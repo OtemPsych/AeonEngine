@@ -232,7 +232,7 @@ namespace ae
  =====================================================
  \endcode
 
- \par Example:
+ Usage example:
  \code
  // This macro will be ignored in Release mode and the metadata parameters will be automatically filled in
  AEON_LOG_ERROR("Title of the error message", "Description of the error message");

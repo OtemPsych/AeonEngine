@@ -1,6 +1,17 @@
-v0.1.0 | 2019-06-10 - 2019-06-14
+v0.2.0 | 2019.06.14 - 2019.07.01
+  Features
+    * Added a Vector partially specialized template struct used for 2-dimensional mathematical vectors
+    * Added a Vector partially specialized template struct used for 3-dimensional mathematical vectors
+    * Added a Vector partially specialized template struct used for 3-dimensional mathematical vectors with a homogeneous component
+    * Added a Matrix template struct for NxM (3x2, 5x4, 4x4) matrices in column-major
+  Updates
+    - Improved the documentation of certain functions in Math/Misc.h
+  Bug Fixes
+    ~ Fixed documentation errors in Math/Vector.h
+
+v0.1.0 | 2019.06.10 - 2019.06.14
   Features
     * Added a DebugLogger singleton class used to log debug information concerning Aeon
     * Added a FileSystem static class that provides I/O access to system files
     * Added a Math namespace providing various mathematical utility functions
-    * Added a Vector primary template struct used for mathematical n-dimensional vector
+    * Added a Vector primary template struct used for n-dimensional mathematical vectors

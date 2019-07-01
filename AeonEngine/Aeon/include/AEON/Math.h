@@ -26,6 +26,10 @@
 // Include all the necessary headers of the Math module
 #include <AEON/Math/Misc.h>
 #include <AEON/Math/Vector.h>
+#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector3.h>
+#include <AEON/Math/Vector4.h>
+#include <AEON/Math/Matrix.h>
 
 #endif // Aeon_Math_H_
 

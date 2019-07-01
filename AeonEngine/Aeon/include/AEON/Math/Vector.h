@@ -42,7 +42,7 @@ namespace ae
 	struct [[nodiscard]] Vector
 	{
 		// Member data
-		std::array<T, n> elements; //!< The array of coordinates
+		std::array<T, n> elements; //!< The array of elements
 
 		// Constructor(s)
 		/*!
@@ -97,9 +97,9 @@ namespace ae
 		/*!
 		 \brief Constructs the ae::Vector by providing specific \a coordinates.
 		 \details Sets the ae::Vector's elements to the \a coordinates provided.
-		 \note It's up to the user to provide the correct number of coordinates.
+		 \note It's up to the user to provide the correct number of elements.
 
-		 \param[in] coordinates The initializer list of coordinates
+		 \param[in] coordinates The initializer list of elements
 
 		 \par Example:
 		 \code
@@ -113,7 +113,7 @@ namespace ae
 		Vector(std::initializer_list<T> coordinates) noexcept
 			: elements()
 		{
-			// Copies the values until the maximum number of elements that both the vector and the list hold
+			// Copy the values until the maximum number of elements that both the vector and the list hold
 			std::copy_n(coordinates.begin(), Math::min(n, coordinates.size()), elements.begin());
 		}
 		/*!
@@ -135,7 +135,7 @@ namespace ae
 		{
 		}
 		/*!
-		 \brief Constructs the ae::Vector by providing an C-style array of coordinates.
+		 \brief Constructs the ae::Vector by providing a C-style array of coordinates.
 		 \details Sets the ae::Vector's elements to the C-style array of \a coordinates provided.
 
 		 \param[in] coordinates The C-style array of coordinates to assign to the ae::Vector
@@ -151,15 +151,15 @@ namespace ae
 		explicit Vector(const T(&coordinates)[n]) noexcept
 			: elements()
 		{
-			// Copies the values of the C-style array to the vector's elements
+			// Copy the values of the C-style array to the vector's elements
 			std::copy_n(coordinates, n, elements.begin());
 		}
 		/*!
-		 \brief Constructs the ae::Vector by providing a ae::Vector of another type or with a different number of elements.
+		 \brief Constructs the ae::Vector by providing an ae::Vector of another type and/or with a different number of elements.
 		 \details Sets the ae::Vector's elements to the \a vecUN's elements, up to the maximum number of elements that both vectors hold.\n
 		 If the \a vecUN possesses less elements, the ae::Vector's remaining elements will be set to 0.
 
-		 \param[in] vecUN The ae::Vector of another type and with a different number of elements to assign to the ae::Vector
+		 \param[in] vecUN The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
 
 		 \par Example:
 		 \code
@@ -176,7 +176,7 @@ namespace ae
 		 ae::Vector<double, 5> vec5d(vec3i); // last two elements set to 0.0
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.2.0
 		*/
 		template <typename U, size_t n2>
 		Vector(const Vector<U, n2>& vecUN) noexcept
@@ -204,7 +204,7 @@ namespace ae
 		 \code
 		 constexpr ae::Vector<float, 5> vec5f_1(0.5f, 0.3f, -1.f, 1.f, 0.f);
 		 constexpr ae::Vector<float, 5> vec5f_2(vec5f_1);
-		 // ou
+		 // or
 		 constexpr ae::Vector<float, 5> vec5f_2 = vec5f_1;
 		 \endcode
 
@@ -224,8 +224,8 @@ namespace ae
 		 \code
 		 constexpr ae::Vector<float, 5> vec5f_1(0.5f, 0.3f, 0.8f, -1.f, 1.f);
 		 constexpr ae::Vector<float, 5> vec5f_2(0.3f, 0.1f, 0.25f, 1.f, 0.f);
-		 constexpr ae::Vector<float, 5> vec5f_3(vec5f_1 + vec5f_2);
-		 // ou
+		 ae::Vector<float, 5> vec5f_3(vec5f_1 + vec5f_2);
+		 // or
 		 ae::Vector<float, 5> vec5f_3 = vec5f_1 + vec5f_2;
 		 \endcode
 
@@ -418,7 +418,7 @@ namespace ae
 		}
 
 		/*!
-		 \brief Calculates and retrieves the ae::Vector's magnitude (or the length).
+		 \brief Calculates and retrieves the ae::Vector's magnitude (or length).
 		 \details The magnitude is calculated using the Pythagorean theorem: \f$ \| \overrightarrow{V} \| = \sqrt{x^2 + y^2 + \dotsb + n^2} \f$.
 
 		 \return The ae::Vector's magnitude
@@ -1595,7 +1595,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.1.0
- \date 2019-06-14
+ \version v0.2.0
+ \date 2019-06-18
  \copyright MIT License
 */

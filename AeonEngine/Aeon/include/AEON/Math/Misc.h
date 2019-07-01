@@ -31,7 +31,7 @@
 namespace ae
 {
 	/*!
-	 \brief The namespace providing various mathematical functions.
+	 \brief The namespace providing various mathematical utility functions.
 	*/
 	namespace Math
 	{
@@ -46,9 +46,8 @@ namespace ae
 
 		/*!
 		 \brief Converts the angle provided in \a degrees into radians.
-		 \details The formula used is the following: \f$ \theta\,rad = \theta^\circ\cdot\frac{\pi}{180} \f$.
-		 \note Only floating point types are allowed (float, double, long double).\n
-		 The cast condition won't have an impact on performance during execution.
+		 \details The equation used is the following: \f$ \theta\,rad = \theta^\circ\cdot\frac{\pi}{180} \f$.
+		 \note Only floating point types are allowed (float, double, long double).
 		 
 		 \param[in] degrees The angle to convert to radians
 
@@ -61,7 +60,7 @@ namespace ae
 		 
 		 \sa toDegrees()
 
-		 \since v0.1.0
+		 \since v0.2.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
 		[[nodiscard]] constexpr T toRadians(T degrees) noexcept
@@ -70,9 +69,8 @@ namespace ae
 		}
 		/*!
 		 \brief Converts the angle provided in \a radians into degrees.
-		 \details The formula used is the following: \f$ \theta^\circ = \theta\,rad \cdot \frac{180}{\pi} \f$.
-		 \note Only floating point types are allowed (float, double, long double).\n
-		 The cast condition won't have an impact on performance during execution.
+		 \details The equation used is the following: \f$ \theta^\circ = \theta\,rad \cdot \frac{180}{\pi} \f$.
+		 \note Only floating point types are allowed (float, double, long double).
 
 		 \param[in] radians The angle to convert to degrees
 
@@ -85,7 +83,7 @@ namespace ae
 
 		 \sa toRadians()
 
-		 \since v0.1.0
+		 \since v0.2.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
 		[[nodiscard]] constexpr T toDegrees(T radians) noexcept
@@ -555,7 +553,7 @@ namespace ae
  the development of a game, whether it be 2D or 3D.
  
  \author Filippos Gleglakos
- \version v0.1.0
- \date 2019-06-14
+ \version v0.2.0
+ \date 2019-06-17
  \copyright MIT License
 */
