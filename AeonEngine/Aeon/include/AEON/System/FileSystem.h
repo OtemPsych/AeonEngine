@@ -88,9 +88,9 @@ namespace ae
 		 std::string binaryFileContents = ae::FileSystem::readFile("data.dat", ae::FileSystem::OpenMode::Binary);
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static std::string readFile(const std::string& filepath, uint_fast16_t openMode = OpenMode::None);
+		_NODISCARD static std::string readFile(const std::string& filepath, uint_fast16_t openMode = OpenMode::None);
 		/*!
 		 \brief Writes into the file situated at the \a filepath provided, adding the \a content and using the \a openMode provided.
 
@@ -106,7 +106,7 @@ namespace ae
 		  ae::FileSystem::writeFile("data.txt", newFileContents);
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		static void writeFile(const std::string& filepath, const std::string& content, uint_fast16_t openMode = OpenMode::None);
 	};
@@ -150,7 +150,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.1.0
- \date 2019-06-10
+ \version v0.3.0
+ \date 2019.07.02
  \copyright MIT License
 */

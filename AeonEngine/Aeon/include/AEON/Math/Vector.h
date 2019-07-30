@@ -39,7 +39,7 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.) and the minimum number of dimensions is 2.
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>>
-	struct [[nodiscard]] Vector
+	struct _NODISCARD Vector
 	{
 		// Member data
 		std::array<T, n> elements; //!< The array of elements
@@ -49,9 +49,9 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		constexpr Vector() noexcept
+		_CONSTEXPR17 Vector() noexcept
 			: elements()
 		{
 		}
@@ -87,10 +87,10 @@ namespace ae
 		 constexpr ae::Vector<float, 5> VEC5F(0.5f, 0.3f, -1.f, 1.f, 10.f);
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename... Coords>
-		constexpr Vector(T coordinate0, T coordinate1, Coords... coordinates) noexcept
+		_CONSTEXPR17 Vector(T coordinate0, T coordinate1, Coords... coordinates) noexcept
 			: elements({ coordinate0, coordinate1, coordinates... })
 		{
 		}
@@ -128,9 +128,9 @@ namespace ae
 		 constexpr ae::Vector<float, 5> VEC5F(COORDINATES);
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		explicit constexpr Vector(const std::array<T, n>& coordinates) noexcept
+		explicit _CONSTEXPR17 Vector(const std::array<T, n>& coordinates) noexcept
 			: elements(coordinates)
 		{
 		}
@@ -176,16 +176,16 @@ namespace ae
 		 ae::Vector<double, 5> vec5d(vec3i); // last two elements set to 0.0
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename U, size_t n2>
 		Vector(const Vector<U, n2>& vecUN) noexcept
 			: elements()
 		{
-			constexpr size_t MIN_N = Math::min(n, n2);
+			_CONSTEXPR17 const size_t MIN_N = Math::min(n, n2);
 
 			// Avoid the casts if the T type is equal to the U type during compilation
-			if constexpr (std::is_same_v<T, U>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, U>) {
 				std::copy_n(vecUN.elements.begin(), MIN_N, elements.begin());
 			}
 			else {
@@ -208,9 +208,9 @@ namespace ae
 		 constexpr ae::Vector<float, 5> vec5f_2 = vec5f_1;
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		constexpr Vector(const Vector<T, n>& copy) noexcept
+		_CONSTEXPR17 Vector(const Vector<T, n>& copy) noexcept
 			: elements(copy.elements)
 		{
 		}
@@ -229,9 +229,9 @@ namespace ae
 		 ae::Vector<float, 5> vec5f_3 = vec5f_1 + vec5f_2;
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		constexpr Vector(Vector<T, n>&& rvalue) noexcept
+		_CONSTEXPR17 Vector(Vector<T, n>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -253,12 +253,12 @@ namespace ae
 		 vec5f_1 = vec5f_2;
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		Vector<T, n>& operator=(const Vector<T, n>& other) noexcept
 		{
 			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (this == &other) {
 					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
 					return *this;
@@ -309,12 +309,12 @@ namespace ae
 
 		 \sa at()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr T& operator[](size_t index) noexcept
+		_NODISCARD _CONSTEXPR17 T& operator[](size_t index) noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= n) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
 					return elements[0];
@@ -340,12 +340,12 @@ namespace ae
 
 		 \sa at()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr const T& operator[](size_t index) const noexcept
+		_NODISCARD _CONSTEXPR17 const T& operator[](size_t index) const noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= n) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
 					return elements[0];
@@ -372,12 +372,12 @@ namespace ae
 
 		 \sa operator[]()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr T& at(size_t index) noexcept
+		_NODISCARD _CONSTEXPR17 T& at(size_t index) noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= n) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
 					return elements[0];
@@ -402,12 +402,12 @@ namespace ae
 
 		 \sa operator[]()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr const T& at(size_t index) const noexcept
+		_NODISCARD _CONSTEXPR17 const T& at(size_t index) const noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= n) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
 					return elements[0];
@@ -429,9 +429,9 @@ namespace ae
 		 float magnitude = vec5f.magnitude();
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] T magnitude() const
+		_NODISCARD T magnitude() const
 		{
 			// Calculate the sum of the elements squared
 			T sum = static_cast<T>(0);
@@ -457,15 +457,15 @@ namespace ae
 		 ae::Vector<float, 5> unitVec5 = vec5f.normalize();
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename = Math::FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] Vector<T, n> normalize() const
+		_NODISCARD Vector<T, n> normalize() const
 		{
 			const T MAGNITUDE = magnitude();
 
 			// Protection against division by 0 (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (MAGNITUDE == static_cast<T>(0)) {
 					AEON_LOG_WARNING("Division by 0", "The ae::Vector's magnitude is equal to 0.\nReturning copy of caller.");
 					return *this;
@@ -495,10 +495,10 @@ namespace ae
 
 	 \sa operator-(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator+(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD Vector<T, n> operator+(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the sum of the two vectors to result
 		Vector<T, n> result;
@@ -527,10 +527,10 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator-(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD Vector<T, n> operator-(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the difference of the two vectors to result
 		Vector<T, n> result;
@@ -559,10 +559,10 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator-(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator*(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD Vector<T, n> operator*(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the product of the two vectors to result
 		Vector<T, n> result;
@@ -592,10 +592,10 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator-(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator/(const Vector<T, n>& lhs, const Vector<T, n>& rhs)
+	_NODISCARD Vector<T, n> operator/(const Vector<T, n>& lhs, const Vector<T, n>& rhs)
 	{
 		// Assign the product of the two vectors to result
 		Vector<T, n> result;
@@ -624,10 +624,10 @@ namespace ae
 
 	 \sa operator-(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator+(const Vector<T, n>& vec, T scalar) noexcept
+	_NODISCARD Vector<T, n> operator+(const Vector<T, n>& vec, T scalar) noexcept
 	{
 		// Assign the sum of the vector and of the scalar to result
 		Vector<T, n> result;
@@ -655,10 +655,10 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator-(const Vector<T, n>& vec, T scalar) noexcept
+	_NODISCARD Vector<T, n> operator-(const Vector<T, n>& vec, T scalar) noexcept
 	{
 		// Assign the difference of the vector and of the scalar to result
 		Vector<T, n> result;
@@ -686,10 +686,10 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator-(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator*(const Vector<T, n>& vec, T scalar) noexcept
+	_NODISCARD Vector<T, n> operator*(const Vector<T, n>& vec, T scalar) noexcept
 	{
 		// Assign the product of the vector and of the scalar to result
 		Vector<T, n> result;
@@ -718,10 +718,10 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator-(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator/(const Vector<T, n>& vec, T scalar)
+	_NODISCARD Vector<T, n> operator/(const Vector<T, n>& vec, T scalar)
 	{
 		// Assign the quotient of the vector and of the scalar to result
 		Vector<T, n> result;
@@ -1009,10 +1009,10 @@ namespace ae
 
 	 \sa operator!=()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] bool operator==(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD bool operator==(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
 			[](T lhsElement, T rhsElement) -> bool { return lhsElement == rhsElement; }
@@ -1039,10 +1039,10 @@ namespace ae
 
 	 \sa operator==()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] bool operator!=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD bool operator!=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		return !(lhs == rhs);
 	}
@@ -1067,10 +1067,10 @@ namespace ae
 
 	 \sa operator<=(), operator>(), operator>=()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] bool operator<(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD bool operator<(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
 			[](T lhsElement, T rhsElement) -> bool { return lhsElement < rhsElement; }
@@ -1097,12 +1097,14 @@ namespace ae
 
 	 \sa operator<(), operator>(), operator>=()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] bool operator<=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD bool operator<=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return !(rhs < lhs);
+		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
+			[](T lhsElement, T rhsElement) -> bool { return lhsElement <= rhsElement; }
+		);
 	}
 	/*!
 	 \relates Vector
@@ -1125,12 +1127,14 @@ namespace ae
 
 	 \sa operator>=(), operator<(), operator<=()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] bool operator>(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD bool operator>(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return (rhs < lhs);
+		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
+			[](T lhsElement, T rhsElement) -> bool { return lhsElement > rhsElement; }
+		);
 	}
 	/*!
 	 \relates Vector
@@ -1153,12 +1157,14 @@ namespace ae
 
 	 \sa operator>(), operator<=(), operator<()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] bool operator>=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	_NODISCARD bool operator>=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return !(lhs < rhs);
+		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
+			[](T lhsElement, T rhsElement) -> bool { return lhsElement >= rhsElement; }
+		);
 	}
 
 	/*!
@@ -1179,10 +1185,10 @@ namespace ae
 
 	 \sa operator*(const Vector<T, n>&, T), operator/(T, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator*(T scalar, const Vector<T, n>& vec) noexcept
+	_NODISCARD Vector<T, n> operator*(T scalar, const Vector<T, n>& vec) noexcept
 	{
 		return vec * scalar;
 	}
@@ -1205,10 +1211,10 @@ namespace ae
 
 	 \sa operator/(const Vector<T, n>&, T), operator*(T, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> operator/(T scalar, const Vector<T, n>& vec) noexcept
+	_NODISCARD Vector<T, n> operator/(T scalar, const Vector<T, n>& vec) noexcept
 	{
 		// Assign the quotient of the scalar value and of the vec's elements to result
 		Vector<T, n> result;
@@ -1235,10 +1241,10 @@ namespace ae
 	 ae::Vector<float, 2> vec2f_2 = -vec2f_1; // (-0.5f, 0.7f)
 	 \endcode
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>, typename = std::enable_if_t<std::is_signed_v<T>>>
-	[[nodiscard]] Vector<T, n> operator-(const Vector<T, n>& vec) noexcept
+	_NODISCARD Vector<T, n> operator-(const Vector<T, n>& vec) noexcept
 	{
 		// Assign the inverted signs of the vec to result
 		Vector<T, n> result;
@@ -1268,10 +1274,10 @@ namespace ae
 
 	 \sa refract()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] constexpr Vector<T, n> reflect(const Vector<T, n>& vec, const Vector<T, n>& normal) noexcept
+	_NODISCARD _CONSTEXPR17 Vector<T, n> reflect(const Vector<T, n>& vec, const Vector<T, n>& normal) noexcept
 	{
 		return (vec - static_cast<T>(2) * dot(vec, normal) * normal);
 	}
@@ -1295,13 +1301,13 @@ namespace ae
 
 	 \sa reflect()
 	 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> refract(const Vector<T, n>& vec, const Vector<T, n>& normal, T eta)
+	_NODISCARD Vector<T, n> refract(const Vector<T, n>& vec, const Vector<T, n>& normal, T eta)
 	{
-		constexpr T T_ZERO = static_cast<T>(0);
-		constexpr T T_ONE = static_cast<T>(1);
+		_CONSTEXPR17 const T T_ZERO = static_cast<T>(0);
+		_CONSTEXPR17 const T T_ONE = static_cast<T>(1);
 		const T D = dot(vec, normal);
 		const T K = T_ONE - eta * eta * (T_ONE - D * D);
 
@@ -1328,10 +1334,10 @@ namespace ae
 	 float distance = ae::distance(vec2f_1, vec2f_2);
 	 \endcode
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] T distance(const Vector<T, n>& v1, const Vector<T, n>& v2)
+	_NODISCARD T distance(const Vector<T, n>& v1, const Vector<T, n>& v2)
 	{
 		return (v2 - v1).magnitude();
 	}
@@ -1357,10 +1363,10 @@ namespace ae
 
 	 \sa normalize(), angle()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] constexpr T dot(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
+	_NODISCARD _CONSTEXPR17 T dot(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		T dotProduct = static_cast<T>(0);
 		for (auto itr1 = v1.elements.begin(), itr2 = v2.elements.begin(); itr1 != v1.elements.end(); ++itr1, ++itr2) {
@@ -1392,10 +1398,10 @@ namespace ae
 
 	 \sa normalize(), dot()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>, typename = Math::FLOATING_POINT_POLICY<T>>
-	[[nodiscard]] T angle(const Vector<T, n>& v1, const Vector<T, n>& v2)
+	_NODISCARD T angle(const Vector<T, n>& v1, const Vector<T, n>& v2)
 	{
 		return Math::acos(dot(v1.normalize(), v2.normalize()));
 	}
@@ -1419,10 +1425,10 @@ namespace ae
 
 	 \sa max(), clamp()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> min(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
+	_NODISCARD Vector<T, n> min(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		Vector<T, n> result;
 		std::transform(v1.elements.begin(), v1.elements.end(), v2.elements.begin(), result.elements.begin(),
@@ -1450,10 +1456,10 @@ namespace ae
 
 	 \sa min(), clamp()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> max(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
+	_NODISCARD Vector<T, n> max(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		Vector<T, n> result;
 		std::transform(v1.elements.begin(), v1.elements.end(), v2.elements.begin(), result.elements.begin(),
@@ -1485,10 +1491,10 @@ namespace ae
 
 	 \sa min(), max()
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> clamp(const Vector<T, n>& vec, const Vector<T, n>& minVec, const Vector<T, n>& maxVec) noexcept
+	_NODISCARD Vector<T, n> clamp(const Vector<T, n>& vec, const Vector<T, n>& minVec, const Vector<T, n>& maxVec) noexcept
 	{
 		return min(max(vec, minVec), maxVec);
 	}
@@ -1517,10 +1523,10 @@ namespace ae
 	 ae::Vector<float, 2> interpolatedVec = edge0 + ae::smoothstep(vec, edge0, edge1) * (edge1 - edge0); // ([0.5f,0.65f], [0.3f,0.7f])
 	 \endcode
 
-	 \since v0.1.0
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n>
-	[[nodiscard]] Vector<T, n> smoothstep(const Vector<T, n>& vec, const Vector<T, n>& edge0, const Vector<T, n>& edge1)
+	_NODISCARD Vector<T, n> smoothstep(const Vector<T, n>& vec, const Vector<T, n>& edge0, const Vector<T, n>& edge1)
 	{
 		const Vector<T, n> INTERP = clamp((vec - edge0) / (edge1 - edge0), Vector<T, n>(static_cast<T>(0)), Vector<T, n>(static_cast<T>(1)));
 		return (INTERP * INTERP * (Vector<T, n>(static_cast<T>(3)) - Vector<T, n>(static_cast<T>(2)) * INTERP));
@@ -1548,9 +1554,11 @@ namespace ae
 	 ae::Vector2f B(20.f, 15.f);
 	 ae::Vector2f LERP = ae::lerp(A, B, 0.5f);
 	 \endcode
+
+	 \since v0.3.0
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>, typename = Math::FLOATING_POINT_POLICY<T>>
-	[[nodiscard]] Vector<T, n> lerp(const Vector<T, n>& A, const Vector<T, n>& B, T t) noexcept
+	_NODISCARD Vector<T, n> lerp(const Vector<T, n>& A, const Vector<T, n>& B, T t) noexcept
 	{
 		return (A + t * (B - A));
 	}
@@ -1595,7 +1603,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.2.0
- \date 2019-06-18
+ \version v0.3.0
+ \date 2019.07.13
  \copyright MIT License
 */

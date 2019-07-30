@@ -21,7 +21,7 @@ namespace ae
 		}
 
 		// Log an error message if the mode selected is invalid (ignored in Release mode)
-		if constexpr (AEON_DEBUG) {
+		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if (openMode & OpenMode::Append || openMode & OpenMode::Truncate) {
 				AEON_LOG_ERROR("Invalid flags", "The mode flags provided to open the file at \"" + filepath + "\" are incorrect.\nReturning empty string.");
 				return contents;
@@ -47,7 +47,7 @@ namespace ae
 	void FileSystem::writeFile(const std::string& filepath, const std::string& content, uint_fast16_t openMode)
 	{
 		// Log an error message if the mode selected is invalid (ignored in Release mode)
-		if constexpr (AEON_DEBUG) {
+		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if ((openMode & OpenMode::AtEnd && (openMode & OpenMode::Append || openMode & OpenMode::Truncate)) || (openMode & OpenMode::Append && openMode & OpenMode::Truncate)) {
 				AEON_LOG_ERROR("Invalid flags", "The mode flags provided to open the file at \"" + filepath + "\" can't be combined.\nAborting operation.");
 				return;

@@ -33,7 +33,7 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.).
 	*/
 	template <typename T>
-	struct [[nodiscard]] Vector<T, 4>
+	struct _NODISCARD Vector<T, 4>
 	{
 		// Member data
 		union {
@@ -53,9 +53,9 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Vector() noexcept
+		_CONSTEXPR17 Vector() noexcept
 			: elements()
 		{
 		}
@@ -70,9 +70,9 @@ namespace ae
 		 constexpr ae::Vector4f vec4f(5.f); // the elements x, y, z and w are set to 5.f
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		explicit constexpr Vector(T scalar) noexcept
+		explicit _CONSTEXPR17 Vector(T scalar) noexcept
 			: x(scalar)
 			, y(scalar)
 			, z(scalar)
@@ -93,9 +93,9 @@ namespace ae
 		 constexpr ae::Vector4f vec4f(0.5f, 0.3f, 2.f, 1.f);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Vector(T x, T y, T z, T w) noexcept
+		_CONSTEXPR17 Vector(T x, T y, T z, T w) noexcept
 			: x(x)
 			, y(y)
 			, z(z)
@@ -136,9 +136,9 @@ namespace ae
 		 constexpr ae::Vector4f vec4f(coordinates);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		explicit constexpr Vector(const std::array<T, 4>& coordinates) noexcept
+		explicit _CONSTEXPR17 Vector(const std::array<T, 4>& coordinates) noexcept
 			: elements(coordinates)
 		{
 		}
@@ -183,7 +183,7 @@ namespace ae
 		 ae::Vector4f vec4f_3 = vec2i;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename U, size_t n2>
 		Vector(const Vector<U, n2>& vecUN) noexcept
@@ -192,7 +192,7 @@ namespace ae
 			const size_t MIN_N = Math::min(elements.size(), n2);
 
 			// Avoid the casts if the T type is equal to the U type during compilation
-			if constexpr (std::is_same_v<T, U>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, U>) {
 				std::copy_n(vecUN.elements.begin(), MIN_N, elements.begin());
 			}
 			else {
@@ -221,10 +221,10 @@ namespace ae
 		 ae::Vector4f vec4f_2(vec2i_1, -1.f, 1.f);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename U>
-		constexpr Vector(const Vector<U, 2>& vecU, T z, T w) noexcept
+		_CONSTEXPR17 Vector(const Vector<U, 2>& vecU, T z, T w) noexcept
 			: xy(vecU)
 		{
 			this->z = z;
@@ -249,10 +249,10 @@ namespace ae
 		 ae::Vector4f vec4f_2(vec3i_1, 1.f);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename U>
-		constexpr Vector(const Vector<U, 3>& vecU, T w) noexcept
+		_CONSTEXPR17 Vector(const Vector<U, 3>& vecU, T w) noexcept
 			: xyz(vecU)
 		{
 			this->w = w;
@@ -271,9 +271,9 @@ namespace ae
 		 constexpr ae::Vector4f vec4f_2 = vec4f_1;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Vector(const Vector<T, 4>& copy) noexcept
+		_CONSTEXPR17 Vector(const Vector<T, 4>& copy) noexcept
 			: elements(copy.elements)
 		{
 		}
@@ -292,9 +292,9 @@ namespace ae
 		 ae::Vector4f vec4f_3 = vec4f_1 + vec4f_2;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Vector(Vector<T, 4>&& rvalue) noexcept
+		_CONSTEXPR17 Vector(Vector<T, 4>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -316,12 +316,12 @@ namespace ae
 		 vec4f_1 = vec4f_2;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		Vector<T, 4>& operator=(const Vector<T, 4>& other) noexcept
 		{
 			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (this == &other) {
 					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
 					return *this;
@@ -372,12 +372,12 @@ namespace ae
 
 		 \sa at()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr T& operator[](size_t index) noexcept
+		_NODISCARD _CONSTEXPR17 T& operator[](size_t index) noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= elements.size()) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
 					return x;
@@ -403,12 +403,12 @@ namespace ae
 
 		 \sa at()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr const T& operator[](size_t index) const noexcept
+		_NODISCARD _CONSTEXPR17 const T& operator[](size_t index) const noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= elements.size()) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
 					return x;
@@ -435,12 +435,12 @@ namespace ae
 
 		 \sa operator[]()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr T& at(size_t index) noexcept
+		_NODISCARD _CONSTEXPR17 T& at(size_t index) noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= elements.size()) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
 					return x;
@@ -465,12 +465,12 @@ namespace ae
 
 		 \sa operator[]()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr const T& at(size_t index) const noexcept
+		_NODISCARD _CONSTEXPR17 const T& at(size_t index) const noexcept
 		{
 			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index >= elements.size()) {
 					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
 					return x;
@@ -492,9 +492,9 @@ namespace ae
 		 float magnitude = vec4f.magnitude();
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] T magnitude() const
+		_NODISCARD T magnitude() const
 		{
 			return Math::sqrt(x * x + y * y + z * z + w * w);
 		}
@@ -513,15 +513,15 @@ namespace ae
 		 ae::Vector4f unitVec4f = vec4f.normalize();
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename = Math::FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] Vector<T, 4> normalize() const
+		_NODISCARD Vector<T, 4> normalize() const
 		{
 			const T MAGNITUDE = magnitude();
 
 			// Protection against division by 0 (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (MAGNITUDE == static_cast<T>(0)) {
 					AEON_LOG_WARNING("Division by 0", "The ae::Vector's magnitude is equal to 0.\nReturning copy of caller.");
 					return *this;
@@ -568,7 +568,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.2.0
- \date 2019-06-18
+ \version v0.3.0
+ \date 2019.07.02
  \copyright MIT License
 */

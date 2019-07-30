@@ -20,26 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_H_
-#define Aeon_Math_H_
+#include <AEON/System/Clock.h>
 
-// Include all the necessary headers of the Math module
-#include <AEON/Math/Misc.h>
-#include <AEON/Math/Vector.h>
-#include <AEON/Math/Vector2.h>
-#include <AEON/Math/Vector3.h>
-#include <AEON/Math/Vector4.h>
-#include <AEON/Math/Matrix.h>
-#include <AEON/Math/Box.h>
-#include <AEON/Math/AABoxCollider.h>
+#include <GLFW/glfw3.h>
 
-#endif // Aeon_Math_H_
+namespace ae
+{
+	// Public constructor(s)
+	Clock::Clock()
+		: mStartTime(Time::seconds(glfwGetTime()))
+	{
+	}
 
-/*!
- \defgroup math Math module
+	// Public method(s)
+	Time Clock::getElapsedTime() const
+	{
+		return Time::seconds(glfwGetTime() - mStartTime.asSeconds());
+	}
 
- A module providing several mathematical features, for example: vectors (for
- graphics calculations and for general use), quaternions (for representing
- rotations), matrices (for representing transformations in the world), and
- other utility functions.
-*/
+	Time Clock::restart()
+	{
+		const Time CURRENT_TIME = Time::seconds(glfwGetTime());
+		const Time ELAPSED_TIME = CURRENT_TIME - mStartTime;
+		mStartTime = CURRENT_TIME;
+
+		return ELAPSED_TIME;
+	}
+}

@@ -27,18 +27,11 @@
 
 #include <AEON/Config.h>
 
-// Define the logging macros (only valid in Debug mode)
-#if AEON_DEBUG
-	#define AEON_LOG(level, title, description) ae::DebugLogger::getInstance().log(title, description, __FILE__, __func__, level, __LINE__)
-	#define AEON_LOG_INFO(title, description) AEON_LOG(ae::DebugLogger::Log::Level::Info, title, description)
-	#define AEON_LOG_WARNING(title, description) AEON_LOG(ae::DebugLogger::Log::Level::Warning, title, description)
-	#define AEON_LOG_ERROR(title, description) AEON_LOG(ae::DebugLogger::Log::Level::Error, title, description)
-#else
-	#define AEON_LOG(level, title, description)
-	#define AEON_LOG_INFO(title, description)
-	#define AEON_LOG_WARNING(title, description)
-	#define AEON_LOG_ERROR(title, description)
-#endif // AEON_DEBUG
+// Define the logging macros
+#define AEON_LOG(level, title, description) ae::DebugLogger::getInstance().log(title, description, __FILE__, __func__, level, __LINE__)
+#define AEON_LOG_INFO(title, description) AEON_LOG(ae::DebugLogger::Log::Level::Info, title, description)
+#define AEON_LOG_WARNING(title, description) AEON_LOG(ae::DebugLogger::Log::Level::Warning, title, description)
+#define AEON_LOG_ERROR(title, description) AEON_LOG(ae::DebugLogger::Log::Level::Error, title, description)
 
 namespace ae
 {
@@ -55,7 +48,7 @@ namespace ae
 		struct AEON_API Log
 		{
 			/*!
-			 \brief Enumeration of the available levels of importance of a log.
+			 \brief Enumeration of the available levels of severity of a log.
 			*/
 			enum class Level { Info, Warning, Error };
 
@@ -78,7 +71,7 @@ namespace ae
 
 			 \par Example:
 			 \code
-			 // This macro will be ignored in Release mode and the metadata parameters will be automatically filled in
+			 // The metadata parameters will be automatically filled in
 			 AEON_LOG_ERROR("Title of the error message", "Description of the error message");
 			 \endcode
 
@@ -140,7 +133,7 @@ namespace ae
 	public:
 		/*!
 		 \brief Logs a new debug log that will be kept until the list is retrieved.
-		 \details The log's information will be displayed to the console and stored on a file on disk.
+		 \details The log's information will be displayed to the console in Debug mode and stored on a file on disk on Debug and Release mode.
 		 \note The metadata \a file, \a line and \a function will be automatically provided by using one of the available macros.
 
 		 \param[in] title An std::string rvalue containing the log's title
@@ -152,13 +145,13 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 // This macro will be ignored in Release mode and the metadata parameters will be automatically filled in
+		 // The metadata parameters will be automatically filled in
 		 AEON_LOG_ERROR("Title of the error message", "Description of the error message");
 		 \endcode
 
 		 \sa getLogs()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		void log(std::string&& title, std::string&& description, std::string&& file,
 		         std::string&& function, Log::Level level, int line);
@@ -177,9 +170,9 @@ namespace ae
 
 		 \sa log()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] std::vector<Log> getLogs() noexcept;
+		_NODISCARD std::vector<Log> getLogs() noexcept;
 
 		/*!
 		 \brief Retrieves the ae::DebugLogger's unique instance.
@@ -192,9 +185,9 @@ namespace ae
 		 ae::DebugLogger& singleInstance = ae::DebugLogger::getInstance();
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static DebugLogger& getInstance();
+		_NODISCARD static DebugLogger& getInstance();
 	private:
 		/*!
 		 \brief Default constructor.
@@ -234,12 +227,23 @@ namespace ae
 
  Usage example:
  \code
- // This macro will be ignored in Release mode and the metadata parameters will be automatically filled in
- AEON_LOG_ERROR("Title of the error message", "Description of the error message");
+ // Debug-only log
+ if constexpr (AEON_DEBUG) {
+	if (...) {
+		// The metadata parameters will be automatically filled in
+		AEON_LOG_ERROR("Title of debug-only error", "Description of error message");
+	}
+ }
+
+ // Debug and release log
+ if (...) {
+	// The metadata parameters will be automatically filled in
+	AEON_LOG_ERROR("Title of debug and release error", "Description of error message");
+ }
  \endcode
 
  \author Filippos Gleglakos
- \version v0.1.0
- \date 2019-06-13
+ \version v0.3.0
+ \date 2019.07.11
  \copyright MIT License
 */

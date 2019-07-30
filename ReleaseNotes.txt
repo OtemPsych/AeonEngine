@@ -1,4 +1,31 @@
-v0.2.0 | 2019.06.14 - 2019.07.01
+v0.3.0 | 2019.07.01 - 2019.07.29
+  Features
+    * Added a Quaternion class used to represent a rotation whilst avoiding gimbal lock
+    * Added a Monitor class used in the representation of a monitor of the application user's setup
+    * Added a VideoMode class used to represent a video mode of the monitor and of the active window
+    * Added a MonitorManager singleton class which is responsible for the creation and management of all the Monitor instances
+    * Added a ContextSettings class that represents the OpenGL context settings of a window
+    * Added an AABoxCollider struct that represents an Axis-Aligned Box Collider of an n-dimensional entity or can simply be used as a container
+    * Added a Time class that represents a time value in seconds, milliseconds or microseconds
+    * Added a Clock class used to measure elapsed time
+    * Added a Color utility class for manipulating RGBA colors
+    * Added a Window class that represents the application's window
+    * Added an Event class that represents a system event and its properties, and several derived classes representing specific system events
+    * Added a Keyboard namespace containing a collection of functions that provide real-time access to the keyboard's state
+    * Added a Mouse namespace containing a collection of functions that provide real-time access to the mouse's state
+    * Added an Application singleton class that manages the entire application
+    * Added an EventQueue singleton class that stores the generated input events until they're polled
+    * Added an InputManager namespace containing several callback functions that create and enqueue input events
+    * Added a State class that acts as a layer used to separate storage of game elements and ease management of game levels (main menu, game - level 1, etc.)
+    * Added a StateStack singleton class used internally to manage the user-created State instances
+  Updates
+    - The minimum version of C++ is now C++11 but still takes advantage of C++17 if available
+    - The logging macros can now also be used in Release mode, Debug-only macros must use the AEON_DEBUG macro to differentiate them
+    - The debug logs will only be displayed to the console in Debug mode
+  Bug Fixes
+    ~ Fixed a bug in the Vector template struct's comparison operators
+
+v0.2.0 | 2019.06.14 - 2019.06.19, 2019.06.27 - 2019.07.01
   Features
     * Added a Vector partially specialized template struct used for 2-dimensional mathematical vectors
     * Added a Vector partially specialized template struct used for 3-dimensional mathematical vectors

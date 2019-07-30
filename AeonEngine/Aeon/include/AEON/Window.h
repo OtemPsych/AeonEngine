@@ -20,26 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_H_
-#define Aeon_Math_H_
+#ifndef Aeon_Window_H_
+#define Aeon_Window_H_
 
-// Include all the necessary headers of the Math module
-#include <AEON/Math/Misc.h>
-#include <AEON/Math/Vector.h>
-#include <AEON/Math/Vector2.h>
-#include <AEON/Math/Vector3.h>
-#include <AEON/Math/Vector4.h>
-#include <AEON/Math/Matrix.h>
-#include <AEON/Math/Box.h>
-#include <AEON/Math/AABoxCollider.h>
+// Include all the necessary headers of the Window module
+#include <AEON/Window/VideoMode.h>
+#include <AEON/Window/Monitor.h>
+#include <AEON/Window/MonitorManager.h>
+#include <AEON/Window/ContextSettings.h>
+#include <AEON/Window/Window.h>
+#include <AEON/Window/Event.h>
+#include <AEON/Window/Keyboard.h>
+#include <AEON/Window/Application.h>
+#include <AEON/Window/Mouse.h>
+#include <AEON/Window/State.h>
 
-#endif // Aeon_Math_H_
+#endif // Aeon_Window_H_
 
 /*!
- \defgroup math Math module
+ \defgroup window Window module
 
- A module providing several mathematical features, for example: vectors (for
- graphics calculations and for general use), quaternions (for representing
- rotations), matrices (for representing transformations in the world), and
- other utility functions.
+ A module providing functionalities concerning the creation of a window as well
+ as the configuration of said window (the OpenGL context options and the video
+ mode). This module also has the Mouse and Keyboard namespaces that contain
+ functions providing access to the real-time state of the mouse's buttons and
+ the keyboard's keys respectively. The Application class is responsible for
+ managing the entire application (the API user's application) and has to be
+ instantiated by the API user at the start of their application.
 */

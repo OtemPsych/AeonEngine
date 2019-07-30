@@ -74,8 +74,11 @@ namespace ae
 		Log& ownedLog = mLogs.emplace_back(std::forward<std::string>(title), std::forward<std::string>(description), std::forward<std::string>(file),
 		                                   std::forward<std::string>(function), level, line);
 
-		// Display the log to the console and append it to the log file on disk if it's not an informational log
-		std::cerr << ownedLog << "\n";
+		// Display the log to the console (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			std::cerr << ownedLog << "\n";
+		}
+		// Append the log to the log file on disk if it's not an informational log
 		if (ownedLog.level != Log::Level::Info) {
 			FileSystem::writeFile(mErrorLog, ownedLog.formattedInfo, FileSystem::OpenMode::Append);
 		}

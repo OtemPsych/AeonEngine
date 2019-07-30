@@ -20,26 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_H_
-#define Aeon_Math_H_
+#include <AEON/Window/Keyboard.h>
 
-// Include all the necessary headers of the Math module
-#include <AEON/Math/Misc.h>
-#include <AEON/Math/Vector.h>
-#include <AEON/Math/Vector2.h>
-#include <AEON/Math/Vector3.h>
-#include <AEON/Math/Vector4.h>
-#include <AEON/Math/Matrix.h>
-#include <AEON/Math/Box.h>
-#include <AEON/Math/AABoxCollider.h>
+#include <GLFW/glfw3.h>
 
-#endif // Aeon_Math_H_
+#include <AEON/Window/Application.h>
 
-/*!
- \defgroup math Math module
+namespace ae
+{
+	namespace Keyboard
+	{
+		GLFWwindow* currentContext = nullptr; //!< The cached pointer to the current context
 
- A module providing several mathematical features, for example: vectors (for
- graphics calculations and for general use), quaternions (for representing
- rotations), matrices (for representing transformations in the world), and
- other utility functions.
-*/
+		// Inaccessible helper function
+		void cacheCurrentContext()
+		{
+			// Cache the current OpenGL context
+			if (!currentContext) {
+				currentContext = ae::Application::getInstance().getWindow().getHandle();
+			}
+		}
+
+		// Function(s)
+		bool isKeyPressed(Key key)
+		{
+			cacheCurrentContext();
+			return glfwGetKey(currentContext, static_cast<int>(key));
+		}
+
+		std::string getKeyName(Key key)
+		{
+			return glfwGetKeyName(static_cast<int>(key), 0);
+		}
+	}
+}

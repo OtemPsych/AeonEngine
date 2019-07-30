@@ -42,7 +42,7 @@ namespace ae
 		using FLOATING_POINT_POLICY = std::enable_if_t<std::is_floating_point_v<T>>; //!< The template parameter will only be enabled if it's a floating point
 
 		// Constant(s)
-		constexpr float PI = 3.14159265358f; //!< The mathematical constant of pi
+		_CONSTEXPR17 const float PI = 3.14159265358f; //!< The mathematical constant of pi
 
 		/*!
 		 \brief Converts the angle provided in \a degrees into radians.
@@ -60,10 +60,10 @@ namespace ae
 		 
 		 \sa toDegrees()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] constexpr T toRadians(T degrees) noexcept
+		_NODISCARD _CONSTEXPR17 T toRadians(T degrees) noexcept
 		{
 			return degrees * (PI / 180.f);
 		}
@@ -83,10 +83,10 @@ namespace ae
 
 		 \sa toRadians()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] constexpr T toDegrees(T radians) noexcept
+		_NODISCARD _CONSTEXPR17 T toDegrees(T radians) noexcept
 		{
 			return radians * (180.f / PI);
 		}
@@ -106,13 +106,13 @@ namespace ae
 		 int randomInt = ae::Math::random(2, 5);
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T random(T min, T max)
+		_NODISCARD inline T random(T min, T max)
 		{
 			// Check if the values provided are the same to avoid division by 0 (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (min == max) {
 					AEON_LOG_WARNING("Invalid values", "The values provided are equal to one another.");
 					return min;
@@ -137,13 +137,13 @@ namespace ae
 
 		 \sa sin(), tan(), acos()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T cos(T value) noexcept
+		_NODISCARD inline T cos(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::cos(value);
 			}
 			else {
@@ -165,13 +165,13 @@ namespace ae
 
 		 \sa cos(), tan(), asin()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T sin(T value) noexcept
+		_NODISCARD inline T sin(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::sin(value);
 			}
 			else {
@@ -193,13 +193,13 @@ namespace ae
 
 		 \sa cos(), sin(), atan(), atan2()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T tan(T value) noexcept
+		_NODISCARD inline T tan(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::tan(value);
 			}
 			else {
@@ -222,13 +222,13 @@ namespace ae
 
 		 \sa asin(), atan(), cos()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] inline T acos(T value) noexcept
+		_NODISCARD inline T acos(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::acos(value);
 			}
 			else {
@@ -250,13 +250,13 @@ namespace ae
 
 		 \sa acos(), atan(), sin()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] inline T asin(T value) noexcept
+		_NODISCARD inline T asin(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::asin(value);
 			}
 			else {
@@ -278,13 +278,13 @@ namespace ae
 
 		 \sa acos(), asin(), atan2(), tan()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T atan(T value) noexcept
+		_NODISCARD inline T atan(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::atan(value);
 			}
 			else {
@@ -308,13 +308,13 @@ namespace ae
 
 		 \sa atan()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T atan2(T v1, T v2) noexcept
+		_NODISCARD inline T atan2(T v1, T v2) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::atan2(v1, v2);
 			}
 			else {
@@ -337,13 +337,13 @@ namespace ae
 
 		 \sa rsqrt()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T sqrt(T value)
+		_NODISCARD inline T sqrt(T value)
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::sqrt(value);
 			}
 			else {
@@ -365,13 +365,13 @@ namespace ae
 
 		 \sa sqrt()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] inline T rsqrt(T value)
+		_NODISCARD inline T rsqrt(T value)
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return (1.0 / ::sqrt(value));
 			}
 			else {
@@ -393,13 +393,13 @@ namespace ae
 
 		 \sa ceil()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] inline T floor(T value) noexcept
+		_NODISCARD inline T floor(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::floor(value);
 			}
 			else {
@@ -420,13 +420,13 @@ namespace ae
 
 		 \sa floor()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		[[nodiscard]] inline T ceil(T value) noexcept
+		_NODISCARD inline T ceil(T value) noexcept
 		{
 			// Avoid the casts if the T type is already a double during compilation
-			if constexpr (std::is_same_v<T, double>) {
+			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
 				return ::ceil(value);
 			}
 			else {
@@ -450,10 +450,10 @@ namespace ae
 
 		 \sa max(), clamp()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] constexpr T min(T v1, T v2) noexcept
+		_NODISCARD _CONSTEXPR17 T min(T v1, T v2) noexcept
 		{
 			return (v1 < v2) ? v1 : v2;
 		}
@@ -473,10 +473,10 @@ namespace ae
 
 		 \sa min(), clamp()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] constexpr T max(T v1, T v2) noexcept
+		_NODISCARD _CONSTEXPR17 T max(T v1, T v2) noexcept
 		{
 			return (v1 > v2) ? v1 : v2;
 		}
@@ -503,10 +503,10 @@ namespace ae
 
 		 \sa min(), max()
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] constexpr T clamp(T value, T minValue, T maxValue) noexcept
+		_NODISCARD _CONSTEXPR17 T clamp(T value, T minValue, T maxValue) noexcept
 		{
 			return min(max(value, minValue), maxValue);
 		}
@@ -534,10 +534,10 @@ namespace ae
 		 constexpr float LERP = ae::Math::lerp(START, END, 0.5f);
 		 \endcode
 
-		 \since v0.1.0
+		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		[[nodiscard]] constexpr T lerp(T start, T end, T t) noexcept
+		_NODISCARD _CONSTEXPR17 T lerp(T start, T end, T t) noexcept
 		{
 			return (start + t * (end - start));
 		}
@@ -553,7 +553,7 @@ namespace ae
  the development of a game, whether it be 2D or 3D.
  
  \author Filippos Gleglakos
- \version v0.2.0
- \date 2019-06-17
+ \version v0.3.0
+ \date 2019.07.02
  \copyright MIT License
 */

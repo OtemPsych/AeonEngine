@@ -49,7 +49,7 @@
 		#endif // __GNUC__ >= 4
 	#endif // _WIN32
 
-	// Define the import / export macros
+	// Define the import / export macro
 	#ifdef AEON_API_EXPORTING
 		#define AEON_API AEON_API_EXPORT
 	#else

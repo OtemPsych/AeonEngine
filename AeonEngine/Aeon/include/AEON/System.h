@@ -25,6 +25,8 @@
 
 // Include all the necessary headers of the System module
 #include <AEON/System/FileSystem.h>
+#include <AEON/System/Time.h>
+#include <AEON/System/Clock.h>
 
 #endif // Aeon_System_H_
 

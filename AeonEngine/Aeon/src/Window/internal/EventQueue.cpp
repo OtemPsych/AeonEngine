@@ -20,26 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_H_
-#define Aeon_Math_H_
+#include <AEON/Window/internal/EventQueue.h>
+#include <AEON/Window/Event.h>
 
-// Include all the necessary headers of the Math module
-#include <AEON/Math/Misc.h>
-#include <AEON/Math/Vector.h>
-#include <AEON/Math/Vector2.h>
-#include <AEON/Math/Vector3.h>
-#include <AEON/Math/Vector4.h>
-#include <AEON/Math/Matrix.h>
-#include <AEON/Math/Box.h>
-#include <AEON/Math/AABoxCollider.h>
+namespace ae
+{
+	// Public method(s)
+	void EventQueue::enqueueEvent(std::unique_ptr<Event> event)
+	{
+		mQueue.push(std::move(event));
+	}
 
-#endif // Aeon_Math_H_
+	bool EventQueue::pollEvent(std::unique_ptr<Event>& event)
+	{
+		if (!mQueue.empty()) {
+			event = std::move(mQueue.front());
+			mQueue.pop();
 
-/*!
- \defgroup math Math module
+			return true;
+		}
 
- A module providing several mathematical features, for example: vectors (for
- graphics calculations and for general use), quaternions (for representing
- rotations), matrices (for representing transformations in the world), and
- other utility functions.
-*/
+		return false;
+	}
+
+	// Public static method(s)
+	EventQueue& EventQueue::getInstance() noexcept
+	{
+		static EventQueue instance;
+		return instance;
+	}
+
+	// Private constructor(s)
+	EventQueue::EventQueue() noexcept
+		: mQueue()
+	{
+	}
+}

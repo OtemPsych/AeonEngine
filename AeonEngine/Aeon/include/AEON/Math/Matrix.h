@@ -30,6 +30,7 @@
 #include <AEON/Math/Vector3.h>
 #include <AEON/Math/Vector4.h>
 #include <AEON/Math/Misc.h>
+#include <AEON/Math/internal/Quaternion.h>
 #include <AEON/System/DebugLogger.h>
 
 namespace ae
@@ -46,7 +47,7 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.) and the minimum number of columns and rows is 2.
 	*/
 	template <typename T, size_t n, size_t m, typename = MATRIX_POLICY<T, n, m>>
-	struct [[nodiscard]] Matrix
+	struct _NODISCARD Matrix
 	{
 		// Public member data
 		union {
@@ -59,9 +60,9 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Matrix() noexcept
+		_CONSTEXPR17 Matrix() noexcept
 			: elements()
 		{
 		}
@@ -77,10 +78,10 @@ namespace ae
 		 constexpr ae::Matrix4f mat4f(1.f);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename = MATRIX_SQUARE_POLICY<n, m>>
-		explicit constexpr Matrix(T diagonal) noexcept
+		explicit _CONSTEXPR17 Matrix(T diagonal) noexcept
 			: elements()
 		{
 			for (size_t i = 0; i < n; ++i) {
@@ -102,10 +103,10 @@ namespace ae
 		                              ae::Vector4f(0.5f, 0.25f, -1.f, 1.f), ae::Vector4f(0.5f, 0.25f, -1.f, 1.f));
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename... Columns>
-		constexpr Matrix(const Vector<T, m>& column0, const Vector<T, m>& column1, Columns... columns) noexcept
+		_CONSTEXPR17 Matrix(const Vector<T, m>& column0, const Vector<T, m>& column1, Columns... columns) noexcept
 			: columns({ column0, column1, columns... })
 		{
 		}
@@ -125,10 +126,10 @@ namespace ae
 		                              0.5f, 0.25f, -1.f, 1.f, 0.5f, 0.25f, -1.f, 1.f);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename... Elements>
-		constexpr Matrix(T element0, T element1, T element2, T element3, Elements... elements) noexcept
+		_CONSTEXPR17 Matrix(T element0, T element1, T element2, T element3, Elements... elements) noexcept
 			: elements({ element0, element1, element2, element3, elements... })
 		{
 		}
@@ -194,9 +195,9 @@ namespace ae
 		 constexpr ae::Matrix4f mat4f(columns);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		explicit constexpr Matrix(const std::array<Vector<T, m>, n>& columns) noexcept
+		explicit _CONSTEXPR17 Matrix(const std::array<Vector<T, m>, n>& columns) noexcept
 			: columns(columns)
 		{
 		}
@@ -215,9 +216,9 @@ namespace ae
 		 constexpr ae::Matrix4f mat4f(elements);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		explicit constexpr Matrix(const std::array<T, n * m>& elements) noexcept
+		explicit _CONSTEXPR17 Matrix(const std::array<T, n * m>& elements) noexcept
 			: elements(elements)
 		{
 		}
@@ -295,18 +296,18 @@ namespace ae
 		 // 2 6 10
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename U, size_t n2, size_t m2>
 		Matrix(const Matrix<U, n2, m2>& matU) noexcept
 			: columns()
 		{
-			constexpr size_t MIN_N = Math::min(n, n2);
-			constexpr size_t MIN_M = Math::min(m, m2);
+			_CONSTEXPR17 const size_t MIN_N = Math::min(n, n2);
+			_CONSTEXPR17 const size_t MIN_M = Math::min(m, m2);
 
 			for (size_t i = 0; i < MIN_N; ++i) {
 				for (size_t j = 0; j < MIN_M; ++j) {
-					if constexpr (std::is_same_v<T, U>) {
+					if _CONSTEXPR_IF (std::is_same_v<T, U>) {
 						columns[i][j] = matU.columns[i][j];
 					}
 					else {
@@ -330,9 +331,9 @@ namespace ae
 		 constexpr ae::Matrix4f mat4f_2 = mat4f_1;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Matrix(const Matrix<T, n, m>& copy) noexcept
+		_CONSTEXPR17 Matrix(const Matrix<T, n, m>& copy) noexcept
 			: elements(copy.elements)
 		{
 		}
@@ -352,9 +353,9 @@ namespace ae
 		 constexpr ae::Matrix4f mat4f_2 = std::move(mat4f_1);
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		constexpr Matrix(Matrix<T, n, m>&& rvalue) noexcept
+		_CONSTEXPR17 Matrix(Matrix<T, n, m>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -377,12 +378,12 @@ namespace ae
 		 mat4f_1 = mat4f_2;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		Matrix<T, n, m>& operator=(const Matrix<T, n, m>& other) noexcept
 		{
 			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (this == &other) {
 					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
 					return *this;
@@ -433,10 +434,10 @@ namespace ae
 		 ae::Matrix4f mat4f_3 = mat4f_1 * mat4f_2;
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <size_t n2, size_t m2, typename = std::enable_if_t<(n == m2)>>
-		[[nodiscard]] constexpr Matrix<T, n2, m> operator*(const Matrix<T, n2, m2>& other) const noexcept
+		_NODISCARD _CONSTEXPR17 Matrix<T, n2, m> operator*(const Matrix<T, n2, m2>& other) const noexcept
 		{
 			// Perform the non-commutative multiplication of the two matrices
 			Matrix<T, n2, m> mat;
@@ -502,9 +503,9 @@ namespace ae
 
 		 \sa operator*(const Vector<T, n2>&)
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr Vector<T, m> operator*(const Vector<T, n>& vec) const noexcept
+		_NODISCARD _CONSTEXPR17 Vector<T, m> operator*(const Vector<T, n>& vec) const noexcept
 		{
 			Vector<T, m> result;
 			for (size_t i = 0; i < m; ++i) {
@@ -533,12 +534,12 @@ namespace ae
 
 		 \sa operator*(const Vector<T, n>&)
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <size_t n2, typename = std::enable_if_t<(n2 == n - 1)>>
-		[[nodiscard]] constexpr auto operator*(const Vector<T, n2>& vec) const noexcept
+		_NODISCARD _CONSTEXPR17 auto operator*(const Vector<T, n2>& vec) const noexcept
 		{
-			constexpr size_t m2 = m - 1;
+			_CONSTEXPR17 const size_t m2 = m - 1;
 
 			Vector<T, m2> result;
 			for (size_t i = 0; i < m2; ++i) {
@@ -566,12 +567,12 @@ namespace ae
 
 		 \sa setRow();
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] Vector<T, n> getRow(size_t index) const noexcept
+		_NODISCARD Vector<T, n> getRow(size_t index) const noexcept
 		{
 			// Check that the index provided is within the array limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index > m - 1) {
 					AEON_LOG_ERROR("Invalid index", "The index provided isn't situated within the matrix's limits [0," + std::to_string(m - 1) + "].\nReturning erroneous data.");
 					return Vector<T, n>();
@@ -602,12 +603,12 @@ namespace ae
 
 		 \sa getRow()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		void setRow(const Vector<T, n>& row, size_t index) noexcept
 		{
 			// Check that the index provided is within the array limits (ignored in Release mode)
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (index > m - 1) {
 					AEON_LOG_ERROR("Invalid index", "The index provided isn't situated within the matrix's limits [0," + std::to_string(m - 1) + "].\nAborting operation.");
 					return;
@@ -645,9 +646,9 @@ namespace ae
 		 // 0 0 0  0
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr Matrix<T, n, m> getSubmatrix(size_t col, size_t row) const noexcept
+		_NODISCARD _CONSTEXPR17 Matrix<T, n, m> getSubmatrix(size_t col, size_t row) const noexcept
 		{
 			Matrix<T, n, m> submatrix;
 
@@ -684,10 +685,10 @@ namespace ae
 		 float mat4f_determinant = mat4f.getDeterminant(); // -376.f
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename = MATRIX_SQUARE_POLICY<n, m>>
-		[[nodiscard]] constexpr T getDeterminant(size_t actualN = n) const noexcept
+		_NODISCARD _CONSTEXPR17 T getDeterminant(size_t actualN = n) const noexcept
 		{
 			// If the matrix only contains a single element, retrieve it
 			if (actualN == 1) {
@@ -720,12 +721,12 @@ namespace ae
 		 ae::Matrix3f mat3f_1_adjoint = mat3f_1.getAdjoint();
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename = MATRIX_SQUARE_POLICY<n, m>>
-		[[nodiscard]] constexpr Matrix<T, n, m> getAdjoint() const noexcept
+		_NODISCARD _CONSTEXPR17 Matrix<T, n, m> getAdjoint() const noexcept
 		{
-			constexpr T T_ONE = static_cast<T>(1);
+			_CONSTEXPR17 const T T_ONE = static_cast<T>(1);
 			T sign = T_ONE;
 
 			Matrix<T, n, m> adjoint;
@@ -752,14 +753,14 @@ namespace ae
 		 ae::Matrix4f invertedMat4f = mat4f.invert();
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename = MATRIX_SQUARE_POLICY<n, m>>
-		[[nodiscard]] constexpr Matrix<T, n, m> invert() const noexcept
+		_NODISCARD _CONSTEXPR17 Matrix<T, n, m> invert() const noexcept
 		{
 			// Calculate the determinant of the matrix and check if it's valid (ignored in Release mode)
 			const T DETERMINANT = getDeterminant();
-			if constexpr (AEON_DEBUG) {
+			if _CONSTEXPR_IF (AEON_DEBUG) {
 				if (DETERMINANT == static_cast<T>(0)) {
 					AEON_LOG_WARNING("Singular matrix", "The caller matrix is singular, its inverse can't be calculated.\nReturning caller matrix.");
 					return *this;
@@ -792,9 +793,9 @@ namespace ae
 		 ae::Matrix4f mat4f_rowMajor = mat4f_columnMajor.transpose();
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] constexpr Matrix<T, m, n> transpose() const noexcept
+		_NODISCARD _CONSTEXPR17 Matrix<T, m, n> transpose() const noexcept
 		{
 			Matrix<T, m, n> transposedMatrix;
 			for (size_t i = 0; i < m; ++i) {
@@ -818,10 +819,10 @@ namespace ae
 		 ae::Matrix4f identityMatrix = ae::Matrix4f::identity();
 		 \endcode
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
 		template <typename = MATRIX_SQUARE_POLICY<n, m>>
-		[[nodiscard]] static Matrix<T, n, m> identity() noexcept
+		_NODISCARD static Matrix<T, n, m> identity() noexcept
 		{
 			return Matrix<T, n, m>(static_cast<T>(1));
 		}
@@ -847,9 +848,9 @@ namespace ae
 
 		 \sa orthographic(T, T, T, T), perspective()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top, T near, T far)
+		_NODISCARD static Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top, T near, T far)
 		{
 			Matrix<T, 4, 4> ortho = ae::Matrix<T, 4, 4>::identity();
 			ortho.columns[0][0] = static_cast<T>(2) / (right - left);
@@ -880,9 +881,9 @@ namespace ae
 
 		 \sa orthographic(T, T, T, T, T, T), perspective()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top)
+		_NODISCARD static Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top)
 		{
 			Matrix<T, 4, 4> ortho = ae::Matrix<T, 4, 4>::identity();
 			ortho.columns[0][0] = static_cast<T>(2) / (right - left);
@@ -912,12 +913,12 @@ namespace ae
 
 		 \sa orthographic(T, T, T, T, T, T), orthographic(T, T, T, T)
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> perspective(T fov, T aspectRatio, T near, T far)
+		_NODISCARD static Matrix<T, 4, 4> perspective(T fov, T aspectRatio, T near, T far)
 		{
-			constexpr T T_ONE = static_cast<T>(1);
-			constexpr T T_TWO = static_cast<T>(2);
+			_CONSTEXPR17 const T T_ONE = static_cast<T>(1);
+			_CONSTEXPR17 const T T_TWO = static_cast<T>(2);
 
 			const T TAN_HALF_FOV = Math::tan(Math::toRadians(fov / T_TWO));
 
@@ -948,9 +949,9 @@ namespace ae
 
 		 \bug May be "mat.columns[3][2] = dot(FWD, eye);"
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> lookat(const Vector3<T>& eye, const Vector3<T>& target, const Vector3<T>& up) noexcept
+		_NODISCARD static Matrix<T, 4, 4> lookat(const Vector3<T>& eye, const Vector3<T>& target, const Vector3<T>& up) noexcept
 		{
 			const Vector3<T> FWD = (target - eye).normalize();
 			const Vector3<T> SIDE = cross(FWD, up).normalize();
@@ -991,9 +992,9 @@ namespace ae
 
 		 \sa rotate(), scale()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> translate(const Vector3<T>& translation) noexcept
+		_NODISCARD static Matrix<T, 4, 4> translate(const Vector3<T>& translation) noexcept
 		{
 			Matrix<T, 4, 4> mat = Matrix<T, 4, 4>::identity();
 			mat.columns[3][0] = translation.x;
@@ -1019,9 +1020,9 @@ namespace ae
 
 		 \sa translate(), scale()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> rotate(float angle, const Vector3<T>& axes) noexcept
+		_NODISCARD static Matrix<T, 4, 4> rotate(float angle, const Vector3<T>& axes) noexcept
 		{
 			const float COS = Math::cos(angle);
 			const float SIN = Math::sin(angle);
@@ -1043,6 +1044,65 @@ namespace ae
 			return mat;
 		}
 		/*!
+		 \brief Constructs a rotation ae::Matrix by providing an ae::Quaternion that will prevent gimbal lock.
+		 \details A rotation matrix is used to rotate vertices around the object's origin along one or several axes.\n
+		 Gimbal lock occurs once two of the three axes of rotation are situated in a parallel configuration.
+
+		 \param[in] quat An ae::Quaternion that represents the angle and the axes of rotation
+
+		 \return A rotation ae::Matrix
+
+		 \par Example:
+		 \code
+		 ae::Quaternion rotationQuat = ae::Quaternion::rotation(ae::Math::toRadians(45.f), ae::Vector3f::XAxis);
+		 ae::Matrix4f rotationMatrix = ae::Matrix4f::rotate(rotationQuat);
+		 \endcode
+
+		 \sa translate(), scale()
+
+		 \since v0.3.0
+		*/
+		_NODISCARD static Matrix<T, 4, 4> rotate(const Quaternion& quat) noexcept
+		{
+			const float W = quat.getAngle();
+			const Vector3f AXES = quat.getAxes();
+
+			const float X2 = AXES.x + AXES.x;
+			const float Y2 = AXES.y + AXES.y;
+			const float Z2 = AXES.z + AXES.z;
+
+			const float WX2 = W * X2;
+			const float WY2 = W * Y2;
+			const float WZ2 = W * Z2;
+
+			const float XX2 = AXES.x * X2;
+			const float XY2 = AXES.x * Y2;
+			const float XZ2 = AXES.x * Z2;
+
+			const float YY2 = AXES.y * Y2;
+			const float YZ2 = AXES.y * Z2;
+
+			const float ZZ2 = AXES.z * Z2;
+
+			Matrix<T, 4, 4> mat = Matrix<T, 4, 4>::identity();
+			mat.columns[0][0] = 1.f - YY2 - ZZ2;
+			mat.columns[0][1] = XY2 - WZ2;
+			mat.columns[0][2] = XZ2 + WY2;
+			mat.columns[0][3] = 0.f;
+
+			mat.columns[1][0] = XY2 + WZ2;
+			mat.columns[1][1] = 1.f - XX2 - ZZ2;
+			mat.columns[1][2] = YZ2 - WX2;
+			mat.columns[1][3] = 0.f;
+
+			mat.columns[2][0] = XZ2 - WY2;
+			mat.columns[2][1] = YZ2 + WX2;
+			mat.columns[2][2] = 1.f - XX2 - YY2;
+			mat.columns[2][3] = 0.f;
+
+			return mat;
+		}
+		/*!
 		 \brief Constructs a scale ae::Matrix.
 		 \details A scale matrix is used to modify the position of the vertices according to the object's origin.
 
@@ -1057,9 +1117,9 @@ namespace ae
 
 		 \sa translate(), rotate()
 
-		 \since v0.2.0
+		 \since v0.3.0
 		*/
-		[[nodiscard]] static Matrix<T, 4, 4> scale(const Vector3<T>& scale) noexcept
+		_NODISCARD static Matrix<T, 4, 4> scale(const Vector3<T>& scale) noexcept
 		{
 			Matrix<T, 4, 4> mat = Matrix<T, 4, 4>::identity();
 			mat.columns[0][0] = scale.x;
@@ -1115,7 +1175,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.2.0
- \date 2019-07-01
+ \version v0.3.0
+ \date 2019-07-02
  \copyright MIT License
 */
