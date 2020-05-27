@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -445,8 +445,7 @@ namespace ae
 		/*!
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
-		 Unit vectors are used when we only need to represent a direction and not a magnitude.\n
-		 The unit vector is calculated using the following equation: \f$ \hat{V} = \frac{\overrightarrow{V}}{\| \overrightarrow{V} \|} \f$.
+		 Unit vectors are used when we only need to represent a direction and not a magnitude.
 		 \note Only floating point types are allowed (float, double, long double).
 
 		 \return The ae::Vector's unit vector (or normalized vector)
@@ -462,17 +461,7 @@ namespace ae
 		template <typename = Math::FLOATING_POINT_POLICY<T>>
 		_NODISCARD Vector<T, n> normalize() const
 		{
-			const T MAGNITUDE = magnitude();
-
-			// Protection against division by 0 (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (MAGNITUDE == static_cast<T>(0)) {
-					AEON_LOG_WARNING("Division by 0", "The ae::Vector's magnitude is equal to 0.\nReturning copy of caller.");
-					return *this;
-				}
-			}
-
-			return (*this / MAGNITUDE);
+			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
 
@@ -495,19 +484,20 @@ namespace ae
 
 	 \sa operator-(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator+(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the sum of the two vectors to result
 		Vector<T, n> result;
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), result.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement + rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = lhs.elements[i] + rhs.elements[i];
+		}
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Subtraction operator.
@@ -527,16 +517,16 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator-(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the difference of the two vectors to result
 		Vector<T, n> result;
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), result.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement - rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = lhs.elements[i] - rhs.elements[i];
+		}
 
 		return result;
 	}
@@ -559,16 +549,16 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator-(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator*(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the product of the two vectors to result
 		Vector<T, n> result;
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), result.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement * rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = lhs.elements[i] * rhs.elements[i];
+		}
 
 		return result;
 	}
@@ -576,7 +566,7 @@ namespace ae
 	 \relates Vector
 	 \brief Division operator.
 	 \details Performs a memberwise division of the elements of \a lhs and \a rhs.
-	 \note Division by zero isn't handled and results in undefined behaviour based on the type.
+	 \note Division by zero isn't handled in Release mode and results in undefined behaviour based on the type.
 
 	 \param[in] lhs The ae::Vector on the left side of the / operator
 	 \param[in] rhs The ae::Vector on the right side of the / operator
@@ -592,16 +582,26 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator-(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator/(const Vector<T, n>& lhs, const Vector<T, n>& rhs)
 	{
-		// Assign the product of the two vectors to result
+		// Check if rhs's elements are equal to 0 (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			for (const T& element : rhs.elements) {
+				if (element == static_cast<T>(0)) {
+					AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning left-hand side vector.");
+					return lhs;
+				}
+			}
+		}
+
+		// Assign the quotient of the two vectors to result
 		Vector<T, n> result;
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), result.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement / rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = lhs.elements[i] / rhs.elements[i];
+		}
 
 		return result;
 	}
@@ -624,19 +624,20 @@ namespace ae
 
 	 \sa operator-(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator+(const Vector<T, n>& vec, T scalar) noexcept
 	{
 		// Assign the sum of the vector and of the scalar to result
 		Vector<T, n> result;
-		std::transform(vec.elements.begin(), vec.elements.end(), result.elements.begin(),
-			[scalar](T element) -> T { return element + scalar; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = vec.elements[i] + scalar;
+		}
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Subtraction operator.
@@ -655,16 +656,16 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator-(const Vector<T, n>& vec, T scalar) noexcept
 	{
 		// Assign the difference of the vector and of the scalar to result
 		Vector<T, n> result;
-		std::transform(vec.elements.begin(), vec.elements.end(), result.elements.begin(),
-			[scalar](T element) -> T { return element - scalar; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = vec.elements[i] - scalar;
+		}
 
 		return result;
 	}
@@ -686,16 +687,16 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator-(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator*(const Vector<T, n>& vec, T scalar) noexcept
 	{
 		// Assign the product of the vector and of the scalar to result
 		Vector<T, n> result;
-		std::transform(vec.elements.begin(), vec.elements.end(), result.elements.begin(),
-			[scalar](T element) -> T { return element * scalar; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = vec.elements[i] * scalar;
+		}
 
 		return result;
 	}
@@ -703,7 +704,7 @@ namespace ae
 	 \relates Vector
 	 \brief Division operator.
 	 \details Performs a memberwise division of the \a vec's elements and of the \a scalar.
-	 \note Division by zero isn't handled and results in undefined behaviour based on the type.
+	 \note Division by zero isn't handled in Release mode and results in undefined behaviour based on the type.
 
 	 \param[in] vec The ae::Vector of which its elements will be divided by the \a scalar value
 	 \param[in] scalar The value that will be the divisor of the \a vec's elements
@@ -718,16 +719,24 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator-(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator/(const Vector<T, n>& vec, T scalar)
 	{
+		// Check if scalar is equal to 0 (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (scalar == static_cast<T>(0)) {
+				AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning vector.");
+				return vec;
+			}
+		}
+		
 		// Assign the quotient of the vector and of the scalar to result
 		Vector<T, n> result;
-		std::transform(vec.elements.begin(), vec.elements.end(), result.elements.begin(),
-			[scalar](T element) -> T { return element / scalar; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = vec.elements[i] / scalar;
+		}
 
 		return result;
 	}
@@ -752,15 +761,15 @@ namespace ae
 
 	 \sa operator-=(Vector<T, n>&, const Vector<T, n>&), operator*=(Vector<T, n>&, const Vector<T, n>&), operator/=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	Vector<T, n>& operator+=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the sum of the two vectors to lhs
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), lhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement + rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			lhs.elements[i] += rhs.elements[i];
+		}
 
 		return lhs;
 	}
@@ -784,15 +793,15 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, const Vector<T, n>&), operator*=(Vector<T, n>&, const Vector<T, n>&), operator/=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	Vector<T, n>& operator-=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the difference of the two vectors to lhs
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), lhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement - rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			lhs.elements[i] -= rhs.elements[i];
+		}
 
 		return lhs;
 	}
@@ -816,15 +825,15 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, const Vector<T, n>&), operator-=(Vector<T, n>&, const Vector<T, n>&), operator/=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	Vector<T, n>& operator*=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		// Assign the product of the two vectors to lhs
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), lhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement * rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			lhs.elements[i] *= rhs.elements[i];
+		}
 
 		return lhs;
 	}
@@ -832,7 +841,7 @@ namespace ae
 	 \relates Vector
 	 \brief Division and assignment operator.
 	 \details Performs a memberwise division of the elements of \a lhs and \a rhs, and assigns the quotient to \a lhs.
-	 \note Division by zero isn't handled and results in undefined behaviour based on the type.
+	 \note Division by zero isn't handled in Release mode and results in undefined behaviour based on the type.
 
 	 \param[in,out] lhs The ae::Vector on the left side of the /= operator
 	 \param[in] rhs The ae::Vector on the right side of the /= operator
@@ -849,15 +858,25 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, const Vector<T, n>&), operator-=(Vector<T, n>&, const Vector<T, n>&), operator*=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.1.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	Vector<T, n>& operator/=(Vector<T, n>& lhs, const Vector<T, n>& rhs)
 	{
+		// Check if rhs's elements are equal to 0 (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			for (const T& element : rhs.elements) {
+				if (element == static_cast<T>(0)) {
+					AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning left-hand side vector.");
+					return lhs;
+				}
+			}
+		}
+
 		// Assign the quotient of the two vectors to lhs
-		std::transform(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(), lhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> T { return lhsElement / rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			lhs.elements[i] /= rhs.elements[i];
+		}
 
 		return lhs;
 	}
@@ -959,7 +978,7 @@ namespace ae
 	 \relates Vector
 	 \brief Division and assignment operator.
 	 \details Performs a memberwise division of the \a vec's elements and of the \a scalar value, and assigns the quotient to \a vec.
-	 \note Division by zero isn't handled and results in undefined behaviour based on the type.
+	 \note Division by zero isn't handled in Release mode and results in undefined behaviour based on the type.
 
 	 \param[in,out] vec The ae::Vector of which its elements will be divided by the \a scalar value
 	 \param[in] scalar The value that will be the divisor of the \a vec's elements
@@ -975,11 +994,19 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, T), operator-=(Vector<T, n>&, T), operator*=(Vector<T, n>&, T)
 
-	 \since v0.1.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	Vector<T, n>& operator/=(Vector<T, n>& vec, T scalar) noexcept
 	{
+		// Check if scalar is equal to 0 (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (scalar == static_cast<T>(0)) {
+				AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning vector.");
+				return vec;
+			}
+		}
+		
 		// Divide the vec's elements by the scalar value
 		for (T& element : vec.elements) {
 			element /= scalar;
@@ -1196,7 +1223,7 @@ namespace ae
 	 \relates Vector
 	 \brief Division operator.
 	 \details Performs a memberwise division of the \a scalar value and the \a vec's elements.
-	 \note Division by zero isn't handled and results in undefined behaviour based on the type.
+	 \note Division by zero isn't handled in Release mode and results in undefined behaviour based on the type.
 
 	 \param[in] scalar The value that will be divided by the \a vec's elements
 	 \param[in] vec The ae::Vector of which its elements will be the divisor of the \a scalar value
@@ -1211,16 +1238,26 @@ namespace ae
 
 	 \sa operator/(const Vector<T, n>&, T), operator*(T, const Vector<T, n>&)
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> operator/(T scalar, const Vector<T, n>& vec) noexcept
 	{
-		// Assign the quotient of the scalar value and of the vec's elements to result
+		// Check if vec's elements are equal to 0 (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			for (const T& element : vec.elements) {
+				if (element == static_cast<T>(0)) {
+					AEON_LOG_ERROR("Division by zero", "Attempt to divide scalar by 0\nReturning vector.");
+					return vec;
+				}
+			}
+		}
+
+		// Divide the scalar value by the vec's elements
 		Vector<T, n> result;
-		std::transform(vec.elements.begin(), vec.elements.end(), result.elements.begin(),
-			[scalar](T element) -> T { return scalar / element; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = scalar / vec.elements[i];
+		}
 
 		return result;
 	}
@@ -1241,16 +1278,16 @@ namespace ae
 	 ae::Vector<float, 2> vec2f_2 = -vec2f_1; // (-0.5f, 0.7f)
 	 \endcode
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>, typename = std::enable_if_t<std::is_signed_v<T>>>
 	_NODISCARD Vector<T, n> operator-(const Vector<T, n>& vec) noexcept
 	{
 		// Assign the inverted signs of the vec to result
 		Vector<T, n> result;
-		std::transform(vec.elements.begin(), vec.elements.end(), result.elements.begin(),
-			[](T element) -> T { return -element; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = -vec.elements[i];
+		}
 
 		return result;
 	}
@@ -1301,17 +1338,15 @@ namespace ae
 
 	 \sa reflect()
 	 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> refract(const Vector<T, n>& vec, const Vector<T, n>& normal, T eta)
 	{
-		_CONSTEXPR17 const T T_ZERO = static_cast<T>(0);
-		_CONSTEXPR17 const T T_ONE = static_cast<T>(1);
 		const T D = dot(vec, normal);
-		const T K = T_ONE - eta * eta * (T_ONE - D * D);
+		const T K = static_cast<T>(1) - eta * eta * (static_cast<T>(1) - D * D);
 
-		if (K < T_ZERO) {
+		if (K < static_cast<T>(0)) {
 			return Vector<T, n>();
 		}
 
@@ -1363,14 +1398,14 @@ namespace ae
 
 	 \sa normalize(), angle()
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD _CONSTEXPR17 T dot(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		T dotProduct = static_cast<T>(0);
-		for (auto itr1 = v1.elements.begin(), itr2 = v2.elements.begin(); itr1 != v1.elements.end(); ++itr1, ++itr2) {
-			dotProduct += (*itr1 * *itr2);
+		for (size_t i = 0; i < n; ++i) {
+			dotProduct += v1.elements[i] * v2.elements[i];
 		}
 
 		return dotProduct;
@@ -1392,13 +1427,13 @@ namespace ae
 	 ae::Vector<float, 2> vec2f_2({ 5.f, -10.f });
 	 float angleRadians = ae::angle(vec2f_1, vec2f_2);
 
-	 // The function angle() is equivalent to:
+	 // The helper function angle() is equivalent to:
 	 float angleRadians = ae::Math::acos(ae::dot(vec2f_1.normalize(), vec2f_2.normalize()));
 	 \endcode
 
 	 \sa normalize(), dot()
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>, typename = Math::FLOATING_POINT_POLICY<T>>
 	_NODISCARD T angle(const Vector<T, n>& v1, const Vector<T, n>& v2)
@@ -1425,18 +1460,19 @@ namespace ae
 
 	 \sa max(), clamp()
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> min(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		Vector<T, n> result;
-		std::transform(v1.elements.begin(), v1.elements.end(), v2.elements.begin(), result.elements.begin(),
-			[](T v1Element, T v2Element) -> T { return Math::min(v1Element, v2Element); }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = Math::min(v1.elements[i], v2.elements[i]);
+		}
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Retrieves an ae::Vector containing the maximum elements of the \a v1 and the \a v2 provided.
@@ -1456,15 +1492,15 @@ namespace ae
 
 	 \sa min(), clamp()
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> max(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		Vector<T, n> result;
-		std::transform(v1.elements.begin(), v1.elements.end(), v2.elements.begin(), result.elements.begin(),
-			[](T v1Element, T v2Element) -> T { return Math::max(v1Element, v2Element); }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			result.elements[i] = Math::max(v1.elements[i], v2.elements[i]);
+		}
 
 		return result;
 	}
@@ -1521,9 +1557,11 @@ namespace ae
 
 	 // In order to retrieve the interpolated vector between the two edges, the user will have to do the following:
 	 ae::Vector<float, 2> interpolatedVec = edge0 + ae::smoothstep(vec, edge0, edge1) * (edge1 - edge0); // ([0.5f,0.65f], [0.3f,0.7f])
+	 // or
+	 ae::Vector<float, 2> interpolatedVec = ae::lerp(edge0, edge1, ae::smoothstep(vec, edge0, edge1));
 	 \endcode
 
-	 \since v0.3.0
+	 \since v0.4.0
 	*/
 	template <typename T, size_t n>
 	_NODISCARD Vector<T, n> smoothstep(const Vector<T, n>& vec, const Vector<T, n>& edge0, const Vector<T, n>& edge1)
@@ -1603,7 +1641,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.13
+ \version v0.4.0
+ \date 2020.03.27
  \copyright MIT License
 */

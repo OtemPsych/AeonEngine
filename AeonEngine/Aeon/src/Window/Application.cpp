@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,6 +28,7 @@
 #include <AEON/System/Clock.h>
 #include <AEON/Window/internal/EventQueue.h>
 #include <AEON/Window/MonitorManager.h>
+#include <AEON/Graphics/GLResourceFactory.h>
 
 namespace ae
 {
@@ -53,6 +54,9 @@ namespace ae
 		if _CONSTEXPR_IF (AEON_DEBUG) {
 			AEON_LOG_INFO("GLEW Version", "Using GLEW " + std::string(reinterpret_cast<const char*>(glewGetString(GLEW_VERSION))));
 		}
+
+		// Set the window as the active target
+		mWindow->activate();
 	}
 
 	void Application::pushState(uint32_t stateID)
@@ -159,6 +163,9 @@ namespace ae
 				MonitorEvent* const monitorEvent = mPolledEvent->as<MonitorEvent>();
 				MonitorManager::getInstance().update(monitorEvent);
 				monitorEvent->handled = true;
+			}
+			else if (mPolledEvent->type == Event::Type::WindowClosed) {
+				GLResourceFactory::getInstance().destroy();
 			}
 
 			// Send the event to the window and to the user-created states

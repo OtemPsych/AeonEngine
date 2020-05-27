@@ -1,3 +1,48 @@
+v0.4.0 | 2019.07.30 - 2020.05.27
+  Features
+    * Added a gl namespace that will contain error-checking and validity-checking OpenGL functions, and OpenGL type enumerations
+    * Added a GLResource abstract base class used to represent an OpenGL resource
+    * Added a Shader class that represents an OpenGL shader program
+    * Added a GLResourceFactory singleton class that manages all GLResource instances, and provides several pre-compiled Shader objects
+    * Added a VertexArray class that represents the vertex fetch stage and is used to supply input to the appropriate vertex shader
+    * Added a Buffer base class representing a generalized OpenGL buffer that's used to supply data to OpenGL
+    * Added a VertexBuffer class used to supply vertex data to a vertex shader
+    * Added a BlendMode struct representing the blending function to use whilst rendering
+    * Added a Camera abstract base class representing a camera/view of a scene
+    * Added a Camera2D class representing a camera/view of a 2D scene
+    * Added a Camera3D class representing a camera/view of a 3D scene
+    * Added a CameraFPS class representing a camera/view of a 3D scene of which its rotation can be manipulated using the mouse cursor
+    * Added a Transformable2D abstract base class used to represent 2D entities to which transformations can be applied (displacement, rotation, scaling)
+    * Added a UniformBuffer class representing an OpenGL buffer used to supply uniform data to several shaders
+    * Added a Texture abstract base class used to represent a texture storing image data
+    * Added a Texture2D class used to represent a 2-dimensional texture storing 2D image data
+    * Added an IndexBuffer class used to represent an OpenGL buffer containing vertex indices
+    * Added a RenderStates struct used to set the OpenGL state prior to rendering
+    * Added a Framebuffer class used for off-screen rendering
+    * Added a RenderTarget abstract base class which is inherited by the Window and RenderTexture classes
+    * Added an Actor2D class used in scene graph architecture and representing a 2D game object
+    * Added a Renderable2D abstract base class representing 2D entities that can be rendered
+    * Added a Renderer2D singleton class that accepts Renderable2Ds and renders them to a RenderTarget
+    * Added a normal() function to the Vector2 class that computes the normal of a line segment
+    * Added a Shape abstract base class used to represent 2D shapes
+    * Added a RectangleShape class used to represent rectangles
+    * Added a Sprite class used to represent sprites
+  Updates
+    - Improved speed of vector normalizations by ~2%
+    - Improved speed of several global vector operators and functions by ~50%
+    - Improved singularity-handling in the Quaternion's toEulerAngles() method
+    - Improved the documentation of the Matrix's getSubmatrix() method clarifying that it used 0-based indexing
+    - The Camera classes are no longer limited to representing the window's view
+    - The Window class now inherits from the RenderTarget abstract base class
+  Bug Fixes
+    ~ Fixed certain documentation errors in Window/internal/InputManager.h, in System/Time.h and in System/FileSystem.h
+    ~ Fixed a bug that caused inaccessible x and y members for Vector2 objects for files including Math/internal/Quaternion.h
+    ~ Fixed a bug in the Matrix's getSubmatrix() method that caused it to support only square matrices
+    ~ Fixed a bug in the Matrix's lookat() static method wherein one of the elements held the inversed sign
+    ~ Fixed a bug in the Matrix's rotate() static method that caused it to return an erroneous result
+    ~ Fixed a bug that caused the application to crash when a window was restored after being maximized due to faulty event creation
+    ~ Fixed a bug that caused the Camera2D to not be able to rotate its view
+
 v0.3.0 | 2019.07.01 - 2019.07.29
   Features
     * Added a Quaternion class used to represent a rotation whilst avoiding gimbal lock
@@ -16,7 +61,7 @@ v0.3.0 | 2019.07.01 - 2019.07.29
     * Added an Application singleton class that manages the entire application
     * Added an EventQueue singleton class that stores the generated input events until they're polled
     * Added an InputManager namespace containing several callback functions that create and enqueue input events
-    * Added a State class that acts as a layer used to separate storage of game elements and ease management of game levels (main menu, game - level 1, etc.)
+    * Added a State class that acts as a layer used to separate storage of game elements and ease of management of game levels (main menu, game - level 1, etc.)
     * Added a StateStack singleton class used internally to manage the user-created State instances
   Updates
     - The minimum version of C++ is now C++11 but still takes advantage of C++17 if available
@@ -25,7 +70,7 @@ v0.3.0 | 2019.07.01 - 2019.07.29
   Bug Fixes
     ~ Fixed a bug in the Vector template struct's comparison operators
 
-v0.2.0 | 2019.06.14 - 2019.06.19, 2019.06.27 - 2019.07.01
+v0.2.0 | 2019.06.14 - 2019.07.01
   Features
     * Added a Vector partially specialized template struct used for 2-dimensional mathematical vectors
     * Added a Vector partially specialized template struct used for 3-dimensional mathematical vectors

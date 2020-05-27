@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -39,7 +39,7 @@ namespace ae
 	template <typename T, size_t n, size_t m>
 	using MATRIX_POLICY = std::enable_if_t<std::is_arithmetic_v<T> && (n >= 2 && m >= 2)>; //!< The template parameters will only be enabled if T is an arithmetic type and n and m are greater or equal to 2
 	template <size_t n, size_t m>
-	using MATRIX_SQUARE_POLICY = std::enable_if_t<(n == m)>;                              //!< The template parameters will only be enabled if the n and m dimensions are equal
+	using MATRIX_SQUARE_POLICY = std::enable_if_t<(n == m)>;                               //!< The template parameters will only be enabled if the n and m dimensions are equal
 
 	/*!
 	 \brief The struct that represents the primary template for a NxM matrix of type T in column-major.
@@ -624,8 +624,8 @@ namespace ae
 		/*!
 		 \brief Retrieves a submatrix of the ae::Matrix by deleting the column and the row provided.
 
-		 \param[in] col The column of the ae::Matrix to delete
-		 \param[in] row The row of the ae::Matrix to delete
+		 \param[in] col The column of the ae::Matrix to delete, 0-based indexing (column 0 is the first column)
+		 \param[in] row The row of the ae::Matrix to delete, 0-based indexing (row 0 is the first row)
 
 		 \return An ae::Matrix containing the submatrix of the caller ae::Matrix
 
@@ -646,14 +646,14 @@ namespace ae
 		 // 0 0 0  0
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD _CONSTEXPR17 Matrix<T, n, m> getSubmatrix(size_t col, size_t row) const noexcept
 		{
 			Matrix<T, n, m> submatrix;
 
 			size_t i = 0, j = 0;
-			for (size_t r = 0; r < n; ++r) {
+			for (size_t r = 0; r < m; ++r) {
 				for (size_t c = 0; c < n; ++c) {
 					// Copy only the elements which aren't in the given column and row
 					if (r != row && c != col) {
@@ -710,7 +710,7 @@ namespace ae
 		}
 		/*!
 		 \brief Calculates and retrieves the adjoint matrix of the ae::Matrix.
-		 \details The adjoint matrix of a square matrix is transpose of its cofactor matrix.
+		 \details The adjoint matrix of a square matrix is the transpose of its cofactor matrix.
 		 \note Only square matrices can use this method, meaning NxN matrices (3x3, 4x4, etc.).
 
 		 \return An ae::Matrix containing the adjoint matrix of the ae::Matrix
@@ -721,7 +721,7 @@ namespace ae
 		 ae::Matrix3f mat3f_1_adjoint = mat3f_1.getAdjoint();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		template <typename = MATRIX_SQUARE_POLICY<n, m>>
 		_NODISCARD _CONSTEXPR17 Matrix<T, n, m> getAdjoint() const noexcept
@@ -848,17 +848,23 @@ namespace ae
 
 		 \sa orthographic(T, T, T, T), perspective()
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top, T near, T far)
 		{
+			_CONSTEXPR17 const T T_TWO = static_cast<T>(2);
+
+			const T RMINUSL = right - left;
+			const T TMINUSB = top - bottom;
+			const T FMINUSN = far - near;
+
 			Matrix<T, 4, 4> ortho = ae::Matrix<T, 4, 4>::identity();
-			ortho.columns[0][0] = static_cast<T>(2) / (right - left);
-			ortho.columns[1][1] = static_cast<T>(2) / (top - bottom);
-			ortho.columns[2][2] = -static_cast<T>(2) / (far - near);
-			ortho.columns[3][0] = -((right + left) / (right - left));
-			ortho.columns[3][1] = -((top + bottom) / (top - bottom));
-			ortho.columns[3][2] = -((far + near) / (far - near));
+			ortho.columns[0][0] = T_TWO / RMINUSL;
+			ortho.columns[1][1] = T_TWO / TMINUSB;
+			ortho.columns[2][2] = -T_TWO / FMINUSN;
+			ortho.columns[3][0] = -((right + left) / RMINUSL);
+			ortho.columns[3][1] = -((top + bottom) / TMINUSB);
+			ortho.columns[3][2] = -((far + near) / FMINUSN);
 
 			return ortho;
 		}
@@ -881,16 +887,21 @@ namespace ae
 
 		 \sa orthographic(T, T, T, T, T, T), perspective()
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top)
 		{
+			_CONSTEXPR17 const T T_TWO = static_cast<T>(2);
+
+			const T RMINUSL = right - left;
+			const T TMINUSB = top - bottom;
+
 			Matrix<T, 4, 4> ortho = ae::Matrix<T, 4, 4>::identity();
-			ortho.columns[0][0] = static_cast<T>(2) / (right - left);
-			ortho.columns[1][1] = static_cast<T>(2) / (top - bottom);
+			ortho.columns[0][0] = T_TWO / RMINUSL;
+			ortho.columns[1][1] = T_TWO / TMINUSB;
 			ortho.columns[2][2] = -static_cast<T>(1);
-			ortho.columns[3][0] = -((right + left) / (right - left));
-			ortho.columns[3][1] = -((top + bottom) / (top - bottom));
+			ortho.columns[3][0] = -((right + left) / RMINUSL);
+			ortho.columns[3][1] = -((top + bottom) / TMINUSB);
 
 			return ortho;
 		}
@@ -947,9 +958,7 @@ namespace ae
 		 ae::Matrix4f lookat = ae::Matrix4f::lookat(cameraPosition, targetPosition, ae::Vector3f::Up);
 		 \endcode
 
-		 \bug May be "mat.columns[3][2] = dot(FWD, eye);"
-
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Matrix<T, 4, 4> lookat(const Vector3<T>& eye, const Vector3<T>& target, const Vector3<T>& up) noexcept
 		{
@@ -972,7 +981,7 @@ namespace ae
 
 			mat.columns[3][0] = -dot(SIDE, eye);
 			mat.columns[3][1] = -dot(UP, eye);
-			mat.columns[3][2] = -dot(FWD, eye);
+			mat.columns[3][2] = dot(FWD, eye);
 
 			return mat;
 		}
@@ -1020,7 +1029,7 @@ namespace ae
 
 		 \sa translate(), scale()
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Matrix<T, 4, 4> rotate(float angle, const Vector3<T>& axes) noexcept
 		{
@@ -1028,18 +1037,31 @@ namespace ae
 			const float SIN = Math::sin(angle);
 			const float OMC = 1.f - COS;
 
+			const float XSIN = axes.x * SIN;
+			const float YSIN = axes.y * SIN;
+			const float ZSIN = axes.z * SIN;
+
+			const float XOMC = axes.x * OMC;
+			const float YOMC = axes.y * OMC;
+			const float ZOMC = axes.z * OMC;
+
+			const float XYOMC = axes.x * YOMC;
+			const float XZOMC = axes.x * ZOMC;
+
+			const float YZOMC = axes.y * ZOMC;
+
 			Matrix<T, 4, 4> mat = Matrix<T, 4, 4>::identity();
-			mat.columns[0][0] = axes.x * axes.x * OMC + COS;
-			mat.columns[0][1] = axes.x * axes.y * OMC + axes.z * SIN;
-			mat.columns[0][2] = axes.x * axes.z * OMC - axes.y * SIN;
+			mat.columns[0][0] = axes.x * XOMC + COS;
+			mat.columns[0][1] = XYOMC + ZSIN;
+			mat.columns[0][2] = XZOMC - YSIN;
 
-			mat.columns[1][0] = axes.y * axes.x * OMC - axes.z * SIN;
-			mat.columns[1][1] = axes.y * axes.y * OMC + COS;
-			mat.columns[1][2] = axes.y * axes.z * OMC + axes.x * SIN;
+			mat.columns[1][0] = XYOMC - ZSIN;
+			mat.columns[1][1] = axes.y * YOMC + COS;
+			mat.columns[1][2] = YZOMC + XSIN;
 
-			mat.columns[2][0] = axes.z * axes.x * OMC + axes.y * SIN;
-			mat.columns[2][1] = axes.z * axes.y * OMC - axes.x * SIN;
-			mat.columns[2][2] = axes.z * axes.z * OMC + COS;
+			mat.columns[2][0] = XZOMC + YSIN;
+			mat.columns[2][1] = YZOMC - XSIN;
+			mat.columns[2][2] = axes.z * ZOMC + COS;
 
 			return mat;
 		}
@@ -1060,45 +1082,38 @@ namespace ae
 
 		 \sa translate(), scale()
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Matrix<T, 4, 4> rotate(const Quaternion& quat) noexcept
 		{
 			const float W = quat.getAngle();
 			const Vector3f AXES = quat.getAxes();
 
-			const float X2 = AXES.x + AXES.x;
-			const float Y2 = AXES.y + AXES.y;
-			const float Z2 = AXES.z + AXES.z;
+			const float WX = W * AXES.x;
+			const float WY = W * AXES.y;
+			const float WZ = W * AXES.z;
 
-			const float WX2 = W * X2;
-			const float WY2 = W * Y2;
-			const float WZ2 = W * Z2;
+			const float XX = AXES.x * AXES.x;
+			const float XY = AXES.x * AXES.y;
+			const float XZ = AXES.x * AXES.z;
 
-			const float XX2 = AXES.x * X2;
-			const float XY2 = AXES.x * Y2;
-			const float XZ2 = AXES.x * Z2;
+			const float YY = AXES.y * AXES.y;
+			const float YZ = AXES.y * AXES.z;
 
-			const float YY2 = AXES.y * Y2;
-			const float YZ2 = AXES.y * Z2;
-
-			const float ZZ2 = AXES.z * Z2;
+			const float ZZ = AXES.z * AXES.z;
 
 			Matrix<T, 4, 4> mat = Matrix<T, 4, 4>::identity();
-			mat.columns[0][0] = 1.f - YY2 - ZZ2;
-			mat.columns[0][1] = XY2 - WZ2;
-			mat.columns[0][2] = XZ2 + WY2;
-			mat.columns[0][3] = 0.f;
+			mat.columns[0][0] = 1.f - 2.f * (YY - ZZ);
+			mat.columns[0][1] = 2.f * (XY + WZ);
+			mat.columns[0][2] = 2.f * (XZ - WY);
 
-			mat.columns[1][0] = XY2 + WZ2;
-			mat.columns[1][1] = 1.f - XX2 - ZZ2;
-			mat.columns[1][2] = YZ2 - WX2;
-			mat.columns[1][3] = 0.f;
+			mat.columns[1][0] = 2.f * (XY - WZ);
+			mat.columns[1][1] = 1.f - 2.f * (XX - ZZ);
+			mat.columns[1][2] = 2.f * (YZ + WX);
 
-			mat.columns[2][0] = XZ2 - WY2;
-			mat.columns[2][1] = YZ2 + WX2;
-			mat.columns[2][2] = 1.f - XX2 - YY2;
-			mat.columns[2][3] = 0.f;
+			mat.columns[2][0] = 2.f * (XZ + WY);
+			mat.columns[2][1] = 2.f * (YZ - WX);
+			mat.columns[2][2] = 1.f - 2.f * (XX - YY);
 
 			return mat;
 		}
@@ -1175,7 +1190,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019-07-02
+ \version v0.4.0
+ \date 2020.05.05
  \copyright MIT License
 */

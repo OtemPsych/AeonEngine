@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,6 +28,13 @@
 	#define AEON_DEBUG 1
 #else
 	#define AEON_DEBUG 0
+#endif // _DEBUG
+
+// Remove the console window in Release mode
+#ifndef _DEBUG
+	#ifndef AEON_INTERNAL_LIB
+		#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+	#endif // AEON_INTERNAL_LIB
 #endif // _DEBUG
 
 // Define macros to differentiate between static and dynamic linking (import / export macros)

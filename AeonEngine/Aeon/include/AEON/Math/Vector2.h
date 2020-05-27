@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -433,8 +433,7 @@ namespace ae
 		/*!
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
-		 Unit vectors are used when we only need to represent a direction and not a magnitude.\n
-		 The unit vector is calculated using the following equation: \f$ \hat{V} = \frac{\overrightarrow{V}}{\| \overrightarrow{V} \|} \f$.
+		 Unit vectors are used when we only need to represent a direction and not a magnitude.
 		 \note Only floating point types are allowed (float, double, long double).
 
 		 \return The ae::Vector's unit vector (or normalized vector)
@@ -445,24 +444,44 @@ namespace ae
 		 ae::Vector2f unitVec2f = vec2f.normalize();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		template <typename = Math::FLOATING_POINT_POLICY<T>>
 		_NODISCARD Vector<T, 2> normalize() const
 		{
-			const T MAGNITUDE = magnitude();
-
-			// Protection against division by 0 (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (MAGNITUDE == static_cast<T>(0)) {
-					AEON_LOG_WARNING("Division by 0", "The ae::Vector's magnitude is equal to 0.\nReturning copy of caller.");
-					return *this;
-				}
-			}
-
-			return (*this / MAGNITUDE);
+			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
+
+	/*!
+	 \relates Vector
+	 \brief Calculates and retrieves the normal of the segment formed by \a v1 and \a v2.
+	 \details The normal of a segment is the perpendicular vector of said segment.
+	 \note Only floating point types are allowed (float, double, long double).
+
+	 \param[in] v1 The ae::Vector that will serve as the first point of the segment
+	 \param[in] v2 The ae::Vector that will serve as the second point of the segment
+
+	 \return The normal (perpendicular vector) of the segment formed by the two vectors provided
+
+	 \par Example:
+	 \code
+	 ae::Vector2f vec2f_1(10.f, 5.f);
+	 ae::Vector2f vec2f_2(5.f, -2.f);
+
+	 ae::Vector2f normal = ae::normal(vec2f_1, vec2f_2);
+	 \endcode
+
+	 \since v0.4.0
+	*/
+	template <typename T, typename = Math::FLOATING_POINT_POLICY<T>>
+	_NODISCARD Vector<T, 2> normal(const Vector<T, 2>& v1, const Vector<T, 2>& v2)
+	{
+		const Vector<T, 2> NORMAL(v1.y - v2.y, v2.x - v1.x);
+		const T MAGNITUDE = NORMAL.magnitude();
+
+		return (MAGNITUDE != static_cast<T>(0)) ? NORMAL / MAGNITUDE : NORMAL;
+	}
 
 	// Typedef(s)
 	template <typename T>
@@ -501,7 +520,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.02
+ \version v0.4.0
+ \date 2020.05.23
  \copyright MIT License
 */

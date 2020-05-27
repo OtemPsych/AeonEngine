@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -192,12 +192,13 @@ namespace ae
 	// Public method(s)
 	Vector3f Quaternion::toEulerAngles() const noexcept
 	{
-		const float ZZ2 = 2.f * z * z;
+		const float YY = y * y;
+		const Vector2f PITCH(2.f * (w * x + y * z), 1.f - 2.f * (x * x + YY));
 
 		return Vector3f(
-			Math::atan2(2.f * (y * w - x * z), 1.f - 2.f * y * y - ZZ2),
-			Math::asin(2.f * (x * y + z * w)),
-			Math::atan2(2.f * (x * w - y * z), 1.f - 2.f * x * x - ZZ2)
+			((PITCH == Vector2f(0.f)) ? 2.f * Math::atan2(x, w) : Math::atan2(PITCH.x, PITCH.y)),
+			Math::asin(Math::clamp(2.f * (w * y - z * x), -1.f, 1.f)),
+			Math::atan2(2.f * (w * z + x * y), 1.f - 2.f * (YY + z * z))
 		);
 	}
 
@@ -219,7 +220,8 @@ namespace ae
 
 	Quaternion Quaternion::normalize() const
 	{
-		return (*this / magnitude());
+		const float MAGNITUDE = magnitude();
+		return (MAGNITUDE <= 0.f) ? Quaternion() : (*this / MAGNITUDE);
 	}
 
 	float Quaternion::getAngle() const noexcept
@@ -235,36 +237,44 @@ namespace ae
 	// Public static method(s)
 	Quaternion Quaternion::rotation(const Vector3f& unitVec0, const Vector3f& unitVec1)
 	{
-		const float M = Math::sqrt(2.f + 2.f * ae::dot(unitVec0, unitVec1));
+		const float M = Math::sqrt(2.f * (1.f + ae::dot(unitVec0, unitVec1)));
 		return Quaternion(0.5f * M, 1.f / M * cross(unitVec0, unitVec1));
 	}
 
 	Quaternion Quaternion::rotation(float angle, const Vector3f& axes) noexcept
 	{
+		Vector3f unitAxes = axes;
+
+		// Normalize axes if necessary
+		const float MAGNITUDE = unitAxes.magnitude();
+		if (abs(MAGNITUDE - 1.f) > 0.001f) {
+			unitAxes *= 1.f / MAGNITUDE;
+		}
+
 		angle *= 0.5f;
-		return Quaternion(Math::cos(angle), axes * Math::sin(angle));
+		return Quaternion(Math::cos(angle), unitAxes * Math::sin(angle));
 	}
 
 	Quaternion Quaternion::rotationX(float angle) noexcept
 	{
 		angle *= 0.5f;
-		return Quaternion(Math::cos(angle), Math::sin(angle), 0.f, 0.f);
+		return Quaternion(Math::cos(angle), Vector3f::Right * Math::sin(angle));
 	}
 
 	Quaternion Quaternion::rotationY(float angle) noexcept
 	{
 		angle *= 0.5f;
-		return Quaternion(Math::cos(angle), 0.f, Math::sin(angle), 0.f);
+		return Quaternion(Math::cos(angle), Vector3f::Up * Math::sin(angle));
 	}
 
 	Quaternion Quaternion::rotationZ(float angle) noexcept
 	{
 		angle *= 0.5f;
-		return Quaternion(Math::cos(angle), 0.f, 0.f, Math::sin(angle));
+		return Quaternion(Math::cos(angle), Vector3f::Backward * Math::sin(angle));
 	}
 
 	float Quaternion::dot(const Quaternion& q0, const Quaternion& q1) noexcept
 	{
-		return (q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w);
+		return (q0.w * q1.w + q0.x * q1.x + q0.y * q1.y + q0.z * q1.z);
 	}
 }

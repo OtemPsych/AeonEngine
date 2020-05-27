@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -173,7 +173,7 @@ namespace ae
 
 		 \sa registerState(), pushState()
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		void run();
 		/*!
@@ -322,7 +322,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.29
+ \version v0.4.0
+ \date 2020.05.06
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,6 +24,7 @@
 #define Aeon_Math_Quaternion_H_
 
 #include <AEON/Config.h>
+#include <AEON/Math/Vector2.h>
 #include <AEON/Math/Vector3.h>
 #include <AEON/Math/Vector4.h>
 
@@ -458,9 +459,9 @@ namespace ae
 
 		// Public method(s)
 		/*!
-		 \brief Calculates and retrieves the ae::Quaternion's rotation in Euler angles in YZX order.
+		 \brief Calculates and retrieves the ae::Quaternion's rotation in Euler angles in XYZ order.
 
-		 \return A 3-dimensional ae::Vector containing the ae::Quaternion's rotation in Euler angles
+		 \return A 3-dimensional ae::Vector containing the ae::Quaternion's rotation in Euler angles in radians
 
 		 \par Example:
 		 \code
@@ -532,7 +533,7 @@ namespace ae
 		 ae::Quaternion unitQuat = quat.normalize();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD Quaternion normalize() const;
 
@@ -585,7 +586,7 @@ namespace ae
 		 ae::Quaternion rotation = ae::Quaternion::rotation(vec0.normalize(), vec1.normalize());
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Quaternion rotation(const Vector3f& unitVec0, const Vector3f& unitVec1);
 		/*!
@@ -602,7 +603,7 @@ namespace ae
 		 ae::Quaternion rotation = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static Quaternion rotation(float angle, const Vector3f& axes) noexcept;
 		/*!
@@ -710,7 +711,7 @@ namespace ae
  Layout of a quaternion: q = w(angle) + xi(x axis) + yj(y axis) + zk(z axis)
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.07
+ \version v0.4.0
+ \date 2020.05.04
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -73,7 +73,6 @@ namespace ae
 	public:
 		/*!
 		 \brief Reads in the file situated at the \a filepath provided using the \a openMode provided.
-		 \details
 
 		 \note Only the OpenMode::Default, OpenMode::Binary and OpenMode::AtEnd bit flags may be used and combined together.
 
@@ -88,7 +87,7 @@ namespace ae
 		 std::string binaryFileContents = ae::FileSystem::readFile("data.dat", ae::FileSystem::OpenMode::Binary);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		_NODISCARD static std::string readFile(const std::string& filepath, uint_fast16_t openMode = OpenMode::None);
 		/*!
@@ -150,7 +149,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.02
+ \version v0.4.0
+ \date 2019.07.30
  \copyright MIT License
 */

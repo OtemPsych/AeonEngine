@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -479,8 +479,7 @@ namespace ae
 		/*!
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
-		 Unit vectors are used when we only need to represent a direction and not a magnitude.\n
-		 The unit vector is calculated using the following equation: \f$ \hat{V} = \frac{\overrightarrow{V}}{\| \overrightarrow{V} \|} \f$.
+		 Unit vectors are used when we only need to represent a direction and not a magnitude.
 		 \note Only floating point types are allowed (float, double, long double).
 
 		 \return The ae::Vector's unit vector (or normalized vector)
@@ -491,22 +490,12 @@ namespace ae
 		 ae::Vector3f unitVec3f = vec3f.normalize();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		template <typename = Math::FLOATING_POINT_POLICY<T>>
 		_NODISCARD Vector<T, 3> normalize() const
 		{
-			const T MAGNITUDE = magnitude();
-
-			// Protection against division by 0 (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (MAGNITUDE == static_cast<T>(0)) {
-					AEON_LOG_WARNING("Division by 0", "The ae::Vector's magnitude is equal to 0.\nReturning copy of caller.");
-					return *this;
-				}
-			}
-
-			return (*this / MAGNITUDE);
+			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
 
@@ -598,7 +587,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.02
+ \version v0.4.0
+ \date 2020.03.24
  \copyright MIT License
 */

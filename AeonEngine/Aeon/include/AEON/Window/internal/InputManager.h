@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -39,12 +39,12 @@ namespace ae
 	{
 		/*!
 		 \brief Callback function that receives the monitor that was either connected or disconnected.
-		 \details Enqueues an ae::Event::Type::MonitorConnected or ae::Event::Type::MonitorDisconnected event.
+		 \details Enqueues an ae::Event::Type::MonitorConnected or an ae::Event::Type::MonitorDisconnected event.
 
 		 \param[in] glfwMonitor The GLFW handle to the monitor in question
 		 \param[in] connected Whether the monitor was connected or disconnected
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		AEON_API void monitor_callback(GLFWmonitor* glfwMonitor, int connected);
 		/*!
@@ -117,7 +117,7 @@ namespace ae
 		 \param[in] glfwWindow The GLFW handle to the window
 		 \param[in] maximized Whether the window was maximized or restored
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		AEON_API void window_maximize_callback(GLFWwindow* glfwWindow, int maximized);
 		/*!
@@ -225,7 +225,7 @@ namespace ae
  doesn't need to by concerned with it .
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.29
+ \version v0.4.0
+ \date 2020.05.08
  \copyright MIT License
 */

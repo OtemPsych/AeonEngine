@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -90,7 +90,7 @@ namespace ae
 		void window_maximize_callback(GLFWwindow* glfwWindow, int maximized)
 		{
 			// Create and enqueue the event
-			auto event = std::make_unique<Event>((maximized) ? Event::Type::WindowMaximized : Event::Type::WindowResized);
+			auto event = std::make_unique<Event>((maximized) ? Event::Type::WindowMaximized : Event::Type::WindowRestored);
 			eventQueue.enqueueEvent(std::move(event));
 		}
 

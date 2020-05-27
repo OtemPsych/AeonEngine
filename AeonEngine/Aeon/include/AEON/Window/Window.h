@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,11 +24,13 @@
 #define Aeon_Window_Window_H_
 
 #include <AEON/Config.h>
+#include <AEON/Math/Vector2.h>
 #include <AEON/Math/AABoxCollider.h>
 #include <AEON/Window/VideoMode.h>
 #include <AEON/Window/ContextSettings.h>
-#include <AEON/Graphics/Color.h>
 #include <AEON/Window/Event.h>
+#include <AEON/Graphics/Color.h>
+#include <AEON/Graphics/internal/RenderTarget.h>
 
 // Forward declaration(s)
 struct GLFWwindow;
@@ -37,9 +39,8 @@ namespace ae
 {
 	/*!
 	 \brief The class representing the application's window.
-	 \note Test the ae::Window class.
 	*/
-	class _NODISCARD AEON_API Window
+	class _NODISCARD AEON_API Window : public RenderTarget
 	{
 	public:
 		/*!
@@ -59,6 +60,7 @@ namespace ae
 		// Public constructor(s)
 		/*!
 		 \brief Constructs the ae::Window by providing at least a video mode and a title.
+		 \details Attaches a camera suited for a 2D scene by default.
 
 		 \param[in] vidMode The ae::VideoMode containing the properties of the video mode to use
 		 \param[in] title The string indicating the name of the window
@@ -71,7 +73,7 @@ namespace ae
 		 app.createWindow(ae::VideoMode(1280, 720), "My Application");
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		Window(const VideoMode& vidMode, const std::string& title, uint32_t style = Style::Default,
 		       const ContextSettings& settings = ContextSettings());
@@ -126,15 +128,6 @@ namespace ae
 		*/
 		void create();
 		/*!
-		 \brief Clears the window's color buffer.
-		 \note This method should only be used internally, its use by the API user isn't necessary.
-
-		 \sa setClearColor()
-
-		 \since v0.3.0
-		*/
-		void clear() const;
-		/*!
 		 \brief Immediately releases all allocated resources and destroys the window.
 
 		 \par Example:
@@ -162,7 +155,7 @@ namespace ae
 
 		 \param[in] event A pointer to the polled input ae::Event that was generated
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		void handleEvent(Event* const event);
 		/*!
@@ -361,22 +354,6 @@ namespace ae
 		*/
 		void setSizeLimits(const Box2i& limits);
 		/*!
-		 \brief Sets the ae::Window's clear color used to erase the window's previous content.
-
-		 \return The ae::Color used to clear the window's previous rendered content
-
-		 \par Example:
-		 \code
-		 // The protected member 'mWindow' is provided by the ae::Layer class, all derived classes have access to this member
-		 mWindow.setClearColor(ae::Color(50, 125, 0));
-		 \endcode
-
-		 \sa getClearColor()
-
-		 \since v0.3.0
-		*/
-		void setClearColor(const Color& color);
-		/*!
 		 \brief Sets the aspect ratio of the ae::Window's content area.
 		 \details The window's size may be resized freely by the application user but it will be constrained to maintain the aspect ratio.\n
 		 In order to maintain the window's current aspect ratio, the current size can be provided as the ratio.
@@ -563,23 +540,6 @@ namespace ae
 		*/
 		_NODISCARD const Box2i& getSizeLimits() const noexcept;
 		/*!
-		 \brief Retrieves the ae::Window's clear color used to erase the window's previous content.
-		 \details The clear color is stored internally as 4 floats in the range [0,1] to pass it to OpenGL faster.
-
-		 \return The ae::Color used to clear the window's previous rendered content
-
-		 \par Example:
-		 \code
-		 // The protected member 'mWindow' is provided by the ae::Layer class, all derived classes have access to this member
-		 ae::Color clearColor = mWindow.getClearColor();
-		 \endcode
-
-		 \sa setClearColor()
-
-		 \since v0.3.0
-		*/
-		_NODISCARD Color getClearColor() const noexcept;
-		/*!
 		 \brief Retrieves the aspect ratio of the ae::Window's content area.
 		 \details The window's size may be resized freely by the application user but it will be constrained to maintain the aspect ratio.
 
@@ -596,22 +556,6 @@ namespace ae
 		 \since v0.3.0
 		*/
 		_NODISCARD const Vector2i& getAspectRatio() const noexcept;
-		/*!
-		 \brief Retrieves the ae::Window's framebuffer size which is in pixels.
-		 \details There's no guarantee that the window's size which is in screen coordinates will map 1:1 with the framebuffer size which is in pixels.
-		 It's, therefore, recommended to use the framebuffer size for pixel-based OpenGL operations, such as setting the viewport.
-
-		 \return The 2-dimensional ae::Vector containing the framebuffer's size
-
-		 \par Example:
-		 \code
-		 // The protected member 'mWindow' is provided by the ae::Layer class, all derived classes have access to this member
-		 const ae::Vector2i& framebufferSize = mWindow.getFramebufferSize();
-		 \endcode
-
-		 \since v0.3.0
-		*/
-		_NODISCARD const Vector2i& getFramebufferSize() const noexcept;
 		/*!
 		 \brief Retrieves the position of the windowed-mode ae::Window from the upper-left corner of its content area in screen coordinates.
 
@@ -686,20 +630,12 @@ namespace ae
 		 \par Example:
 		 \code
 		 // The protected member 'mWindow' is provided by the ae::Layer class, all derived classes have access to this member
-		 GLFWwindow* handle = mWindow.getHandle();
+		 GLFWwindow* winHandle = mWindow.getHandle();
 		 \endcode
 
 		 \since v0.3.0
 		*/
 		_NODISCARD GLFWwindow* const getHandle() const noexcept;
-	private:
-		// Private method(s)
-		/*!
-		 \brief Performs internal OpenGL initializations.
-
-		 \since v0.3.0
-		*/
-		void init();
 
 	private:
 		// Private member(s)
@@ -707,9 +643,7 @@ namespace ae
 		VideoMode       mVideoMode;       //!< The window's video mode
 		ContextSettings mContextSettings; //!< The OpenGL context's settings
 		Box2i           mSizeLimits;      //!< The minimum and maximum size of the window's content area
-		Vector4f        mClearColor;      //!< The color used to clear the window's current content
 		Vector2i        mAspectRatio;     //!< The aspect ratio of the window's content area
-		Vector2i        mFramebufferSize; //!< The size of the framebuffer in pixels
 		Vector2i        mPosition;        //!< The position of the window in screen coordinates
 		Vector2f        mContentScale;    //!< The content scale (current DPI / default DPI)
 		uint32_t        mStyle;           //!< The window's appearance
@@ -732,7 +666,7 @@ namespace ae
  All configuration concerning the window are done by using this class's methods.
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.29
+ \version v0.4.0
+ \date 2020.05.20
  \copyright MIT License
 */

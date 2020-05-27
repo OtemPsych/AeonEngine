@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -512,11 +512,11 @@ namespace ae
 		// Private constructor(s)
 		/*!
 		 \brief Constructs the ae::Time by providing a time value in seconds.
-		 \details The API user can't use this constructor, but he can use the available static methods.
+		 \details The API user can't use this constructor, but they can use the available static methods.
 
 		 \param[in] seconds The time value in seconds
 
-		 \since v0.3.0
+		 \since v0.4.0
 		*/
 		explicit Time(double seconds) noexcept;
 
@@ -555,7 +555,7 @@ namespace ae
  \sa ae::Clock
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.13
+ \version v0.4.0
+ \date 2019.07.30
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,7 +24,19 @@
 #define Aeon_Graphics_H_
 
 // Include all the necessary headers of the Graphics module
+#include <AEON/Graphics/BlendMode.h>
+#include <AEON/Graphics/Camera.h>
+#include <AEON/Graphics/Camera2D.h>
+#include <AEON/Graphics/Camera3D.h>
+#include <AEON/Graphics/CameraFPS.h>
 #include <AEON/Graphics/Color.h>
+#include <AEON/Graphics/GLResourceFactory.h>
+#include <AEON/Graphics/Shader.h>
+#include <AEON/Graphics/Transformable.h>
+#include <AEON/Graphics/Texture.h>
+#include <AEON/Graphics/Texture2D.h>
+#include <AEON/Graphics/Material.h>
+#include <AEON/Graphics/Renderer2D.h>
 
 #endif // Aeon_Graphics_H_
 

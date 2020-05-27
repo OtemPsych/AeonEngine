@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019 Filippos Gleglakos
+// Copyright(c) 2019-2020 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -27,6 +27,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <AEON/Graphics/internal/GLCommon.h>
 #include <AEON/Window/MonitorManager.h>
 #include <AEON/Window/Monitor.h>
 #include <AEON/Window/internal/InputManager.h>
@@ -36,13 +37,12 @@ namespace ae
 	// Public constructor(s)
 	Window::Window(const VideoMode& vidMode, const std::string& title, uint32_t style,
 	               const ContextSettings& settings)
-		: mTitle(title)
+		: RenderTarget()
+		, mTitle(title)
 		, mVideoMode(vidMode)
 		, mContextSettings(settings)
 		, mSizeLimits(-1, -1, -1, -1)
-		, mClearColor(0.f, 0.f, 0.f, 1.f)
 		, mAspectRatio(-1, -1)
-		, mFramebufferSize()
 		, mPosition()
 		, mContentScale()
 		, mStyle(style)
@@ -52,9 +52,6 @@ namespace ae
 		// Apply the OpenGL context hints and create the GLFW window
 		mContextSettings.apply();
 		create();
-
-		// Perform OpenGL initializations
-		init();
 	}
 
 	// Destructor
@@ -143,11 +140,6 @@ namespace ae
 		glfwSetWindowUserPointer(mHandle, this);
 	}
 
-	void Window::clear() const
-	{
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-
 	void Window::close() const
 	{
 		glfwSetWindowShouldClose(mHandle, GLFW_TRUE);
@@ -167,7 +159,7 @@ namespace ae
 		if (event->type == Event::Type::FramebufferResized) {
 			FramebufferResizeEvent* const framebufferResizeEvent = event->as<FramebufferResizeEvent>();
 			mFramebufferSize = framebufferResizeEvent->size;
-			glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y);
+			GLCall(glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y));
 			framebufferResizeEvent->handled = true;
 		}
 		else if (event->type == Event::Type::WindowResized) {
@@ -312,12 +304,6 @@ namespace ae
 		glfwSetWindowSizeLimits(mHandle, limits.min.x, limits.min.y, limits.max.x, limits.max.y);
 	}
 
-	void Window::setClearColor(const Color& color)
-	{
-		mClearColor = color.normalize();
-		glClearColor(mClearColor.x, mClearColor.y, mClearColor.z, mClearColor.w);
-	}
-
 	void Window::setAspectRatio(const Vector2i& ratio)
 	{
 		// Check if the ratios provided are valid (ignored in Release mode)
@@ -428,24 +414,9 @@ namespace ae
 		return mSizeLimits;
 	}
 
-	Color Window::getClearColor() const noexcept
-	{
-		return Color(
-			static_cast<uint8_t>(mClearColor.x * 255.f),
-			static_cast<uint8_t>(mClearColor.y * 255.f),
-			static_cast<uint8_t>(mClearColor.z * 255.f),
-			static_cast<uint8_t>(mClearColor.w * 255.f)
-		);
-	}
-
 	const Vector2i& Window::getAspectRatio() const noexcept
 	{
 		return mAspectRatio;
-	}
-
-	const Vector2i& Window::getFramebufferSize() const noexcept
-	{
-		return mFramebufferSize;
 	}
 
 	const Vector2i& Window::getPosition() const noexcept
@@ -471,16 +442,5 @@ namespace ae
 	GLFWwindow* const Window::getHandle() const noexcept
 	{
 		return mHandle;
-	}
-
-	// Private method(s)
-	void Window::init()
-	{
-		// Set the values of the OpenGL color buffers
-		glClearColor(mClearColor.x, mClearColor.y, mClearColor.z, mClearColor.w);
-		glClearDepth(1.0);
-
-		// Set the values of the OpenGL viewport
-		glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y);
 	}
 }
