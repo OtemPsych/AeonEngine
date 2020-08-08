@@ -76,8 +76,7 @@ namespace ae
 		// Update the stored view matrix if necessary
 		if (mUpdateViewMatrix) {
 			mViewMatrix = Matrix4f::rotate(getRotation()) * Matrix4f::translate(-getPosition());
-			mUpdateViewMatrix = false;
-			mUpdateInvViewMatrix = true;
+			mUpdateInvViewMatrix = std::exchange(mUpdateViewMatrix, false);
 		}
 
 		return mViewMatrix;

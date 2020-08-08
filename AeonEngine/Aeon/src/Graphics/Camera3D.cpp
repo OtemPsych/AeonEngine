@@ -65,7 +65,7 @@ namespace ae
 
 			// Update the projection matrix
 			mProjectionMatrix = Matrix4f::perspective(mFOV, HALF_FRAME_SIZE.x / HALF_FRAME_SIZE.y, nearPlane, farPlane);
-			mUpdateProjectionMatrix = false;
+			mUpdateInvProjectionMatrix = std::exchange(mUpdateProjectionMatrix, false);
 		}
 
 		return mProjectionMatrix;

@@ -99,9 +99,10 @@ namespace ae
 
 		 \sa loadFromFile()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		bool create(unsigned int width, unsigned int height, const void* data = nullptr);
+		//void update( const void* data)
 		/*!
 		 \brief Loads in a texture from a file on disk.
 		 \details The image types supported:
@@ -185,7 +186,7 @@ namespace ae
  located in the VRAM so this class is simply an intermediary to that data.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.01.04
+ \version v0.5.0
+ \date 2020.08.01
  \copyright MIT License
 */

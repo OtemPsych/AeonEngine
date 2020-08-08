@@ -22,9 +22,13 @@
 
 #include <AEON/Graphics/internal/VertexArray.h>
 
+#include <string>
+
 #include <GL/glew.h>
 
 #include <AEON/Graphics/internal/GLCommon.h>
+#include <AEON/Graphics/internal/VertexBuffer.h>
+#include <AEON/Graphics/internal/IndexBuffer.h>
 
 namespace ae
 {
@@ -32,6 +36,7 @@ namespace ae
 	VertexArray::VertexArray()
 		: GLResource()
 		, mVBOs()
+		, mIBO(nullptr)
 		, mAttributeIndex(0)
 	{
 		// Create the VAO
@@ -39,7 +44,7 @@ namespace ae
 	}
 
 	// Public method(s)
-	void VertexArray::addBuffer(std::unique_ptr<VertexBuffer> vbo, unsigned int divisor)
+	void VertexArray::addVBO(std::unique_ptr<VertexBuffer> vbo, unsigned int divisor)
 	{
 		// Retrieve the VBO's data layout
 		const unsigned int BINDING_INDEX = static_cast<unsigned int>(mVBOs.size());
@@ -64,6 +69,42 @@ namespace ae
 		mVBOs.push_back(std::move(vbo));
 	}
 
+	void VertexArray::addIBO(std::unique_ptr<IndexBuffer> ibo)
+	{
+		// Destroy the previous ibo (if there was one)
+		if (mIBO) mIBO->destroy();
+
+		// Move the new ibo
+		mIBO = std::move(ibo);
+	}
+
+	VertexBuffer* const VertexArray::getVBO(size_t index) const noexcept
+	{
+		// Check if the index is valid
+		if (mVBOs.size() <= index) {
+			AEON_LOG_ERROR("Invalid index", "The index \"" + std::to_string(index) + "\" isn't associated with any VBOs.");
+			return nullptr;
+		}
+
+		return mVBOs[index].get();
+	}
+
+	IndexBuffer* const VertexArray::getIBO() const noexcept
+	{
+		// Check if an IBO was added
+		if (!mIBO) {
+			AEON_LOG_ERROR("Null IBO", "No IBO was associated to the caller VAO.");
+			return nullptr;
+		}
+
+		return mIBO.get();
+	}
+
+	size_t VertexArray::getVBOCount() const noexcept
+	{
+		return mVBOs.size();
+	}
+
 	// Public virtual method(s)
 	void VertexArray::destroy() const
 	{
@@ -72,16 +113,28 @@ namespace ae
 			vbo->destroy();
 		}
 
+		// Destroy the IBO (if one was added)
+		if (mIBO) mIBO->destroy();
+
+		// Destroy the VAO's identifier
 		GLCall(glDeleteVertexArrays(1, &mHandle));
 	}
 
 	void VertexArray::bind() const
 	{
+		// Bind the VAO to the context
 		GLCall(glBindVertexArray(mHandle));
+
+		// Bind the IBO (if one was added) to the context
+		if (mIBO) mIBO->bind();
 	}
 
 	void VertexArray::unbind() const
 	{
+		// Unbind the IBO (if one was added) from the context
+		if (mIBO) mIBO->unbind();
+
+		// Unbind the VAO from the context
 		GLCall(glBindVertexArray(0));
 	}
 }

@@ -24,6 +24,8 @@
 
 #include <string>
 
+#include <GL/glew.h>
+
 #include <AEON/System/DebugLogger.h>
 
 namespace ae
@@ -37,6 +39,7 @@ namespace ae
 				if (itr->second.use_count() == 1) {
 					itr->second->destroy();
 					resourceMap.second.erase(itr);
+					itr = resourceMap.second.begin();
 				}
 			}
 		}
@@ -80,20 +83,66 @@ namespace ae
 	// Private method(s)
 	void GLResourceFactory::createPrecompiledShaders()
 	{
-		// Retrieve the shader sources
-			// Sprite Shader
-		std::string spriteShaderVertSource =
-		#include <AEON/Shaders/Sprite.vs>
+		// Shaders
+			// Retrieve the shader sources
+				// Basic2D Shader
+		std::string basic2DShaderVertSource =
+		#include <AEON/Shaders/Basic2D.vs>
 		;
-		std::string spriteShaderFragSource =
-		#include <AEON/Shaders/Sprite.fs>
+		std::string basic2DShaderFragSource =
+		#include <AEON/Shaders/Basic2D.fs>
 		;
 
-		// Create the shaders
-			// Sprite Shader
-		auto spriteShader = create<Shader>("Sprite");
-		spriteShader->loadFromSource(Shader::StageType::Vertex, spriteShaderVertSource);
-		spriteShader->loadFromSource(Shader::StageType::Fragment, spriteShaderFragSource);
-		spriteShader->link();
+			// Text2D Shader
+		std::string text2DShaderVertSource =
+		#include <AEON/Shaders/Text2D.vs>
+		;
+		std::string text2DShaderFragSource =
+		#include <AEON/Shaders/Text2D.fs>
+		;
+
+			// Create the shaders
+				// Basic2D Shader
+		auto basic2DShader = create<Shader>("_AEON_Basic2D");
+		basic2DShader->loadFromSource(Shader::StageType::Vertex, basic2DShaderVertSource);
+		basic2DShader->loadFromSource(Shader::StageType::Fragment, basic2DShaderFragSource);
+		basic2DShader->link();
+
+				// Text2D Shader
+		auto text2DShader = create<Shader>("_AEON_Text2D");
+		text2DShader->loadFromSource(Shader::StageType::Vertex, text2DShaderVertSource);
+		text2DShader->loadFromSource(Shader::StageType::Fragment, text2DShaderFragSource);
+		text2DShader->link();
+
+		// UBOs
+			// Create the UBOs
+				// Transform UBO
+		auto transformUBO = create<UniformBuffer>("_AEON_TransformUBO");
+		transformUBO->queryLayout(*basic2DShader, "uTransformBlock", { "model", "view", "projection", "viewProjection", "mvp" });
+
+			// Assign the UBOs to the shaders
+		basic2DShader->addUniformBuffer(transformUBO.get());
+		text2DShader->addUniformBuffer(transformUBO.get());
+
+		// VAOs
+			// Create the IBOs
+		auto ibo = std::make_unique<IndexBuffer>(GL_DYNAMIC_DRAW);
+
+			// Create the VBOs
+		auto vbo = std::make_unique<VertexBuffer>(GL_DYNAMIC_DRAW);
+		vbo->getLayout().addElement(GL_FLOAT, 3, GL_FALSE);
+		vbo->getLayout().addElement(GL_FLOAT, 4, GL_FALSE);
+		vbo->getLayout().addElement(GL_FLOAT, 2, GL_FALSE);
+
+			// Create the VAOs
+		auto vao = create<VertexArray>("_AEON_VAO");
+		vao->addVBO(std::move(vbo));
+		vao->addIBO(std::move(ibo));
+
+		// Textures
+			// White Texture
+		uint32_t hexWhite = 0xffffffff;
+		auto whiteTexture = create<Texture2D>("_AEON_WhiteTexture", Texture2D::Filter::Nearest, Texture2D::Wrap::Repeat, Texture2D::InternalFormat::RGBA8);
+		whiteTexture->create(1, 1, &hexWhite);
 	}
 }

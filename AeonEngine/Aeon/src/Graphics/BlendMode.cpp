@@ -22,6 +22,8 @@
 
 #include <AEON/Graphics/BlendMode.h>
 
+#include <AEON/System/DebugLogger.h>
+
 namespace ae
 {
 	// Public static member(s)
@@ -40,6 +42,16 @@ namespace ae
 		, alphaSrcFactor(Factor::One)
 		, alphaDstFactor(Factor::OneMinusSrcAlpha)
 		, alphaEquation(Equation::Add)
+	{
+	}
+
+	BlendMode::BlendMode(BlendMode&& rvalue) noexcept
+		: colorSrcFactor(rvalue.colorSrcFactor)
+		, colorDstFactor(rvalue.colorDstFactor)
+		, colorEquation(rvalue.colorEquation)
+		, alphaSrcFactor(rvalue.alphaSrcFactor)
+		, alphaDstFactor(rvalue.alphaDstFactor)
+		, alphaEquation(rvalue.alphaEquation)
 	{
 	}
 
@@ -65,6 +77,38 @@ namespace ae
 	}
 
 	// Public operator(s)
+	BlendMode& BlendMode::operator=(const BlendMode& other)
+	{
+		// Check if the caller is being assigned to itself
+		if (this == &other) {
+			AEON_LOG_WARNING("Invalid assignment", "The caller BlendMode is being assigned to itself.");
+			return *this;
+		}
+
+		// Copy the other's data
+		colorSrcFactor = other.colorSrcFactor;
+		colorDstFactor = other.colorDstFactor;
+		colorEquation = other.colorEquation;
+		alphaSrcFactor = other.alphaSrcFactor;
+		alphaDstFactor = other.alphaDstFactor;
+		alphaEquation = other.alphaEquation;
+
+		return *this;
+	}
+
+	BlendMode& BlendMode::operator=(BlendMode&& rvalue) noexcept
+	{
+		// Copy the rvalue's data as moving them is redundant
+		colorSrcFactor = rvalue.colorSrcFactor;
+		colorDstFactor = rvalue.colorDstFactor;
+		colorEquation = rvalue.colorEquation;
+		alphaSrcFactor = rvalue.alphaSrcFactor;
+		alphaDstFactor = rvalue.alphaDstFactor;
+		alphaEquation = rvalue.alphaEquation;
+
+		return *this;
+	}
+
 	bool BlendMode::operator==(const BlendMode& other) const noexcept
 	{
 		return (colorSrcFactor == other.colorSrcFactor) &&

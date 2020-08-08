@@ -24,8 +24,9 @@
 #define Aeon_Graphics_RenderTarget_H_
 
 #include <AEON/Config.h>
-#include <AEON/Graphics/Camera.h>
+#include <AEON/Math/Vector2.h>
 #include <AEON/Math/AABoxCollider.h>
+#include <AEON/Graphics/Camera.h>
 
 namespace ae
 {
@@ -51,12 +52,6 @@ namespace ae
 		*/
 		RenderTarget(const RenderTarget&) = delete;
 		/*!
-		 \brief Deleted move constructor.
-
-		 \since v0.4.0
-		*/
-		RenderTarget(RenderTarget&&) = delete;
-		/*!
 		 \brief Virtual destructor.
 		 \details A virtual destructor is needed as this class will be inherited.
 
@@ -71,12 +66,6 @@ namespace ae
 		 \since v0.4.0
 		*/
 		RenderTarget& operator=(const RenderTarget&) = delete;
-		/*!
-		 \brief Deleted move assignment operator.
-
-		 \since v0.4.0
-		*/
-		RenderTarget& operator=(RenderTarget&&) = delete;
 	public:
 		// Public method(s)
 		/*!
@@ -206,6 +195,26 @@ namespace ae
 		 \since v0.4.0
 		*/
 		RenderTarget() noexcept;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::RenderTarget that will be moved
+
+		 \since v0.5.0
+		*/
+		RenderTarget(RenderTarget&& rvalue) noexcept;
+	protected:
+		// Protected operator(s)
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::RenderTarget that will be moved
+
+		 \return The caller ae::RenderTarget
+
+		 \since v0.5.0
+		*/
+		RenderTarget& operator=(RenderTarget&& rvalue) noexcept;
 
 	protected:
 		// Protected member(s)
@@ -227,7 +236,7 @@ namespace ae
  shown on the window / render texture.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 202019.05.27
+ \version v0.5.0
+ \date 2020.06.09
  \copyright MIT License
 */

@@ -35,6 +35,9 @@
 
 namespace ae
 {
+	// Forward declaration(s)
+	class Font;
+
 	/*!
 	 \brief The base class representing a system event and its properties.
 	 \details This class is inherited by several dedicated classes based on the event generated.
@@ -72,7 +75,9 @@ namespace ae
 			MouseWheelScrolled,        //!< A mouse wheel was scrolled (data in MouseWheelEvent)
 
 			JoystickConnected,         //!< A joystick/controller was connected (data in JoystickEvent)
-			JoystickDisconnected       //!< A joystick/controller was disconnected (data in JoystickEvent)
+			JoystickDisconnected,      //!< A joystick/controller was disconnected (data in JoystickEvent)
+
+			FontUpdated                //!< A font's texture atlas was updated (data in FontEvent)
 		};
 
 	public:
@@ -677,6 +682,55 @@ namespace ae
 		*/
 		MouseWheelEvent& operator=(MouseWheelEvent&&) = delete;
 	};
+
+	/*!
+	 \brief The derived class representing a font update event and the associated font's properties.
+	 \details An ae::FontEvent's associated types are: Type::FontUpdated.\n
+	 This class inherits the ae::Event base class.
+	*/
+	class _NODISCARD AEON_API FontEvent : public Event
+	{
+	public:
+		// Public member(s)
+		const Font* const font; //!< The pointer to the affected font
+
+	public:
+		// Public constructor(s)
+		/*!
+		 \brief Constructs the ae::FontEvent by providing the affected font.
+
+		 \param[in] font A pointer to the affected ae::Font
+
+		 \since v0.5.0
+		*/
+		FontEvent(const Font* const font) noexcept;
+		/*!
+		 \brief Deleted copy constructor.
+
+		 \since v0.5.0
+		*/
+		FontEvent(const FontEvent&) = delete;
+		/*!
+		 \brief Deleted move constructor.
+
+		 \since v0.5.0
+		*/
+		FontEvent(FontEvent&&) = delete;
+	public:
+		// Public operator(s)
+		/*!
+		 \brief Deleted assignment operator.
+
+		 \since v0.5.0
+		*/
+		FontEvent& operator=(const FontEvent&) = delete;
+		/*!
+		 \brief Deleted move assignment operator.
+
+		 \since v0.5.0
+		*/
+		FontEvent& operator=(FontEvent&&) = delete;
+	};
 }
 #endif // Aeon_Window_Event_H_
 
@@ -1004,5 +1058,33 @@ namespace ae
  \author Filippos Gleglakos
  \version v0.3.0
  \date 2019.07.22
+ \copyright MIT License
+*/
+
+/*!
+ \class ae::FontEvent
+ \ingroup window
+
+ The ae::FontEvent class is used to represent an API event that was generated
+ concerning the update of the specified font's texture atlas. It contains a
+ pointer to the affected font.
+
+ This event is primarily used internally in order for all ae::Text instances to
+ be informed when they should update their uv coordinates.
+
+ Usage example:
+ \code
+ // The 'event' parameter is provided by the overloaded method 'handleEvent()' of the ae::State class
+ if (event->type == ae::Event::Type::FontUpdated) {
+	auto fontEvent = event->as<ae::FontEvent>();
+	if (fontEvent->font == mFont) {
+		updateTextUVCoordinates();
+	}
+ }
+ \endcode
+
+ \author Filippos Gleglakos
+ \version v0.5.0
+ \date 2020.08.07
  \copyright MIT License
 */

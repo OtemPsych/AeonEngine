@@ -1,4 +1,33 @@
-v0.4.0 | 2019.07.30 - 2020.05.27
+v0.5.0 | 2020.08.07
+  Features
+    * Added Z-ordering for all instances deriving from the Actor2D class (all children are now rendered on top of their parents)
+    * Added automatic generation of an outline and uv coordinates for all classes deriving from the Shape abstract base class
+    * Added the possibility to have rounded corners for the RectangleShape class
+    * Added a RenderTexture class used for off-screen rendering
+    * Added a Glyph class representing a glyph (a text character)
+    * Added a TextureAtlas class used for dynamically generating a texture atlas during runtime
+    * Added a Font class used to represent a font
+    * Added a Text class used to represent a renderable string of characters
+    * Added equality and inequality operators to the ae::Matrix struct
+    * Added a dirty render flag to the Renderable2D class used to inform the appropriate renderer to update its cached properties
+    * Added a Widget abstract base class providing basic GUI functionalities
+    * Added a Button class used to represent a GUI button
+  Updates
+    - Due to the addition of Z-ordering, the default Camera2D frustrum now ranges from -12000 to 1 permitting Actor2D instances to have a child depth of up to 12000
+    - Due to the addition of Z-ordering, Vertex2D positions now possess a position along the Z axis (users can manually set the Z position, but it's not necessary)
+    - Significantly improved the Renderer2D's performance by caching submissions and not recreating them every frame
+    - VBOs can now also be retrieved from a VAO, and an IBO may also be attached to a VAO
+    - Significantly improved mapping pixels to coordinates by caching the inverse projection matrices of the RenderTarget instances
+    - Renderable2D and Transformable2D instances (including all derived classes) are no longer copyable or assignable
+    - The mVertices and mIndices protected members (now private) in the Renderable2D class were replaced by the the getVertices() and getIndices() protected methods
+    - The Actor2D event handling, updating and rendering methods no longer return a boolean as it proved to be unnecessary
+  Bug Fixes
+    ~ Fixed a bug which caused Shape and Sprite instances to have invalid uv coordinates and colors when their vertices were modified during runtime
+    ~ Fixed a bug which caused a 16 bit-per-channel texture loaded from the disk to be created with 8 bits-per-channel
+    ~ Fixed a bug which caused an infinite loop when the global transform of an Actor2D was requested
+    ~ Fixed a bug which caused Actor2D instances to have incomplete transforms applied to them resulting in faulty rendering
+
+v0.4.0 | 2020.05.27
   Features
     * Added a gl namespace that will contain error-checking and validity-checking OpenGL functions, and OpenGL type enumerations
     * Added a GLResource abstract base class used to represent an OpenGL resource
@@ -32,7 +61,6 @@ v0.4.0 | 2019.07.30 - 2020.05.27
     - Improved speed of several global vector operators and functions by ~50%
     - Improved singularity-handling in the Quaternion's toEulerAngles() method
     - Improved the documentation of the Matrix's getSubmatrix() method clarifying that it used 0-based indexing
-    - The Camera classes are no longer limited to representing the window's view
     - The Window class now inherits from the RenderTarget abstract base class
   Bug Fixes
     ~ Fixed certain documentation errors in Window/internal/InputManager.h, in System/Time.h and in System/FileSystem.h
@@ -41,9 +69,8 @@ v0.4.0 | 2019.07.30 - 2020.05.27
     ~ Fixed a bug in the Matrix's lookat() static method wherein one of the elements held the inversed sign
     ~ Fixed a bug in the Matrix's rotate() static method that caused it to return an erroneous result
     ~ Fixed a bug that caused the application to crash when a window was restored after being maximized due to faulty event creation
-    ~ Fixed a bug that caused the Camera2D to not be able to rotate its view
 
-v0.3.0 | 2019.07.01 - 2019.07.29
+v0.3.0 | 2019.07.29
   Features
     * Added a Quaternion class used to represent a rotation whilst avoiding gimbal lock
     * Added a Monitor class used in the representation of a monitor of the application user's setup
@@ -70,7 +97,7 @@ v0.3.0 | 2019.07.01 - 2019.07.29
   Bug Fixes
     ~ Fixed a bug in the Vector template struct's comparison operators
 
-v0.2.0 | 2019.06.14 - 2019.07.01
+v0.2.0 | 2019.07.01
   Features
     * Added a Vector partially specialized template struct used for 2-dimensional mathematical vectors
     * Added a Vector partially specialized template struct used for 3-dimensional mathematical vectors
@@ -81,7 +108,7 @@ v0.2.0 | 2019.06.14 - 2019.07.01
   Bug Fixes
     ~ Fixed documentation errors in Math/Vector.h
 
-v0.1.0 | 2019.06.10 - 2019.06.14
+v0.1.0 | 2019.06.14
   Features
     * Added a DebugLogger singleton class used to log debug information concerning Aeon
     * Added a FileSystem static class that provides I/O access to system files

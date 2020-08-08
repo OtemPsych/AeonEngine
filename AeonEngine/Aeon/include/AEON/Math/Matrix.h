@@ -420,6 +420,60 @@ namespace ae
 			return *this;
 		}
 		/*!
+		 \brief Equality operator.
+		 \details Checks if the caller ae::Matrix's elements are equal to the \a other's elements.
+
+		 \param[in] other The ae::Matrix which its elements will be compared to the caller's ones
+
+		 \return True if all of the \a other's elements are equal to the caller's elements
+
+		 \par Example:
+		 \code
+		 ae::Matrix4f mat4f_1(ae::Vector4f(0.5f, 0.25f, -1.f, 1.f), ae::Vector4f(0.5f, 0.25f, -1.f, 1.f),
+		                      ae::Vector4f(0.5f, 0.25f, -1.f, 1.f), ae::Vector4f(0.5f, 0.25f, -1.f, 1.f));
+		 ae::Matrix4f mat4f_2(ae::Vector4f(5.f, 2.25f, -1.f, 1.f), ae::Vector4f(5.5f, 1.25f, -1.f, 1.f),
+		                      ae::Vector4f(5.f, 2.25f, -1.f, 1.f), ae::Vector4f(3.5f, 1.25f, -1.f, 1.f));
+		 if (mat4f_1 == mat4f_2) {
+			...
+		 }
+		 \endcode
+
+		 \sa operator!=()
+
+		 \since v0.5.0
+		*/
+		_NODISCARD bool operator==(const Matrix<T, n, m>& other) const
+		{
+			return elements == other.elements;
+		}
+		/*!
+		 \brief Inequality operator.
+		 \details Checks if the caller ae::Matrix's elements are inequal to the \a other's elements.
+
+		 \param[in] other The ae::Matrix which its elements will be compared to the caller's ones
+
+		 \return True if at least one of the \a other's elements is inequal to the caller's elements
+
+		 \par Example:
+		 \code
+		 ae::Matrix4f mat4f_1(ae::Vector4f(0.5f, 0.25f, -1.f, 1.f), ae::Vector4f(0.5f, 0.25f, -1.f, 1.f),
+							  ae::Vector4f(0.5f, 0.25f, -1.f, 1.f), ae::Vector4f(0.5f, 0.25f, -1.f, 1.f));
+		 ae::Matrix4f mat4f_2(ae::Vector4f(5.f, 2.25f, -1.f, 1.f), ae::Vector4f(5.5f, 1.25f, -1.f, 1.f),
+							  ae::Vector4f(5.f, 2.25f, -1.f, 1.f), ae::Vector4f(3.5f, 1.25f, -1.f, 1.f));
+		 if (mat4f_1 != mat4f_2) {
+			...
+		 }
+		 \endcode
+
+		 \sa operator==()
+
+		 \since v0.5.0
+		*/
+		_NODISCARD bool operator!=(const Matrix<T, n, m>& other) const
+		{
+			return elements != other.elements;
+		}
+		/*!
 		 \brief Transformation application operator.
 		 \details Applies the transformation \a other to the caller ae::Matrix.\n
 		 The resulting matrix will have the same number of rows as the first matrix and the same number of columns as the second matrix.
@@ -1190,7 +1244,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.05
+ \version v0.5.0
+ \date 2020.08.07
  \copyright MIT License
 */

@@ -66,13 +66,19 @@ namespace ae
 		*/
 		Actor2D();
 		/*!
-		 \brief Copy constructor.
-		 
-		 \param[in] copy The ae::Actor2D that will be copied
+		 \brief Deleted copy constructor.
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Actor2D(const Actor2D& copy);
+		Actor2D(const Actor2D&) = delete;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Actor2D that will be moved
+
+		 \since v0.5.0
+		*/
+		Actor2D(Actor2D&& rvalue) noexcept;
 		/*!
 		 \brief Virtual destructor.
 		 \details A virtual destructor is needed as this class will be inherited.
@@ -80,6 +86,24 @@ namespace ae
 		 \since v0.4.0
 		*/
 		virtual ~Actor2D();
+	public:
+		// Public operator(s)
+		/*!
+		 \brief Deleted assignment operator.
+
+		 \since v0.5.0
+		*/
+		Actor2D& operator=(const Actor2D&) = delete;
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Actor2D that will be moved
+
+		 \return The caller ae::Actor2D
+
+		 \since v0.5.0
+		*/
+		Actor2D& operator=(Actor2D&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -128,29 +152,51 @@ namespace ae
 		*/
 		std::unique_ptr<Actor2D> detachChild(const Actor2D& child);
 		/*!
+		 \brief Relatively aligns the caller ae::Transformable2D to another based on the flags provided.
+		 \details Can be used to easily center text inside a rectangle, placing elements below/above/next to other elements.
+		 \note This method has no effect if the caller doesn't have a parent.\n
+		 Padding isn't taken into account if the alignment flags center the caller.
+
+		 \param[in] alignmentFlags The ae::Transformable2D::OriginFlag to set using the OR bit operator
+		 \param[in] padding The padding (spacing) from the edge of the alignment \a target (not taken into account if the caller is centered)
+
+		 \par Example:
+		 \code
+		 // Create the parent and child sprites
+		 auto parentSprite = std::make_unique<ae::Sprite>(someTexture);
+		 auto childSprite = std::make_unique<ae::Sprite>(otherTexture);
+
+		 ae::Sprite* childSpritePtr = childSprite.get();
+		 parentSprite->attachChild(std::move(childSprite));
+
+		 // Set the origin of the child sprite to its center and align it to the center of the parent
+		 childSpritePtr->setOriginFlags(ae::Sprite::OriginFlag::Center);
+		 childSpritePtr->setRelativeAlignment(ae::Sprite::OriginFlag::Center);
+		 \endcode
+
+		 \since v0.5.0
+		*/
+		void setRelativeAlignment(uint32_t alignmentFlags, float padding = 0.f);
+		/*!
 		 \brief Sends the event received to the current node and all of its children nodes for processing.
 
 		 \param[in] event The polled input event
 
-		 \return True if any other nodes are free to handle the event as well, false otherwise
-
 		 \sa handleEventSelf(), handleEventChildren()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD bool handleEvent(Event* const event);
+		void handleEvent(Event* const event);
 		/*!
 		 \brief Updates the current nodes and all of its children nodes.
 
 		 \param[in] dt The delta time between the current frame and the previous one
 
-		 \return True if any other nodes are free to update themselves and their own nodes, false otherwise
-
 		 \sa updateSelf(), updateChildren()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD bool update(const Time& dt);
+		void update(const Time& dt);
 		/*!
 		 \brief (De)Activates event handling, updating and/or rendering for the current node and/or its children.
 		 \details Several functionalities and targets may be selected simultaneously.
@@ -176,7 +222,7 @@ namespace ae
 
 		 \sa getGlobalPosition(), getGlobalBounds()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		_NODISCARD Matrix4f getGlobalTransform();
 		/*!
@@ -225,17 +271,21 @@ namespace ae
 		*/
 		_NODISCARD virtual bool isDestroyed() const;
 		/*!
+		 \brief Recalculates the correct origin based on the origin flags, and realigns the actor relative to its parent.
+
+		 \since v0.5.0
+		*/
+		virtual void correctProperties() override final;
+		/*!
 		 \brief Renders the current ae::Actor2D and its children.
 
 		 \param[in] states The ae::RenderStates associated (texture, transform, blend mode, shader)
 
-		 \return True if any other ae::Actor2D objects should be allowed to render themselves and their chilren, false otherwise
-
 		 \sa renderSelf(), renderChilren()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD virtual bool render(RenderStates states) override final;
+		virtual void render(RenderStates states) override final;
 		/*!
 		 \brief Retrieves the ae::Actor2D's model bounding box.
 		 \note Derived classes should override this method to set the appropriate bounding box.
@@ -247,6 +297,17 @@ namespace ae
 		 \since v0.4.0
 		*/
 		_NODISCARD virtual Box2f getModelBounds() const override;
+	protected:
+		// Protected method(s)
+		/*!
+		 \brief Updates the z-index ordering of the caller and its children to achieve correct depth ordering.
+		 \details The z-index provided will be assigned to the caller and its children will be assigned to a superior z-index.
+
+		 \param[in] zIndex The depth index to assign to the caller
+
+		 \since v0.5.0
+		*/
+		void updateZOrdering(int zIndex);
 	private:
 		// Private method(s)
 		/*!
@@ -263,37 +324,31 @@ namespace ae
 
 		 \param[in] event The polled input ae::Event
 
-		 \return True if any other ae::Actor2D objects should be allowed to handle the polled input event, false otherwise
-
 		 \sa handleEventSelf(), handleEvent()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD bool handleEventChildren(Event* const event);
+		void handleEventChildren(Event* const event);
 		/*!
 		 \brief Sends the command to the ae::Actor2D's children to update themselves and their own children.
 		 
 		 \param[in] dt The time difference between the previous frame and the current frame
 
-		 \return True if any other ae::Actor2D objects should be allowed to update themselves and their children, false otherwise
-
 		 \sa updateSelf(), update()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD bool updateChildren(const Time& dt);
+		void updateChildren(const Time& dt);
 		/*!
 		 \brief Sends the command to the ae::Actor2D's children to render themselves and their own children.
 
 		 \param[in] states The ae::RenderStates defining the OpenGL state
 
-		 \return True if any other ae::Actor2D objects should be allowed to render themselves and their children, false otherwise
-
 		 \sa renderSelf(), render()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD bool renderChildren(RenderStates states);
+		void renderChildren(RenderStates states) const;
 
 		// Private virtual method(s)
 		/*!
@@ -302,47 +357,42 @@ namespace ae
 
 		 \param[in] event The polled input ae::Event
 
-		 \return True if any other ae::Actor2D objects should be allowed to handle the polled input event, false otherwise
-
 		 \sa handleEventChildren(), handleEvent()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD virtual bool handleEventSelf(Event* const event);
+		virtual void handleEventSelf(Event* const event);
 		/*!
 		 \brief Updates the ae::Actor2D.
 		 \note The method's behaviour is defined by the derived class.
 
 		 \param[in] dt The time difference between the previous frame and the current frame
 
-		 \return True if any other ae::Actor2D objects should be allowed to update themselves and their children, false otherwise
-
 		 \sa updateChildren(), update()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD virtual bool updateSelf(const Time& dt);
+		virtual void updateSelf(const Time& dt);
 		/*!
 		 \brief Renders the ae::Actor2D.
 		 \note The method's behaviour is defined by the derived class.
 
 		 \param[in] states The ae::RenderStates defining the OpenGL state
 
-		 \return True if any other ae::Actor2D objects should be allowed to render themselves and their children, false otherwise
-
 		 \sa renderChildren(), render()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		_NODISCARD virtual bool renderSelf(RenderStates states);
+		virtual void renderSelf(RenderStates states) const;
 
 	protected:
 		// Protected member(s)
-		Actor2D*                               mParent;   //!< The node's parent node
+		Actor2D*                                    mParent;    //!< The node's parent node
 	private:
 		// Private member(s)
-		std::vector<std::unique_ptr<Actor2D>>  mChildren; //!< The list of attached children nodes
-		std::map<Func, std::map<Target, bool>> mFuncs;    //!< The active functionalities
+		std::vector<std::unique_ptr<Actor2D>>       mChildren;  //!< The list of attached children nodes
+		std::map<Func, std::map<Target, bool>>      mFuncs;     //!< The active functionalities
+		std::pair<bool, std::pair<uint32_t, float>> mAlignment; //!< The relative alignment to the parent node
 	};
 }
 #endif // Aeon_Graphics_Actor2D_H_
@@ -357,7 +407,7 @@ namespace ae
  and drawing the caller node and its children.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.24
+ \version v0.5.0
+ \date 2020.08.07
  \copyright MIT License
 */

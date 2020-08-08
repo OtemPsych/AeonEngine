@@ -41,10 +41,18 @@ namespace ae
 	class AEON_API Renderer2D
 	{
 	private:
+		struct SubmissionData {
+			size_t vertexOffset;
+			size_t indexCount;
+			bool   resubmitted;
+		};
 		struct RenderData {
 			std::vector<Vertex2D>     vertices;
 			std::vector<unsigned int> indices;
+			Matrix4f                  transform;
 			unsigned int              indexOffset;
+
+			std::map<const std::vector<Vertex2D>*, SubmissionData> subData;
 		};
 
 	public:
@@ -78,7 +86,8 @@ namespace ae
 	public:
 		void beginScene(RenderTarget& target);
 		void endScene();
-		void submit(Renderable2D& renderable, const RenderStates& states);
+		void submit(const Renderable2D& renderable, const RenderStates& states, bool dirty);
+		void submit(const std::vector<Vertex2D>& vertices, const std::vector<unsigned int>& indices, const RenderStates& states, bool dirty);
 
 		// Public static method(s)
 		/*!
@@ -103,6 +112,8 @@ namespace ae
 		 \since v0.4.0
 		*/
 		Renderer2D();
+	private:
+		void deleteSubmissions(RenderData& renderData);
 
 	private:
 		using TexturePass = std::map<const Texture*, RenderData>;
@@ -111,9 +122,6 @@ namespace ae
 	private:
 		std::shared_ptr<UniformBuffer> mTransformUBO;
 		std::shared_ptr<VertexArray>   mSpriteVAO;
-		VertexBuffer*                  mSpriteVBO;
-		std::shared_ptr<IndexBuffer>   mSpriteIBO;
-		std::shared_ptr<Shader>        mSpriteShader;
 		RenderTarget*                  mRenderTarget;
 		std::shared_ptr<Texture2D>     mWhiteTexture;
 

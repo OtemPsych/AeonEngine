@@ -62,6 +62,38 @@ namespace ae
 		 \since v0.4.0
 		*/
 		explicit Sprite(const Texture2D& texture, const Box2f& rect = Box2f());
+		/*!
+		 \brief Deleted copy constructor.
+
+		 \since v0.5.0
+		*/
+		Sprite(const Sprite&) = delete;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Sprite that will be moved
+
+		 \since v0.5.0
+		*/
+		Sprite(Sprite&& rvalue) noexcept;
+	public:
+		// Public operator(s)
+		/*!
+		 \brief Deleted assignment operator.
+
+		 \since v0.5.0
+		*/
+		Sprite& operator=(const Sprite&) = delete;
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Sprite that will be moved
+
+		 \return The caller ae::Sprite
+
+		 \since v0.5.0
+		*/
+		Sprite& operator=(Sprite&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -186,22 +218,6 @@ namespace ae
 
 		// Public virtual method(s)
 		/*!
-		 \brief Sets the ae::Sprite's local origin (or anchor point).
-		 \details An origin of (0, 0) places the origin at the top left part of the shape.
-
-		 \param[in] origin A 2-dimensional ae::Vector containing the local origin, (0, 0) by default
-
-		 \par Example:
-		 \code
-		 // Place the origin at the center of the rectangle, can also be achieved with origin flags
-		 auto sprite = std::make_unique<ae::Sprite>(texture);
-		 sprite->setOrigin(sprite->getModelBounds().max / 2.f);
-		 \endcode
-
-		 \since v0.4.0
-		*/
-		virtual void setOrigin(const Vector2f& origin) noexcept override final;
-		/*!
 		 \brief Retrieves the ae::Sprite's model bounding box.
 
 		 \return An ae::Box2f containing the model bounding box.
@@ -217,7 +233,7 @@ namespace ae
 
 		 \sa updateColor(), updateVertices()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		void updatePosUV();
 		/*!
@@ -229,19 +245,6 @@ namespace ae
 		 \since v0.4.0
 		*/
 		void updateColor();
-
-		// Private virtual method(s)
-		/*!
-		 \brief Sends the vertex data and render states to the renderer.
-		 \details Sets the appropriate shader, blend mode and texture.
-
-		 \param[in] states The ae::RenderStates defining the OpenGL state
-
-		 \return True if any other ae::Actor2D objects should be allowed to render themselves and their children, false otherwise
-
-		 \since v0.4.0
-		*/
-		_NODISCARD virtual bool renderSelf(RenderStates states) override final;
 		/*!
 		 \brief Updates the ae::Sprite's stored vertices.
 		 \details Calls the specified update methods.
@@ -250,16 +253,30 @@ namespace ae
 
 		 \since v0.4.0
 		*/
-		virtual void updateVertices() override final;
+		bool updateVertices();
+
+		// Private virtual method(s)
 		/*!
-		 \brief Updates the ae::Sprite's stored indices.
-		 \details Mostly used for first-time setup of the indices.
+		 \brief Updates the ae::Sprite's vertex data.
 
-		 \sa updateVertices()
+		 \param[in] dt The time difference between the previous frame and the current frame
 
-		 \since v0.4.0
+		 \sa renderSelf()
+
+		 \since v0.5.0
 		*/
-		virtual void updateIndices() override final;
+		virtual void updateSelf(const Time& dt) override final;
+		/*!
+		 \brief Sends the vertex data and render states to the renderer.
+		 \details Sets the appropriate shader, blend mode and texture.
+
+		 \param[in] states The ae::RenderStates defining the OpenGL state
+
+		 \sa updateSelf()
+
+		 \since v0.5.0
+		*/
+		virtual void renderSelf(RenderStates states) const override final;
 
 	private:
 		// Private member(s)
@@ -287,7 +304,7 @@ namespace ae
  never appears stretched or in any way deformed.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.09
+ \version v0.5.0
+ \date 2020.08.07
  \copyright MIT License
 */

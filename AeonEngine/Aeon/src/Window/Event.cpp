@@ -132,4 +132,12 @@ namespace ae
 		, offset(offset)
 	{
 	}
+
+	// FontEvent
+		// Public constructor(s)
+	FontEvent::FontEvent(const Font* const font) noexcept
+		: Event(Type::FontUpdated)
+		, font(font)
+	{
+	}
 }

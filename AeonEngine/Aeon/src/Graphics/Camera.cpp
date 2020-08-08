@@ -22,9 +22,6 @@
 
 #include <AEON/Graphics/Camera.h>
 
-#include <AEON/Window/Window.h>
-#include <AEON/Window/Application.h>
-
 namespace ae
 {
 	// Public constructor(s)
@@ -108,8 +105,7 @@ namespace ae
 	void Camera::lookAt(const Vector3f& focus) noexcept
 	{
 		mViewMatrix = Matrix4f::lookat(mPosition, focus, Vector3f::Up);
-		mUpdateViewMatrix = false;
-		mUpdateInvViewMatrix = true;
+		mUpdateInvViewMatrix = std::exchange(mUpdateViewMatrix, false);
 	}
 
 	void Camera::setTarget(const RenderTarget* const target) noexcept
@@ -162,6 +158,17 @@ namespace ae
 		return mInvViewMatrix;
 	}
 
+	const Matrix4f& Camera::getInverseProjectionMatrix()
+	{
+		// Update the stored inverse projection matrix if necessary
+		if (mUpdateProjectionMatrix || mUpdateInvProjectionMatrix) {
+			mInvProjectionMatrix = getProjectionMatrix().invert();
+			mUpdateInvProjectionMatrix = false;
+		}
+
+		return mInvProjectionMatrix;
+	}
+
 	// Public virtual method(s)
 	const Quaternion& Camera::getRotation()
 	{
@@ -179,8 +186,7 @@ namespace ae
 
 			// Update the view matrix
 			mViewMatrix = Matrix4f::lookat(mPosition, mPosition + FORWARD, UP);
-			mUpdateViewMatrix = false;
-			mUpdateInvViewMatrix = true;
+			mUpdateInvViewMatrix = std::exchange(mUpdateViewMatrix, false);
 		}
 
 		return mViewMatrix;
@@ -194,12 +200,81 @@ namespace ae
 		, mUpdateViewMatrix(true)
 		, mUpdateInvViewMatrix(true)
 		, mUpdateProjectionMatrix(true)
+		, mUpdateInvProjectionMatrix(true)
 		, mTarget(nullptr)
 		, mInvViewMatrix()
+		, mInvProjectionMatrix()
 		, mViewport(0.f, 0.f, 1.f, 1.f)
 		, mPosition()
 		, mNearPlane(nearPlane)
 		, mFarPlane(farPlane)
 	{
+	}
+
+	Camera::Camera(Camera&& rvalue) noexcept
+		: mViewMatrix(std::move(rvalue.mViewMatrix))
+		, mProjectionMatrix(std::move(rvalue.mProjectionMatrix))
+		, mRotation(std::move(rvalue.mRotation))
+		, mUpdateViewMatrix(rvalue.mUpdateViewMatrix)
+		, mUpdateInvViewMatrix(rvalue.mUpdateInvViewMatrix)
+		, mUpdateProjectionMatrix(rvalue.mUpdateProjectionMatrix)
+		, mUpdateInvProjectionMatrix(rvalue.mUpdateInvProjectionMatrix)
+		, mTarget(rvalue.mTarget)
+		, mInvViewMatrix(std::move(rvalue.mInvViewMatrix))
+		, mInvProjectionMatrix(std::move(rvalue.mInvProjectionMatrix))
+		, mViewport(std::move(rvalue.mViewport))
+		, mPosition(std::move(rvalue.mPosition))
+		, mNearPlane(rvalue.mNearPlane)
+		, mFarPlane(rvalue.mFarPlane)
+	{
+	}
+
+	// Protected operator(s)
+	Camera& Camera::operator=(const Camera& other)
+	{
+		// Check if the caller is being assigned to itself
+		if (this == &other) {
+			AEON_LOG_WARNING("Invalid assignment", "The caller Camera is being assigned to itself.");
+			return *this;
+		}
+
+		// Copy the other's data
+		mViewMatrix = other.mViewMatrix;
+		mProjectionMatrix = other.mProjectionMatrix;
+		mRotation = other.mRotation;
+		mUpdateViewMatrix = other.mUpdateViewMatrix;
+		mUpdateInvViewMatrix = other.mUpdateInvViewMatrix;
+		mUpdateProjectionMatrix = other.mUpdateProjectionMatrix;
+		mUpdateInvProjectionMatrix = other.mUpdateInvProjectionMatrix;
+		mTarget = other.mTarget;
+		mInvViewMatrix = other.mInvViewMatrix;
+		mInvProjectionMatrix = other.mInvProjectionMatrix;
+		mViewport = other.mViewport;
+		mPosition = other.mPosition;
+		mNearPlane = other.mNearPlane;
+		mFarPlane = other.mFarPlane;
+
+		return *this;
+	}
+
+	Camera& Camera::operator=(Camera&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		mViewMatrix = std::move(rvalue.mViewMatrix);
+		mProjectionMatrix = std::move(rvalue.mProjectionMatrix);
+		mRotation = std::move(rvalue.mRotation);
+		mUpdateViewMatrix = rvalue.mUpdateViewMatrix;
+		mUpdateInvViewMatrix = rvalue.mUpdateInvViewMatrix;
+		mUpdateProjectionMatrix = rvalue.mUpdateProjectionMatrix;
+		mUpdateInvProjectionMatrix = rvalue.mUpdateInvProjectionMatrix;
+		mTarget = rvalue.mTarget;
+		mInvViewMatrix = std::move(rvalue.mInvViewMatrix);
+		mInvProjectionMatrix = std::move(rvalue.mInvProjectionMatrix);
+		mViewport = std::move(rvalue.mViewport);
+		mPosition = std::move(rvalue.mPosition);
+		mNearPlane = rvalue.mNearPlane;
+		mFarPlane = rvalue.mFarPlane;
+
+		return *this;
 	}
 }

@@ -37,19 +37,58 @@ namespace ae
 	public:
 		// Public constructor(s)
 		/*!
-		 \brief Constructs the ae::Camera2D by providing the optional distances to the Z-axis planes.
+		 \brief Constructs the ae::Camera2D by providing the optional Y orientation and distances to the Z-axis planes.
+		 \details The default Y orientation for the 2D camera is top to bottom, meaning that 0 is at the top.
 
-		 \param[in] nearPlane The distance from the camera to the near plane in the Z-axis, -1.f by default
+		 \param[in] flipY Whether the Y orientation should be flipped, false by default
+		 \param[in] nearPlane The distance from the camera to the near plane in the Z-axis, -12000.f by default
 		 \param[in] farPlane The distance from the camera to the far plane in the Z-axis, 1.f by default
 
 		 \par Example:
 		 \code
-		 ae::Camera2D camera(-1.f, 2000.f);
+		 ae::Camera2D camera(false, -1.f, 2000.f);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		explicit Camera2D(float nearPlane = -1.f, float farPlane = 1.f);
+		explicit Camera2D(bool flipY = false, float nearPlane = -12000.f, float farPlane = 1.f);
+		/*!
+		 \brief Copy constructor.
+
+		 \since v0.5.0
+		*/
+		Camera2D(const Camera2D&) noexcept = default;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Camera2D that will be moved
+
+		 \since v0.5.0
+		*/
+		Camera2D(Camera2D&& rvalue) noexcept;
+	public:
+		// Public operator(s)
+		/*!
+		 \brief Assignment operator.
+		 \details Checks if the caller is being assigned to itself.
+
+		 \param[in] other The ae::Camera2D that will be copied
+
+		 \return The caller ae::Camera2D
+
+		 \since v0.5.0
+		*/
+		Camera2D& operator=(const Camera2D& other);
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Camera2D that will be moved
+
+		 \return The caller ae::Camera2D
+
+		 \since v0.5.0
+		*/
+		Camera2D& operator=(Camera2D&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -109,13 +148,14 @@ namespace ae
 		 const ae::Matrix4f& projectionMatrix = camera.getProjectionMatrix();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		_NODISCARD virtual const Matrix4f& getProjectionMatrix() override final;
 
 	private:
 		// Private member(s)
 		float mZoomFactor; //!< The camera's zoom factor applied to the framebuffer size
+		bool  mFlippedY;   //!< Whether the Y orientation is flipped (bottom is 0)
 	};
 }
 #endif // Aeon_Graphics_Camera2D_H_
@@ -134,7 +174,7 @@ namespace ae
  functionality.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.10.13
+ \version v0.5.0
+ \date 2020.08.03
  \copyright MIT License
 */

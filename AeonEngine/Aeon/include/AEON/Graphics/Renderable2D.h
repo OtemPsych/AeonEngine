@@ -36,9 +36,9 @@ namespace ae
 	*/
 	struct Vertex2D
 	{
-		Vector2f position; //!< The vertex's position
-		Vector2f uv;       //!< The vertex's texture coordinates
+		Vector3f position; //!< The vertex's position
 		Vector4f color;    //!< The vertex's normalized color
+		Vector2f uv;       //!< The vertex's texture coordinates
 	};
 
 	/*!
@@ -60,13 +60,12 @@ namespace ae
 		// Public method(s)
 		/*!
 		 \brief Retrieves the list of vertices defining the shape of the ae::Renderable2D.
-		 \details May also update the list of vertices if necessary.
 
 		 \return The list of vertices
 
 		 \since v0.4.0
 		*/
-		_NODISCARD const std::vector<Vertex2D>& getVertices();
+		_NODISCARD const std::vector<Vertex2D>& getVertices() const noexcept;
 		/*!
 		 \brief Retrieves the list of indices defining the shape of the ae::Renderable2D.
 
@@ -74,9 +73,13 @@ namespace ae
 
 		 \since v0.4.0
 		*/
-		_NODISCARD const std::vector<unsigned int>& getIndices();
+		_NODISCARD const std::vector<unsigned int>& getIndices() const noexcept;
+		// Public virtual method(s)
 		/*!
 		 \brief Renders the ae::Renderable2D.
+		 \details While the method is called "render", it actually submits the appropriate vertices and indices to be rendered as a batch later on.
+
+		 \param[in] states The ae::RenderStates associated (texture, transform, blend mode, shader)
 		 
 		 \par Example:
 		 \code
@@ -96,9 +99,9 @@ namespace ae
 		 renderer.endScene();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		virtual bool render(RenderStates states) = 0;
+		virtual void render(RenderStates states) = 0;
 	protected:
 		// Protected constructor(s)
 		/*!
@@ -109,33 +112,27 @@ namespace ae
 		*/
 		Renderable2D() noexcept;
 		/*!
-		 \brief Copy constructor.
-		 
-		 \param[in] copy The ae::Renderable2D that'll be copied
+		 \brief Deleted copy constructor.
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Renderable2D(const Renderable2D& copy) = default;
+		Renderable2D(const Renderable2D&) = delete;
 		/*!
 		 \brief Move constructor.
 
 		 \param[in] rvalue The ae::Renderable2D that'll be moved
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Renderable2D(Renderable2D&& rvalue) = default;
+		Renderable2D(Renderable2D&& rvalue) noexcept;
 	protected:
 		// Protected operator(s)
 		/*!
-		 \brief Assignment operator.
+		 \brief Deleted assignment operator.
 
-		 \param[in] other The ae::Renderable2D that'll be copied
-
-		 \return The caller ae::Renderable2D
-
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Renderable2D& operator=(const Renderable2D& other) noexcept = default;
+		Renderable2D& operator=(const Renderable2D&) = delete;
 		/*!
 		 \brief Move assignment operator.
 
@@ -143,37 +140,55 @@ namespace ae
 
 		 \return The caller ae::Renderable2D
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Renderable2D& operator=(Renderable2D&& rvalue) noexcept = default;
-	private:
-		// Private virtual method(s)
-		/*!
-		 \brief Updates the ae::Renderable2D's stored vertices.
-		 \note This method needs to be overwritten by derived classes for it to have any effect.
-
-		 \sa updateIndices()
-
-		 \since v0.4.0
-		*/
-		virtual void updateVertices();
-		/*!
-		 \brief Updates the ae::Renderable2D's stored indices.
-		 \note This method needs to be overwritten by derived classes for it to have any effect.
-
-		 \sa updateVertices()
-
-		 \since v0.4.0
-		*/
-		virtual void updateIndices();
-
+		Renderable2D& operator=(Renderable2D&& rvalue) noexcept;
 	protected:
-		// Protected member(s)
-		std::vector<Vertex2D>     mVertices;       //!< The list of vertices to be passed on to a renderer
-		std::vector<unsigned int> mIndices;        //!< The list of indices to be passed on to a renderer
+		// Protected method(s)
+		/*!
+		 \brief Raises/Drops the ae::Renderable2D's dirty render flag.
+		 \details The dirty render flag is used to inform the renderer to update its cached properties.
+
+		 \param[in] True to raise the dirty render flag, false to drop it
+
+		 \sa isDirty()
+
+		 \since v0.5.0
+		*/
+		void setDirty(bool flag) noexcept;
+		/*!
+		 \brief Whether or not the ae::Renderable2D's render properties need to be updated.
+		 \details This flag needs to be passed on to a renderer to update its cached properties.
+
+		 \return True if the render properties are dirty, false otherwise
+
+		 \sa setDirty()
+
+		 \since v0.5.0
+		*/
+		_NODISCARD bool isDirty() const noexcept;
+		/*!
+		 \brief Retrieves the list of vertices defining the shape of the ae::Renderable2D.
+
+		 \return The list of vertices
+
+		 \since v0.5.0
+		*/
+		_NODISCARD std::vector<Vertex2D>& getVertices() noexcept;
+		/*!
+		 \brief Retrieves the list of indices defining the shape of the ae::Renderable2D.
+
+		 \return The list of indices
+
+		 \since v0.5.0
+		*/
+		_NODISCARD std::vector<unsigned int>& getIndices() noexcept;
+
 	private:
 		// Private member(s)
-		bool                      mUpdateIndices;  //!< Whether the list of indices must be updated
+		std::vector<Vertex2D>     mVertices; //!< The list of vertices to be passed on to a renderer
+		std::vector<unsigned int> mIndices;  //!< The list of indices to be passed on to a renderer
+		bool                      mDirty;    //!< Whether the render properties need to be updated
 	};
 }
 #endif // Aeon_Graphics_Renderable2D_H_
@@ -185,10 +200,10 @@ namespace ae
  The ae::Renderable2D abstract base class is used to represent entities that
  can be rendered to the screen or, more specifically, passed to a renderer to
  then be rendered to a render target. They hold a list of vertices (most often
- 4) that will automatically be passed on to the GPU.
+ 4) and a list of indices that will automatically be passed on to the GPU.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.14
+ \version v0.5.0
+ \date 2020.08.07
  \copyright MIT License
 */

@@ -53,10 +53,12 @@ namespace ae
 				AEON_LOG_ERROR("Failed to create texture", "The dimensions (" + WIDTH_STR + "x" + HEIGHT_STR + ") are invalid.");
 				return false;
 			}
-			// Emit warning if the dimensions aren't even numbers
-			if (width % 2 != 0 || height % 2 != 0) {
-				AEON_LOG_WARNING("Texture may not display correctly", "The dimensions (" + WIDTH_STR + "x" + HEIGHT_STR + ") aren't even numbers");
-			}
+		}
+
+		// Recreate the texture if necessary
+		if (mSize.x != 0) {
+			destroy();
+			GLCall(glCreateTextures(mBindingTarget, 1, &mHandle));
 		}
 
 		// Modify the texture's metadata
@@ -67,10 +69,20 @@ namespace ae
 			mFormat = Format(InternalFormat::RGBA8);
 		}
 
+		// Deactivate the byte alignment restriction if necessary
+		if (mFormat.internal == InternalFormat::R8 || mFormat.internal == InternalFormat::R16) {
+			GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+		}
+
 		// Create the OpenGL texture with the dimensions width x height and fill it with the image data provided
 		GLCall(glTextureStorage2D(mHandle, 1, static_cast<GLenum>(mFormat.internal), width, height));
 		if (data) {
 			GLCall(glTextureSubImage2D(mHandle, 0, 0, 0, width, height, mFormat.base, GL_UNSIGNED_BYTE, data));
+		}
+
+		// Reactivate the byte alignment restriction if necessary
+		if (mFormat.internal == InternalFormat::R8 || mFormat.internal == InternalFormat::R16) {
+			GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 		}
 
 		return true;
@@ -80,9 +92,8 @@ namespace ae
 	{
 		// Load in the image data
 		int width, height, channels;
-		stbi_set_flip_vertically_on_load(true);
 		stbi_uc* pixels8 = (mFormat.bitCount == 8) ? stbi_load(filename.c_str(), &width, &height, &channels, mFormat.imposedChannels) : nullptr;
-		stbi_us* pixels16 = (mFormat.bitCount == 16) ? stbi_load_16(filename.c_str(), &width, &height, &channels, mFormat.imposedChannels) : nullptr;
+		stbi_us* pixels16 = (mFormat.bitCount == 16 || !pixels8) ? stbi_load_16(filename.c_str(), &width, &height, &channels, mFormat.imposedChannels) : nullptr;
 
 		// Log an error message if the image couldn't be loaded in
 		if (!pixels8 && !pixels16) {
@@ -104,16 +115,16 @@ namespace ae
 			switch (channels)
 			{
 			case 4:
-				mFormat = Format(InternalFormat::RGBA8);
+				mFormat = Format((pixels8) ? InternalFormat::RGBA8 : InternalFormat::RGBA16);
 				break;
 			case 1:
-				mFormat = Format(InternalFormat::R8);
+				mFormat = Format((pixels8) ? InternalFormat::R8 : InternalFormat::R16);
 				break;
 			case 3:
 				mFormat = Format(InternalFormat::RGB8);
 				break;
 			case 2:
-				mFormat = Format(InternalFormat::RG8);
+				mFormat = Format((pixels8) ? InternalFormat::RG8 : InternalFormat::RG16);
 			}
 		}
 

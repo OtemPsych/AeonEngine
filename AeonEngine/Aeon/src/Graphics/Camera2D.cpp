@@ -27,10 +27,45 @@
 namespace ae
 {
 	// Public constructor(s)
-	Camera2D::Camera2D(float nearPlane, float farPlane)
+	Camera2D::Camera2D(bool flipY, float nearPlane, float farPlane)
 		: Camera(nearPlane, farPlane)
 		, mZoomFactor(1.f)
+		, mFlippedY(flipY)
 	{
+	}
+
+	Camera2D::Camera2D(Camera2D&& rvalue) noexcept
+		: Camera(std::move(rvalue))
+		, mZoomFactor(rvalue.mZoomFactor)
+		, mFlippedY(rvalue.mFlippedY)
+	{
+	}
+
+	// Public operator(s)
+	Camera2D& Camera2D::operator=(const Camera2D& other)
+	{
+		// Check if the caller is being assigned to itself
+		if (this == &other) {
+			AEON_LOG_WARNING("Invalid assignment", "The caller Camera2D is being assigned to itself.");
+			return *this;
+		}
+
+		// Copy the other's data
+		Camera::operator=(other);
+		mZoomFactor = other.mZoomFactor;
+		mFlippedY = other.mFlippedY;
+
+		return *this;
+	}
+
+	Camera2D& Camera2D::operator=(Camera2D&& rvalue) noexcept
+	{
+		// Copy the rvalue's data as moving them is redundant
+		Camera::operator=(std::move(rvalue));
+		mZoomFactor = rvalue.mZoomFactor;
+		mFlippedY = rvalue.mFlippedY;
+
+		return *this;
 	}
 
 	// Public method(s)
@@ -71,8 +106,9 @@ namespace ae
 			getFrustum(nearPlane, farPlane);
 
 			// Update the projection matrix
-			mProjectionMatrix = Matrix4f::orthographic(0.f, FRAME_SIZE.x, FRAME_SIZE.y, 0.f, nearPlane, farPlane);
-			mUpdateProjectionMatrix = false;
+			Vector2f viewCoordsY = (mFlippedY) ? Vector2f(0.f, FRAME_SIZE.y) : Vector2f(FRAME_SIZE.y, 0.f);
+			mProjectionMatrix = Matrix4f::orthographic(0.f, FRAME_SIZE.x, viewCoordsY[0], viewCoordsY[1], nearPlane, farPlane);
+			mUpdateInvProjectionMatrix = std::exchange(mUpdateProjectionMatrix, false);
 		}
 
 		return mProjectionMatrix;

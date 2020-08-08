@@ -63,17 +63,17 @@ namespace ae
 	void Texture::setFilter(Filter filter)
 	{
 		// Update the filter subject to the following conditions
-		if (mFilter != filter && (mHasMipmap || filter == Filter::None || filter == Filter::Nearest || filter == Filter::Linear)) {
+		if (mFilter != filter && (mHasMipmap || filter == Filter::Nearest || filter == Filter::Linear)) {
 			mFilter = filter;
 			
 			// Find the appropriate magnification filter as it can only use GL_NEAREST or GL_LINEAR
-			GLint GLMagFilter = (mFilter == Filter::Linear
-			                  || mFilter == Filter::Linear_MipLinear
-			                  || mFilter == Filter::Linear_MipNearest) ? GL_LINEAR : GL_NEAREST;
+			const GLint GL_MAG_FILTER = (mFilter == Filter::Linear
+			                          || mFilter == Filter::Linear_MipLinear
+			                          || mFilter == Filter::Linear_MipNearest) ? GL_LINEAR : GL_NEAREST;
 
 			// Apply the filter chosen
 			GLCall(glTextureParameteri(mHandle, GL_TEXTURE_MIN_FILTER, static_cast<GLint>(mFilter)));
-			GLCall(glTextureParameteri(mHandle, GL_TEXTURE_MAG_FILTER, GLMagFilter));
+			GLCall(glTextureParameteri(mHandle, GL_TEXTURE_MAG_FILTER, GL_MAG_FILTER));
 		}
 	}
 
@@ -146,15 +146,19 @@ namespace ae
 		GLCall(glCreateTextures(mBindingTarget, 1, &mHandle));
 
 		// Set the filter type and the wrapping mode
-		setFilter(filter);
-		setWrap(wrap);
+		if (filter != Filter::None) {
+			setFilter(filter);
+		}
+		if (wrap != Wrap::None) {
+			setWrap(wrap);
+		}
 	}
 
 	// Texture::Format
 		// Public constructor(s)
 	Texture::Format::Format(InternalFormat internalFormat) noexcept
 		: internal(internalFormat)
-		, base(GL_NONE)
+		, base(GL_RGBA)
 		, imposedChannels(0)
 		, bitCount(8)
 	{
@@ -183,11 +187,9 @@ namespace ae
 			imposedChannels = 3;
 			break;
 		case InternalFormat::RGBA8:
-			base = GL_RGBA;
 			imposedChannels = 4;
 			break;
 		case InternalFormat::RGBA16:
-			base = GL_RGBA;
 			imposedChannels = 4;
 			bitCount = 16;
 		}

@@ -32,7 +32,7 @@
 namespace ae
 {
 	// Global variable(s) (inaccessible from outside the source file)
-	int bindingPointCounter = 0; //!< Used to assign an incrementable binding point to each UBO created
+	int bindingPointCounter = 0; //!< Used to assign an incrementing binding point to each UBO created
 
 	// UniformBuffer
 		// Public constructor(s)

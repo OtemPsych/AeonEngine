@@ -84,6 +84,22 @@ namespace ae
 		*/
 		BlendMode() noexcept;
 		/*!
+		 \brief Copy constructor.
+		 
+		 \param[in] copy The ae::BlendMode that will be copied
+
+		 \since v0.5.0
+		*/
+		BlendMode(const BlendMode& copy) noexcept = default;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::BlendMode that will be copied
+
+		 \since v0.5.0
+		*/
+		BlendMode(BlendMode&& rvalue) noexcept;
+		/*!
 		 \brief Constructs the ae::BlendMode by providing the blending factors and equations to use.
 		 \details The same factors and the same equation will be used for both the color channels and the alpha channel.
 
@@ -121,6 +137,27 @@ namespace ae
 		          Factor alphaSrcFactor, Factor alphaDstFactor, Equation alphaEquation) noexcept;
 
 		// Public operator(s)
+		/*!
+		 \brief Assignment operator.
+		 \details Checks if the caller is being assigned to itself.
+
+		 \param[in] other The ae::BlendMode that will be copied
+
+		 \return The caller ae::BlendMode
+
+		 \since v0.5.0
+		*/
+		BlendMode& operator=(const BlendMode& other);
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::BlendMode that will be copied
+
+		 \return The caller ae::BlendMode
+
+		 \since v0.5.0
+		*/
+		BlendMode& operator=(BlendMode&& rvalue) noexcept;
 		/*!
 		 \brief Equality operator.
 		 \details Checks if the caller's and the \a other's members are respectively equal.
@@ -226,7 +263,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.22
+ \version v0.5.0
+ \date 2020.06.09
  \copyright MIT License
 */

@@ -120,7 +120,7 @@ namespace ae
 		 const ae::Matrix4f& viewMatrix = camera.getViewMatrix();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		_NODISCARD virtual const Matrix4f& getViewMatrix() override final;
 
@@ -223,7 +223,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.10.14
+ \version v0.5.0
+ \date 2020.08.03
  \copyright MIT License
 */

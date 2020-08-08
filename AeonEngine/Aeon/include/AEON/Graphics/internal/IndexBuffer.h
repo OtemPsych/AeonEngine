@@ -121,7 +121,7 @@ namespace ae
 
 		 \since v0.4.0
 		*/
-		void setData(int size, const unsigned int* data);
+		void setData(unsigned int size, const unsigned int* data);
 		/*!
 		 \brief Retrieves the ae::IndexBuffer's total number of indices.
 

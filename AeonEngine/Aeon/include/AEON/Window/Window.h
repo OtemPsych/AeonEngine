@@ -276,7 +276,7 @@ namespace ae
 		 mWindow.enableVerticalSync(true);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.5.0
 		*/
 		void enableVerticalSync(bool flag) const;
 		/*!

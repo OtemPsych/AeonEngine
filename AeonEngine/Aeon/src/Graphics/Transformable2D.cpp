@@ -30,17 +30,27 @@ namespace ae
 	}
 
 	// Public method(s)
-	void Transformable2D::setPosition(const Vector2f& position) noexcept
+	void Transformable2D::setPosition(const Vector2f& position, int zIndex) noexcept
 	{
-		mPosition = position;
+		mPosition.xy = position;
 		mUpdateTransform = true;
+
+		// Only modify the z position if it was manually set
+		if (zIndex != 0) {
+			mPosition.z = static_cast<float>(zIndex);
+		}
 	}
 
-	void Transformable2D::setPosition(float posX, float posY) noexcept
+	void Transformable2D::setPosition(float posX, float posY, int zIndex) noexcept
 	{
 		mPosition.x = posX;
 		mPosition.y = posY;
 		mUpdateTransform = true;
+
+		// Only modify the z position if it was manually set
+		if (zIndex != 0) {
+			mPosition.z = static_cast<float>(zIndex);
+		}
 	}
 
 	void Transformable2D::setRotation(float angle) noexcept
@@ -86,11 +96,13 @@ namespace ae
 
 			setOrigin(newOrigin);
 		}
+
+		mOriginFlags = flags;
 	}
 
 	void Transformable2D::move(const Vector2f& offset) noexcept
 	{
-		mPosition += offset;
+		mPosition.xy += offset;
 		mUpdateTransform = true;
 	}
 
@@ -122,8 +134,14 @@ namespace ae
 
 	void Transformable2D::lookat(const Vector2f& focus)
 	{
-		const Vector2f deltaPos = focus - mPosition;
+		const Vector2f deltaPos = focus - mPosition.xy;
 		setRotation(Math::toDegrees(Math::atan2(deltaPos.y, deltaPos.x)));
+	}
+
+	void Transformable2D::setOrigin(const Vector2f& origin) noexcept
+	{
+		mOrigin = origin;
+		mUpdateTransform = true;
 	}
 
 	const Matrix4f& Transformable2D::getTransform()
@@ -137,7 +155,7 @@ namespace ae
 			}
 
 			// Calculate the model transform
-			mTransform = Matrix4f::translate(Vector3f(mPosition)) * rotation * Matrix4f::scale(Vector3f(mScale));
+			mTransform = Matrix4f::translate(mPosition - Vector3f(mOrigin)) * rotation * Matrix4f::scale(Vector3f(mScale));
 			mUpdateInvTransform = std::exchange(mUpdateTransform, false);
 		}
 
@@ -155,7 +173,7 @@ namespace ae
 		return mInvTransform;
 	}
 
-	const Vector2f& Transformable2D::getPosition() const noexcept
+	const Vector3f& Transformable2D::getPosition() const noexcept
 	{
 		return mPosition;
 	}
@@ -183,23 +201,53 @@ namespace ae
 		return Box2f(Vector2f(transform * Vector3f(MODEL_BOUNDS.min)), Vector2f(transform * Vector3f(MODEL_BOUNDS.max)));
 	}
 
-	// Public virtual method(s)
-	void Transformable2D::setOrigin(const Vector2f& origin) noexcept
-	{
-		mOrigin = origin;
-		mUpdateTransform = true;
-	}
-
 	// Protected constructor(s)
 	Transformable2D::Transformable2D() noexcept
 		: mTransform(1.f)
 		, mInvTransform(1.f)
-		, mPosition(0.f, 0.f)
+		, mPosition(0.f, 0.f, 0.f)
 		, mScale(1.f, 1.f)
 		, mOrigin(0.f, 0.f)
 		, mRotation(0.f)
+		, mOriginFlags(OriginFlag::Left | OriginFlag::Top)
 		, mUpdateTransform(false)
 		, mUpdateInvTransform(false)
 	{
+	}
+
+	Transformable2D::Transformable2D(Transformable2D&& rvalue) noexcept
+		: mTransform(std::move(rvalue.mTransform))
+		, mInvTransform(std::move(rvalue.mInvTransform))
+		, mPosition(std::move(rvalue.mPosition))
+		, mScale(std::move(rvalue.mScale))
+		, mOrigin(std::move(rvalue.mOrigin))
+		, mRotation(rvalue.mRotation)
+		, mOriginFlags(rvalue.mOriginFlags)
+		, mUpdateTransform(rvalue.mUpdateTransform)
+		, mUpdateInvTransform(rvalue.mUpdateInvTransform)
+	{
+	}
+
+	// Protected operator(s)
+	Transformable2D& Transformable2D::operator=(Transformable2D&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		mTransform = std::move(rvalue.mTransform);
+		mInvTransform = std::move(rvalue.mInvTransform);
+		mPosition = std::move(rvalue.mPosition);
+		mScale = std::move(rvalue.mScale);
+		mOrigin = std::move(rvalue.mOrigin);
+		mRotation = rvalue.mRotation;
+		mOriginFlags = rvalue.mOriginFlags;
+		mUpdateTransform = rvalue.mUpdateTransform;
+		mUpdateInvTransform = rvalue.mUpdateInvTransform;
+
+		return *this;
+	}
+
+	// Protected virtual method(s)
+	void Transformable2D::correctProperties()
+	{
+		setOriginFlags(mOriginFlags);
 	}
 }

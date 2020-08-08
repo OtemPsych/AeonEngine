@@ -156,7 +156,7 @@ namespace ae
 
 		 \sa getFilter(), generateMipmap(), setWrap()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		void setFilter(Filter filter);
 
@@ -260,7 +260,7 @@ namespace ae
 		 \param[in] wrap The ae::Texture::Wrap mode that will be employed once the normalized coordinates aren't in the range [0,1]
 		 \param[in] internalFormat The ae::Texture::InternalFormat of the image data
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		Texture(uint32_t target, Filter filter, Wrap wrap, InternalFormat internalFormat);
 
@@ -282,19 +282,19 @@ namespace ae
 
 			 \param[in] internalFormat The ae::Texture::InternalFormat of the image data
 
-			 \since v0.4.0
+			 \since v0.5.0
 			*/
 			explicit Format(InternalFormat internalFormat) noexcept;
 		};
 	protected:
 		// Protected member(s)
-		Format         mFormat;         //!< The information regarding the image data's format
-		Wrap           mWrap;           //!< The wrapping mode to employ once the normalized coordinates aren't in the range [0,1]
-		uint32_t       mBindingTarget;  //!< The binding target of the OpenGL texture
-		bool           mHasMipmap;      //!< Whether a mipmap has been generated
+		Format   mFormat;        //!< The information regarding the image data's format
+		Wrap     mWrap;          //!< The wrapping mode to employ once the normalized coordinates aren't in the range [0,1]
+		uint32_t mBindingTarget; //!< The binding target of the OpenGL texture
+		bool     mHasMipmap;     //!< Whether a mipmap has been generated
 	private:
 		// Private member(s)
-		Filter         mFilter;         //!< The filtering type to apply
+		Filter   mFilter;        //!< The filtering type to apply
 	};
 }
 #endif // Aeon_Graphics_Texture_H_
@@ -308,7 +308,7 @@ namespace ae
  VRAM so this class is simply an intermediary to that data.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.03.19
+ \version v0.5.0
+ \date 2020.08.01
  \copyright MIT License
 */

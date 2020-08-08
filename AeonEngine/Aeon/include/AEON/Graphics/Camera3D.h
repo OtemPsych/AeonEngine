@@ -110,7 +110,7 @@ namespace ae
 		 const ae::Matrix4f& projectionMatrix = camera.getProjectionMatrix();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		_NODISCARD virtual const Matrix4f& getProjectionMatrix() override final;
 	protected:
@@ -148,7 +148,7 @@ namespace ae
  in FPS (First-Person Shooter) games).
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.10.13
+ \version v0.5.0
+ \date 2020.08.03
  \copyright MIT License
 */

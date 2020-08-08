@@ -50,17 +50,20 @@ namespace ae
 
 		// Clear the color and depth buffers
 		unsigned int fboHandle = getFramebufferHandle();
+		//GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 		GLCall(glClearNamedFramebufferfv(fboHandle, GL_COLOR, 0, mClearColor.elements.data()));
-		GLCall(glClearNamedFramebufferfv(fboHandle, GL_DEPTH, 0, &depthValue));
+		GLCall(glClearNamedFramebufferfi(fboHandle, GL_DEPTH_STENCIL, 0, depthValue, 0));
 	}
 
 	void RenderTarget::activate()
 	{
-		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, getFramebufferHandle()));
-		GLCall(glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y));
-		clear();
+		if (activeTarget != this) {
+			activeTarget = this;
 
-		activeTarget = this;
+			GLCall(glBindFramebuffer(GL_FRAMEBUFFER, getFramebufferHandle()));
+			GLCall(glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y));
+		}
+		clear();
 	}
 
 	void RenderTarget::setClearColor(const Color& color)
@@ -79,12 +82,12 @@ namespace ae
 		}
 
 		// Convert the pixel to homogeneous coordinates
-		const Box2f VIEWPORT = getViewport();
+		const Box2i VIEWPORT = getViewport();
 		const Vector2f NDC(-1.f + 2.f * (pixel.x - VIEWPORT.min.x) / VIEWPORT.max.x,
 		                    1.f - 2.f * (pixel.y - VIEWPORT.min.y) / VIEWPORT.max.y);
 
-		// Transform the homogeneous coordinates by the inverse of the projection matrix
-		return Vector2f(mCamera->getProjectionMatrix().invert() * Vector3f(NDC));
+		// Transform the homogeneous coordinates by the inverse of the view and the inverse of the projection matrices
+		return Vector2f(mCamera->getInverseViewMatrix() * mCamera->getInverseProjectionMatrix() * Vector3f(NDC));
 	}
 
 	Vector2f RenderTarget::mapCoordsToPixel(const Vector2f& point) const
@@ -152,9 +155,23 @@ namespace ae
 		, mClearColor(Color::Black.normalize())
 		, mCamera(nullptr)
 	{
-		// The window will be the first render target, so set it as active
-		if (!activeTarget) {
-			activeTarget = this;
-		}
+	}
+
+	RenderTarget::RenderTarget(RenderTarget&& rvalue) noexcept
+		: mFramebufferSize(std::move(rvalue.mFramebufferSize))
+		, mClearColor(std::move(rvalue.mClearColor))
+		, mCamera(std::move(rvalue.mCamera))
+	{
+	}
+
+	// Protected operator(s)
+	RenderTarget& RenderTarget::operator=(RenderTarget&& rvalue) noexcept
+	{
+		// Move the rvalue's data
+		mFramebufferSize = std::move(rvalue.mFramebufferSize);
+		mClearColor = std::move(rvalue.mClearColor);
+		mCamera = std::move(rvalue.mCamera);
+
+		return *this;
 	}
 }

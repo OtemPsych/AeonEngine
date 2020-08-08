@@ -33,10 +33,20 @@
 #include <AEON/Graphics/GLResourceFactory.h>
 #include <AEON/Graphics/Shader.h>
 #include <AEON/Graphics/Transformable.h>
+#include <AEON/Graphics/Transformable2D.h>
 #include <AEON/Graphics/Texture.h>
 #include <AEON/Graphics/Texture2D.h>
 #include <AEON/Graphics/Material.h>
 #include <AEON/Graphics/Renderer2D.h>
+#include <AEON/Graphics/Font.h>
+#include <AEON/Graphics/RenderTexture.h>
+#include <AEON/Graphics/RenderStates.h>
+#include <AEON/Graphics/TextureAtlas.h>
+#include <AEON/Graphics/Actor2D.h>
+#include <AEON/Graphics/Sprite.h>
+#include <AEON/Graphics/EllipseShape.h>
+#include <AEON/Graphics/RectangleShape.h>
+#include <AEON/Graphics/Text.h>
 
 #endif // Aeon_Graphics_H_
 

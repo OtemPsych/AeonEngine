@@ -22,12 +22,12 @@
 
 #include <AEON/Graphics/Renderer2D.h>
 
-#include <iostream>
-
 #include <GL/glew.h>
 
 #include <AEON/Graphics/internal/GLCommon.h>
 #include <AEON/Graphics/Camera.h>
+
+#include <iostream>
 
 namespace ae
 {
@@ -46,19 +46,18 @@ namespace ae
 
 	void Renderer2D::endScene()
 	{
+		glEnable(GL_DEPTH_TEST);
+
 		mRenderTarget->activate();
 
 		mSpriteVAO->bind();
-		//mTransformUBO->bind();
-		mSpriteIBO->bind();
-		//mSpriteVBO->bind();
 
-		for (const auto& shaderPass : mDrawcalls)
+		for (auto& shaderPass : mDrawcalls)
 		{
 			shaderPass.first->bind();
 
-			const BlendPass& blendPasses = shaderPass.second;
-			for (const auto& blendPass : blendPasses)
+			BlendPass& blendPasses = shaderPass.second;
+			for (auto& blendPass : blendPasses)
 			{
 				if (blendPass.first != BlendMode::BlendNone) {
 					GLCall(glEnable(GL_BLEND));
@@ -70,55 +69,46 @@ namespace ae
 					GLCall(glDisable(GL_BLEND));
 				}
 
-				const TexturePass& texturePasses = blendPass.second;
-				for (const auto& texturePass : texturePasses)
+				TexturePass& texturePasses = blendPass.second;
+				for (auto& texturePass : texturePasses)
 				{
 					texturePass.first->bind();
 
-					mSpriteVBO->setData(static_cast<int>(sizeof(Vertex2D) * texturePass.second.vertices.size()), nullptr);
-					void* vboMap = mSpriteVBO->map(GL_WRITE_ONLY);
-
 					// Upload vertices
-					const std::vector<Vertex2D>& vertices = texturePass.second.vertices;
-					uint64_t offset = 0;
-					for (const Vertex2D& vertex : vertices)
-					{
-						// Upload position
-						memcpy(static_cast<void*>(static_cast<char*>(vboMap) + offset), vertex.position.elements.data(), sizeof(Vertex2D::position));
-						offset += sizeof(Vertex2D::position);
-
-						// Upload color
-						memcpy(static_cast<void*>(static_cast<char*>(vboMap) + offset), vertex.color.elements.data(), sizeof(Vertex2D::color));
-						offset += sizeof(Vertex2D::color);
-
-						// Upload uv coordinates
-						memcpy(static_cast<void*>(static_cast<char*>(vboMap) + offset), vertex.uv.elements.data(), sizeof(Vertex2D::uv));
-						offset += sizeof(Vertex2D::uv);
-					}
-					mSpriteVBO->unmap();
+					VertexBuffer* const vboPtr = mSpriteVAO->getVBO(0);
+					vboPtr->setData(static_cast<int>(sizeof(Vertex2D) * texturePass.second.vertices.size()), texturePass.second.vertices.data());
 
 					// Upload indices
-					const std::vector<unsigned int>& indices = texturePass.second.indices;
-					mSpriteIBO->setData(static_cast<int>(indices.size() * sizeof(GLuint)), indices.data());
+					std::vector<unsigned int>& indices = texturePass.second.indices;
+					IndexBuffer* const iboPtr = mSpriteVAO->getIBO();
+					iboPtr->setData(indices.size() * sizeof(GLuint), indices.data());
 
 					// Draw indices
-					GLCall(glDrawElements(GL_TRIANGLES, mSpriteIBO->getCount(), GL_UNSIGNED_INT, nullptr));
+					GLCall(glDrawElements(GL_TRIANGLES, iboPtr->getCount(), GL_UNSIGNED_INT, nullptr));
 
 					texturePass.first->unbind();
+
+					// Delete the stored submissions that weren't resubmitted this frame
+					deleteSubmissions(texturePass.second);
+					// Reset the cached submissions flag
+					for (auto& submission : texturePass.second.subData) {
+						submission.second.resubmitted = false;
+					}
 				}
 			}
 
 			shaderPass.first->unbind();
 		}
 
-		//mSpriteVBO->unbind();
-		mSpriteIBO->unbind();
-		//mTransformUBO->unbind();
 		mSpriteVAO->unbind();
-		mDrawcalls.clear();
 	}
 
-	void Renderer2D::submit(Renderable2D& renderable, const RenderStates& states)
+	void Renderer2D::submit(const Renderable2D& renderable, const RenderStates& states, bool dirty)
+	{
+		submit(renderable.getVertices(), renderable.getIndices(), states, dirty);
+	}
+
+	void Renderer2D::submit(const std::vector<Vertex2D>& vertices, const std::vector<unsigned int>& indices, const RenderStates& states, bool dirty)
 	{
 		// Find existing shader pass or create a new one
 		auto shaderItr = mDrawcalls.find(states.shader);
@@ -141,22 +131,47 @@ namespace ae
 			textureItr = texturePasses.emplace(texture, RenderData()).first;
 		}
 
-		// Retrieve the list of vertices and store them
-		const std::vector<Vertex2D>& vertices = renderable.getVertices();
-		std::vector<Vertex2D>& vertexList = textureItr->second.vertices;
-		vertexList.reserve(vertices.size());
-		for (const Vertex2D& vertex : vertices) {
-			vertexList.emplace_back(Vertex2D{ Vector2f(states.transform * Vector3f(vertex.position)), vertex.uv, vertex.color });
+		// Check if submission is cached
+		auto subFound = textureItr->second.subData.find(&vertices);
+		if (subFound != textureItr->second.subData.end()) {
+			subFound->second.resubmitted = true;
+			if (dirty || textureItr->second.transform != states.transform) {
+				if (subFound->second.indexCount == indices.size()) {
+					auto cachedVertexItr = textureItr->second.vertices.begin() + subFound->second.vertexOffset;
+					for (auto vertexItr = vertices.begin(); vertexItr != vertices.end(); ++vertexItr, ++cachedVertexItr) {
+						*cachedVertexItr = Vertex2D{ Vector3f(Vector2f(states.transform * Vector3f(vertexItr->position.xy)), vertexItr->position.z), vertexItr->color, vertexItr->uv };
+					}
+					textureItr->second.transform = states.transform;
+				}
+				else {
+					subFound->second.resubmitted = false;
+				}
+			}
+		}
+		else {
+			// Retrieve the list of vertices and store them
+			std::vector<Vertex2D>& vertexList = textureItr->second.vertices;
+			vertexList.reserve(vertices.size());
+			for (const Vertex2D& vertex : vertices) {
+				vertexList.emplace_back(Vertex2D{ Vector3f(Vector2f(states.transform * Vector3f(vertex.position.xy)), vertex.position.z), vertex.color, vertex.uv });
+			}
+
+			// Retrieve the list of indices and store them
+			std::vector<unsigned int>& indexList = textureItr->second.indices;
+			indexList.reserve(indices.size());
+			for (const unsigned int& index : indices) {
+				indexList.emplace_back(index + textureItr->second.indexOffset);
+			}
+			auto minMaxIndices = std::minmax_element(indices.begin(), indices.end());
+			textureItr->second.indexOffset += *minMaxIndices.second + 1;
+
+			// Store the transform
+			textureItr->second.transform = states.transform;
+
+			// Create submission
+			textureItr->second.subData.emplace(&vertices, SubmissionData{ vertexList.size() - vertices.size(), indices.size(), true });
 		}
 
-		// Retrieve the list of indices and store them
-		const std::vector<unsigned int>& indices = renderable.getIndices();
-		std::vector<unsigned int>& indexList = textureItr->second.indices;
-		indexList.reserve(indices.size());
-		for (const unsigned int& index : indices) {
-			indexList.emplace_back(index + textureItr->second.indexOffset);
-		}
-		textureItr->second.indexOffset += *std::max_element(indices.begin(), indices.end()) + 1;
 	}
 
 	// Public static method(s)
@@ -168,26 +183,25 @@ namespace ae
 
 	// Private constructor(s)
 	Renderer2D::Renderer2D()
-		: mTransformUBO(GLResourceFactory::getInstance().create<UniformBuffer>("TransformUBO"))
-		, mSpriteVAO(GLResourceFactory::getInstance().create<VertexArray>("SpriteVAO"))
-		, mSpriteVBO(nullptr)
-		, mSpriteIBO(GLResourceFactory::getInstance().create<IndexBuffer>("SpriteIBO", GL_DYNAMIC_DRAW))
-		, mSpriteShader(GLResourceFactory::getInstance().get<Shader>("Sprite"))
+		: mTransformUBO(GLResourceFactory::getInstance().get<UniformBuffer>("_AEON_TransformUBO"))
+		, mSpriteVAO(GLResourceFactory::getInstance().get<VertexArray>("_AEON_VAO"))
 		, mRenderTarget(nullptr)
-		, mWhiteTexture(GLResourceFactory::getInstance().create<Texture2D>("_AEON_WhiteTexture", Texture2D::Filter::Linear, Texture2D::Wrap::Repeat, Texture2D::InternalFormat::RGBA8))
+		, mWhiteTexture(GLResourceFactory::getInstance().get<Texture2D>("_AEON_WhiteTexture"))
 		, mDrawcalls()
 	{
-		mTransformUBO->queryLayout(*mSpriteShader, "uTransformBlock", { "model", "view", "projection", "viewProjection", "mvp" });
-		mSpriteShader->addUniformBuffer(mTransformUBO.get());
+	}
 
-		auto vbo = std::make_unique<VertexBuffer>(GL_DYNAMIC_DRAW);
-		vbo->getLayout().addElement(GL_FLOAT, 2, GL_FALSE);
-		vbo->getLayout().addElement(GL_FLOAT, 4, GL_FALSE);
-		vbo->getLayout().addElement(GL_FLOAT, 2, GL_FALSE);
-		mSpriteVBO = vbo.get();
-		mSpriteVAO->addBuffer(std::move(vbo));
+	void Renderer2D::deleteSubmissions(RenderData& renderData)
+	{
+		std::vector<unsigned int>& indices = renderData.indices;
+		std::vector<Vertex2D>& vertices = renderData.vertices;
 
-		uint32_t white = 0xffffffff;
-		mWhiteTexture->create(2, 2, &white);
+		// Remove render data if at least one submission wasn't resubmitted this frame
+		for (const auto& sub : renderData.subData) {
+			if (!sub.second.resubmitted) {
+				renderData = RenderData();
+				break;
+			}
+		}
 	}
 }

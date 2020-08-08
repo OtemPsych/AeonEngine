@@ -65,9 +65,14 @@ namespace ae
 		// Public method(s)
 		/*!
 		 \brief Sets the ae::Transformable2D's position in world-space.
+		 \details It's also possible to set the ae::Transformable2D's z
+		 position to manually handle z-ordering, but this is also managed
+		 automatically by the ae::Actor2D scene graph architecture.
 		 \note This method replaces the previous position.
+		 A z-index of 0 will not replace the current position along the Z axis.
 
 		 \param[in] position A 2-dimensional ae::Vector containing the new position
+		 \param[in] zIndex The z position to manually handle z-ordering, 0 by default
 
 		 \par Example:
 		 \code
@@ -77,15 +82,20 @@ namespace ae
 
 		 \sa move(), getPosition()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		void setPosition(const Vector2f& position) noexcept;
+		void setPosition(const Vector2f& position, int zIndex = 0) noexcept;
 		/*!
 		 \brief Sets the ae::Transformable2D's position in world-space.
+		 \details It's also possible to set the ae::Transformable2D's z
+		 position to manually handle z-ordering, but this is also managed
+		 automatically by the ae::Actor2D scene graph architecture.
 		 \note This method replaces the previous position.
+		 A z-index of 0 will not replace the current position along the Z axis.
 
 		 \param[in] posX The new horizontal position
 		 \param[in] posY The new vertical position
+		 \param[in] zIndex The z position to manually handle z-ordering, 0 by default
 
 		 \par Example:
 		 \code
@@ -97,7 +107,7 @@ namespace ae
 
 		 \since v0.4.0
 		*/
-		void setPosition(float posX, float posY) noexcept;
+		void setPosition(float posX, float posY, int zIndex = 0) noexcept;
 		/*!
 		 \brief Sets the ae::Transformable2D's rotation by providing an angle in degrees.
 		 \note This method replaces the previous rotation.
@@ -224,14 +234,14 @@ namespace ae
 		 \par Example:
 		 \code
 		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
-		 sprite->setRotation(90.f); // Rotation: 90°
+		 sprite->setRotation(90.f); // Rotation: 90 degrees
 		 ...
-		 sprite->rotate(15.f);      // Rotation: 105°
+		 sprite->rotate(15.f);      // Rotation: 105 degrees
 		 \endcode
 
 		 \sa setRotation(), getRotation()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		void rotate(float angle) noexcept;
 		/*!
@@ -295,6 +305,24 @@ namespace ae
 		*/
 		void lookat(const Vector2f& focus);
 		/*!
+		 \brief Sets the ae::Transformable2D's local origin (or anchor point).
+		 \details An origin of (0, 0) places the origin at the top left part of the entity.
+		 \note Origin flags provide a more accessible way to set the local origin rather than directly setting it manually.
+
+		 \param[in] origin A 2-dimensional ae::Vector containing the local origin, (0, 0) by default
+
+		 \par Example:
+		 \code
+		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
+		 sprite->setOrigin(getModelBounds().max / 2.f);
+		 \endcode
+
+		 \sa setOriginFlags(), getOrigin()
+
+		 \since v0.5.0
+		*/
+		void setOrigin(const Vector2f& origin) noexcept;
+		/*!
 		 \brief Retrieves the ae::Transformable2D's model transform.
 		 \details The model transform is used to convert the ae::Transformable2D from local coordinates to world coordinates.
 		 \note The model transform may be updated (if necessary) before being retrieved.
@@ -304,14 +332,14 @@ namespace ae
 		 \par Example:
 		 \code
 		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
-		 sprite->setPosition(50.f, 25.f); // transform will be recomputed when required
+		 sprite->setPosition(50.f, 25.f); // transform will be recomputed when requested
 
 		 const ae::Matrix4f& transform = sprite->getTransform(); // transform recomputed
 		 \endcode
 
 		 \sa getInverseTransform()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		const Matrix4f& getTransform();
 		/*!
@@ -321,28 +349,36 @@ namespace ae
 
 		 \return The ae::Matrix4f containing the ae::Transformable2D's inverse model transform
 
+		 \par Example:
+		 \code
+		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
+		 sprite->setPosition(50.f, 25.f); // inverse transform will be recomputed when requested
+
+		 const ae::Matrix4f& invTransform = sprite->getInverseTransform(); // inverse transform recomputed
+		 \endcode
+
 		 \sa getTransform()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		const Matrix4f& getInverseTransform();
 		/*!
 		 \brief Retrieves the ae::Transformable2D's position in world-space.
 
-		 \return The 2-dimensional ae::Vector containing the ae::Transformable2D's position in world-space
+		 \return The 3-dimensional ae::Vector containing the ae::Transformable2D's position in world-space
 
 		 \par Example:
 		 \code
 		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
 		 ...
-		 const ae::Vector2f& position = sprite->getPosition();
+		 const ae::Vector3f& position = sprite->getPosition();
 		 \endcode
 
 		 \sa setPosition()
 
 		 \since v0.4.0
 		*/
-		_NODISCARD const Vector2f& getPosition() const noexcept;
+		_NODISCARD const Vector3f& getPosition() const noexcept;
 		/*!
 		 \brief Retrieves the ae::Transformable2D's angle of rotation in degrees.
 
@@ -352,12 +388,12 @@ namespace ae
 		 \code
 		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
 		 ...
-		 float angle = sprite->getAngle();
+		 float angle = sprite->getRotation();
 		 \endcode
 
 		 \sa setRotation()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		_NODISCARD float getRotation() const noexcept;
 		/*!
@@ -415,23 +451,6 @@ namespace ae
 
 		// Public virtual method(s)
 		/*!
-		 \brief Sets the ae::Transformable2D's local origin (or anchor point).
-		 \details An origin of (0, 0) places the origin at the top left part of the entity.
-
-		 \param[in] origin A 2-dimensional ae::Vector containing the local origin, (0, 0) by default
-
-		 \par Example:
-		 \code
-		 auto sprite = std::make_unique<ae::Sprite>(someTexture);
-		 sprite->setOrigin(getModelBounds().max / 2.f);
-		 \endcode
-
-		 \sa setOriginFlags(), getOrigin()
-
-		 \since v0.4.0
-		*/
-		virtual void setOrigin(const Vector2f& origin) noexcept;
-		/*!
 		 \brief Retrieves the ae::Transformable2D's model bounding box.
 		 \note Derived classes define the model bounding box.
 
@@ -458,16 +477,58 @@ namespace ae
 		 \since v0.4.0
 		*/
 		Transformable2D() noexcept;
+		/*!
+		 \brief Deleted copy constructor.
+
+		 \since v0.5.0
+		*/
+		Transformable2D(const Transformable2D&) = delete;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Transformable2D that will be moved
+
+		 \since v0.5.0
+		*/
+		Transformable2D(Transformable2D&& rvalue) noexcept;
+	protected:
+		// Protected operator(s)
+		/*!
+		 \brief Deleted assignment operator.
+
+		 \since v0.5.0
+		*/
+		Transformable2D& operator=(const Transformable2D&) = delete;
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Transformable2D that will be moved
+
+		 \return The caller ae::Transformable2D
+
+		 \since v0.5.0
+		*/
+		Transformable2D& operator=(Transformable2D&& rvalue) noexcept;
+	protected:
+		// Protected virtual method(s)
+		/*!
+		 \brief Recalculates the correct origin position based on the origin flags.
+
+		 \sa setOriginFlags()
+
+		 \since v0.5.0
+		*/
+		virtual void correctProperties();
 
 	private:
 		// Private member(s)
 		Matrix4f mTransform;          //!< The model transform
 		Matrix4f mInvTransform;       //!< The inverse model transform
-		Vector2f mPosition;           //!< The position in world-space
+		Vector3f mPosition;           //!< The position in world-space
 		Vector2f mScale;              //!< The scale factors
 		Vector2f mOrigin;             //!< The local origin or the anchor point
 		float    mRotation;           //!< The rotation in degrees along the Z axis
-
+		uint32_t mOriginFlags;        //!< The origin flags indicating the origin point
 		bool     mUpdateTransform;    //!< Whether the model transform needs to be updated
 		bool     mUpdateInvTransform; //!< Whether the inverse model transform needs to be updated
 	};
@@ -483,7 +544,7 @@ namespace ae
  rotated and scaled.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.24
+ \version v0.5.0
+ \date 2020.08.07
  \copyright MIT License
 */

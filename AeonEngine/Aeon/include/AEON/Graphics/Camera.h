@@ -23,10 +23,6 @@
 #ifndef Aeon_Graphics_Camera_H_
 #define Aeon_Graphics_Camera_H_
 
-#include <yvals_core.h>
-
-#include <AEON/Config.h>
-#include <AEON/Math/Vector2.h>
 #include <AEON/Math/Vector3.h>
 #include <AEON/Math/Matrix.h>
 #include <AEON/Math/AABoxCollider.h>
@@ -215,7 +211,7 @@ namespace ae
 		 camera.lookAt(ae::Vector3f(5.f, -2.f, -8.f));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		void lookAt(const Vector3f& focus) noexcept;
 		/*!
@@ -370,6 +366,24 @@ namespace ae
 		 \since v0.4.0
 		*/
 		_NODISCARD const Matrix4f& getInverseViewMatrix();
+		/*!
+		 \brief Retrieves the ae::Camera's inverse projection matrix.
+		 \details The inverse projection matrix will be updated (if necessary) before being retrieved.
+
+		 \return An ae::Matrix4f containing the inverse projection matrix
+
+		 \par Example:
+		 \code
+		 ae::Camera3D camera;
+		 ...
+		 const ae::Matrix4f& invProjectionMatrix = camera.getInverseProjectionMatrix();
+		 \endcode
+
+		 \sa getProjectionMatrix()
+
+		 \since v0.5.0
+		*/
+		_NODISCARD const Matrix4f& getInverseProjectionMatrix();
 
 		// Public virtual method(s)
 		/*!
@@ -402,7 +416,7 @@ namespace ae
 
 		 \sa getInverseViewMatrix(), getProjectionMatrix()
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
 		_NODISCARD virtual const Matrix4f& getViewMatrix();
 		/*!
@@ -438,58 +452,59 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \param[in] copy The ae::Camera that will be copied
-
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Camera(const Camera& copy) noexcept = default;
+		Camera(const Camera&) noexcept = default;
 		/*!
 		 \brief Move constructor.
 
 		 \param[in] rvalue The ae::Camera rvalue that will be moved
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Camera(Camera&& rvalue) noexcept = default;
+		Camera(Camera&& rvalue) noexcept;
 	protected:
 		// Protected operator(s)
 		/*!
 		 \brief Assignment operator.
+		 \details Checks if the caller is being assigned to itself.
 
 		 \param[in] other The ae::Camera that will be copied
 
-		 \return The newly-constructed ae::Camera
+		 \return The caller ae::Camera
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Camera& operator=(const Camera& other) noexcept = default;
+		Camera& operator=(const Camera& other);
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Camera rvalue that will be moved
+		 \param[in] rvalue The ae::Camera that will be moved
 
-		 \return The moved ae::Camera
+		 \return The caller ae::Camera
 
-		 \since v0.4.0
+		 \since v0.5.0
 		*/
-		Camera& operator=(Camera&& rvalue) noexcept = default;
+		Camera& operator=(Camera&& rvalue) noexcept;
 
 	protected:
 		// Protected member(s)
-		Matrix4f            mViewMatrix;             //!< The view matrix
-		Matrix4f            mProjectionMatrix;       //!< The projection matrix
-		Quaternion          mRotation;               //!< The camera's rotation
-		bool                mUpdateViewMatrix;       //!< Whether or not the view matrix must be updated
-		bool                mUpdateInvViewMatrix;    //!< Whether or not the inverse view matrix must be updated
-		bool                mUpdateProjectionMatrix; //!< Whether or not the projection matrix must be updated
-		const RenderTarget* mTarget;                 //!< The associated render target
+		Matrix4f            mViewMatrix;                //!< The view matrix
+		Matrix4f            mProjectionMatrix;          //!< The projection matrix
+		Quaternion          mRotation;                  //!< The camera's rotation
+		bool                mUpdateViewMatrix;          //!< Whether or not the view matrix must be updated
+		bool                mUpdateInvViewMatrix;       //!< Whether or not the inverse view matrix must be updated
+		bool                mUpdateProjectionMatrix;    //!< Whether or not the projection matrix must be updated
+		bool                mUpdateInvProjectionMatrix; //!< Whether or not the inverse projection matrix must be updated
+		const RenderTarget* mTarget;                    //!< The associated render target
 	private:
 		// Private member(s)
-		Matrix4f            mInvViewMatrix;          //!< The inverse view matrix
-		Box2f               mViewport;               //!< The viewport rectangle
-		Vector3f            mPosition;               //!< The camera's position
-		float               mNearPlane;              //!< The distance to the near plane in the Z-axis
-		float               mFarPlane;               //!< The distance to the far plane in the Z-axis
+		Matrix4f            mInvViewMatrix;             //!< The inverse view matrix
+		Matrix4f            mInvProjectionMatrix;       //!< The inverse projection matrix
+		Box2f               mViewport;                  //!< The viewport rectangle
+		Vector3f            mPosition;                  //!< The camera's position
+		float               mNearPlane;                 //!< The distance to the near plane in the Z-axis
+		float               mFarPlane;                  //!< The distance to the far plane in the Z-axis
 	};
 }
 #endif // Aeon_Graphics_Camera_H_
@@ -504,7 +519,7 @@ namespace ae
  scene objects are rendered.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.10.13
+ \version v0.5.0
+ \date 2020.06.03
  \copyright MIT License
 */

@@ -31,6 +31,7 @@ namespace ae
 		, mParent(nullptr)
 		, mChildren()
 		, mFuncs()
+		, mAlignment(std::make_pair(false, std::make_pair(OriginFlag::Top | OriginFlag::Left, 0.f)))
 	{
 		// Initialize the associate functionalities and targets
 		mFuncs = {
@@ -40,21 +41,32 @@ namespace ae
 		};
 	}
 
-	Actor2D::Actor2D(const Actor2D& copy)
-		: Transformable2D(copy)
-		, Renderable2D(copy)
-		, mParent(copy.mParent)
-		, mChildren()
-		, mFuncs(copy.mFuncs)
+	Actor2D::Actor2D(Actor2D&& rvalue) noexcept
+		: Transformable2D(std::move(rvalue))
+		, Renderable2D(std::move(rvalue))
+		, mParent(rvalue.mParent)
+		, mChildren(std::move(mChildren))
+		, mFuncs(std::move(rvalue.mFuncs))
+		, mAlignment(std::move(rvalue.mAlignment))
 	{
-		// Create copies of the children and add them in
-		for (const auto& child : copy.mChildren) {
-			mChildren.emplace_back(std::make_unique<Actor2D>(*child));
-		}
 	}
 
 	Actor2D::~Actor2D()
 	{
+	}
+
+	// Public operator(s)
+	Actor2D& Actor2D::operator=(Actor2D&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		Transformable2D::operator=(std::move(rvalue));
+		Renderable2D::operator=(std::move(rvalue));
+		mParent = rvalue.mParent;
+		mChildren = std::move(rvalue.mChildren);
+		mFuncs = std::move(rvalue.mFuncs);
+		mAlignment = std::move(rvalue.mAlignment);
+
+		return *this;
 	}
 
 	// Public method(s)
@@ -62,6 +74,10 @@ namespace ae
 	{
 		child->mParent = this;
 		mChildren.push_back(std::move(child));
+
+		// Update Z-ordering
+		const int ZINDEX = (mParent) ? static_cast<int>(getPosition().z) : 0;
+		updateZOrdering(ZINDEX);
 	}
 
 	std::unique_ptr<Actor2D> Actor2D::detachChild(const Actor2D& child)
@@ -78,37 +94,68 @@ namespace ae
 		// Nullify the child's parent, remove it from the list and return it
 		std::unique_ptr<Actor2D> result = std::move(*found);
 		result->mParent = nullptr;
+		result->updateZOrdering(0);
 		mChildren.erase(found);
 
 		return std::move(result);
 	}
 
-	bool Actor2D::handleEvent(Event* const event)
+	void Actor2D::setRelativeAlignment(uint32_t alignmentFlags, float padding)
 	{
-		bool allow = true;
-		if (mFuncs[Func::EventHandle][Target::Self]) {
-			allow = handleEventSelf(event);
-		}
-		if (allow && mFuncs[Func::EventHandle][Target::Children]) {
-			allow = handleEventChildren(event);
+		// Check if the caller has a parent
+		if (!mParent) {
+			AEON_LOG_WARNING("Invalid alignment", "Attempt to relatively align parentless actor.\nAborting operation.");
+			return;
 		}
 
-		return allow;
+		// Align the caller to its parent based on the alignment flags
+		const Box2f PARENT_BOUNDS = mParent->getModelBounds();
+		if (alignmentFlags == OriginFlag::Center) {
+			setPosition(PARENT_BOUNDS.min + PARENT_BOUNDS.max / 2.f);
+		}
+		else {
+			Vector2f newPos(PARENT_BOUNDS.min + padding);
+			if (alignmentFlags & OriginFlag::CenterX) {
+				newPos.x = PARENT_BOUNDS.min.x + PARENT_BOUNDS.max.x / 2.f;
+			}
+			else if (alignmentFlags & OriginFlag::Right) {
+				newPos.x = PARENT_BOUNDS.min.x + PARENT_BOUNDS.max.x - padding;
+			}
+
+			if (alignmentFlags & OriginFlag::CenterY) {
+				newPos.y = PARENT_BOUNDS.min.y + PARENT_BOUNDS.max.y / 2.f;
+			}
+			else if (alignmentFlags & OriginFlag::Bottom) {
+				newPos.y = PARENT_BOUNDS.min.y + PARENT_BOUNDS.max.y - padding;
+			}
+
+			setPosition(newPos);
+		}
+
+		// Store the new alignment properties
+		mAlignment = std::make_pair(true, std::make_pair(alignmentFlags, padding));
 	}
 
-	bool Actor2D::update(const Time& dt)
+	void Actor2D::handleEvent(Event* const event)
+	{
+		if (mFuncs[Func::EventHandle][Target::Self]) {
+			handleEventSelf(event);
+		}
+		if (mFuncs[Func::EventHandle][Target::Children]) {
+			handleEventChildren(event);
+		}
+	}
+
+	void Actor2D::update(const Time& dt)
 	{
 		removeChildrenMarkedForRemoval();
 
-		bool allow = true;
 		if (mFuncs[Func::Update][Target::Self]) {
-			allow = updateSelf(dt);
+			updateSelf(dt);
 		}
-		if (allow && mFuncs[Func::Update][Target::Children]) {
-			allow = updateChildren(dt);
+		if (mFuncs[Func::Update][Target::Children]) {
+			updateChildren(dt);
 		}
-
-		return allow;
 	}
 
 	void Actor2D::activateFunctionality(uint32_t func, uint32_t target, bool flag)
@@ -125,7 +172,7 @@ namespace ae
 	Matrix4f Actor2D::getGlobalTransform()
 	{
 		Matrix4f globalTransform(1.f);
-		for (Actor2D* node = this; node != nullptr; node = mParent) {
+		for (Actor2D* node = this; node != nullptr; node = node->mParent) {
 			globalTransform = node->getTransform() * globalTransform;
 		}
 
@@ -156,19 +203,30 @@ namespace ae
 		return false;
 	}
 
-	bool Actor2D::render(RenderStates states)
+	void Actor2D::correctProperties()
+	{
+		// Correct caller node's properties
+		Transformable2D::correctProperties();
+		if (mAlignment.first) {
+			setRelativeAlignment(mAlignment.second.first, mAlignment.second.second);
+		}
+
+		// Correct the children nodes' properties
+		for (const auto& child : mChildren) {
+			child->correctProperties();
+		}
+	}
+
+	void Actor2D::render(RenderStates states)
 	{
 		states.transform *= getTransform();
 
-		bool allow = true;
+		if (mFuncs[Func::Render][Target::Children]) {
+			renderChildren(states);
+		}
 		if (mFuncs[Func::Render][Target::Self]) {
-			allow = renderSelf(states);
+			renderSelf(states);
 		}
-		if (allow && mFuncs[Func::Render][Target::Children]) {
-			allow = renderChildren(states);
-		}
-
-		return allow;
 	}
 
 	Box2f Actor2D::getModelBounds() const
@@ -176,60 +234,59 @@ namespace ae
 		return Box2f();
 	}
 
+	// Protected method(s)
+	void Actor2D::updateZOrdering(int zIndex)
+	{
+		// Set the z index provided to this node
+		const Vector3f& pos = getPosition();
+		setPosition(pos.x, pos.y, zIndex);
+
+		// Set superior z index to all children nodes, and they'll pass the next z index to their children
+		const int NEXT_ZINDEX = zIndex + 1;
+		for (auto& child : mChildren) {
+			child->updateZOrdering(NEXT_ZINDEX);
+		}
+	}
+
 	// Private method(s)
 	void Actor2D::removeChildrenMarkedForRemoval()
 	{
-		mChildren.erase(std::remove_if(mChildren.begin(), mChildren.end(), [](std::unique_ptr<Actor2D>& child) {
+		mChildren.erase(std::remove_if(mChildren.begin(), mChildren.end(), [](const std::unique_ptr<Actor2D>& child) {
 			return child->isMarkedForRemoval();
-		}));
+		}), mChildren.end());
 	}
 
-	bool Actor2D::handleEventChildren(Event* const event)
+	void Actor2D::handleEventChildren(Event* const event)
 	{
 		for (auto& child : mChildren) {
-			if (!child->handleEvent(event)) {
-				return false;
-			}
+			child->handleEvent(event);
 		}
-
-		return true;
 	}
 
-	bool Actor2D::updateChildren(const Time& dt)
+	void Actor2D::updateChildren(const Time& dt)
 	{
 		for (auto& child : mChildren) {
-			if (!child->update(dt)) {
-				return false;
-			}
+			child->update(dt);
 		}
-
-		return true;
 	}
 
-	bool Actor2D::renderChildren(RenderStates states)
+	void Actor2D::renderChildren(RenderStates states) const
 	{
-		for (auto& child : mChildren) {
-			if (!child->render(states)) {
-				return false;
-			}
+		for (const auto& child : mChildren) {
+			child->render(states);
 		}
-
-		return true;
 	}
 
 	// Private virtual method(s)
-	bool Actor2D::handleEventSelf(Event* const event)
+	void Actor2D::handleEventSelf(Event* const event)
 	{
-		return true;
 	}
 
-	bool Actor2D::updateSelf(const Time& dt)
+	void Actor2D::updateSelf(const Time& dt)
 	{
-		return true;
 	}
 
-	bool Actor2D::renderSelf(RenderStates states)
+	void Actor2D::renderSelf(RenderStates states) const
 	{
-		return true;
 	}
 }

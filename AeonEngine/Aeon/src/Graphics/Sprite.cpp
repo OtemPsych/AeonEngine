@@ -29,27 +29,52 @@ namespace ae
 	// Public constructor(s)
 	Sprite::Sprite()
 		: Actor2D()
-		, mTexture(nullptr)
+		, mModelBounds()
 		, mTextureRect(0.f, 0.f, 0.f, 0.f)
+		, mTexture(nullptr)
 		, mColor(Color::White)
 		, mUpdatePosUV(true)
 		, mUpdateColor(true)
 	{
-		// Create 4 vertices
-		mVertices.resize(4);
 	}
 
 	Sprite::Sprite(const Texture2D& texture, const Box2f& rect)
 		: Actor2D()
-		, mTexture(&texture)
+		, mModelBounds()
 		, mTextureRect()
+		, mTexture(&texture)
 		, mColor(Color::White)
+		, mUpdatePosUV(true)
+		, mUpdateColor(true)
 	{
-		// Create 4 vertices
-		mVertices.resize(4);
-
 		// Setup the appropriate texture rect
 		setTextureRect((rect == Box2f()) ? Box2f(Vector2f(0.f, 0.f), Vector2f(mTexture->getSize())) : rect);
+	}
+
+	Sprite::Sprite(Sprite&& rvalue) noexcept
+		: Actor2D(std::move(rvalue))
+		, mModelBounds(std::move(rvalue.mModelBounds))
+		, mTextureRect(std::move(rvalue.mTextureRect))
+		, mTexture(rvalue.mTexture)
+		, mColor(std::move(rvalue.mColor))
+		, mUpdatePosUV(rvalue.mUpdatePosUV)
+		, mUpdateColor(rvalue.mUpdateColor)
+	{
+	}
+
+	// Public operator(s)
+	Sprite& Sprite::operator=(Sprite&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		Actor2D::operator=(std::move(rvalue));
+		mModelBounds = std::move(rvalue.mModelBounds);
+		mTextureRect = std::move(rvalue.mTextureRect);
+		mTexture = rvalue.mTexture;
+		mColor = std::move(rvalue.mColor);
+		mUpdatePosUV = rvalue.mUpdatePosUV;
+		mUpdateColor = rvalue.mUpdateColor;
+
+		return *this;
 	}
 
 	// Public method(s)
@@ -102,12 +127,6 @@ namespace ae
 	}
 
 	// Public virtual method(s)
-	void Sprite::setOrigin(const Vector2f& origin) noexcept
-	{
-		Transformable2D::setOrigin(origin);
-		mUpdatePosUV = true;
-	}
-
 	Box2f Sprite::getModelBounds() const
 	{
 		return mModelBounds;
@@ -116,76 +135,81 @@ namespace ae
 	// Private method(s)
 	void Sprite::updatePosUV()
 	{
-		// Check if there are sufficient vertices (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (mVertices.empty()) {
-				AEON_LOG_ERROR("Insufficient vertex count", "Unable to update positions due to empty vertex array.");
-				return;
-			}
+		std::vector<Vertex2D>& vertices = getVertices();
+		if (vertices.empty()) {
+			vertices.resize(4);
 		}
 
-		// Update the positions
-		const Vector2f& origin = getOrigin();
-		mVertices[0].position = Vector2f(0.f,                0.f)                - origin;
-		mVertices[1].position = Vector2f(0.f,                mTextureRect.max.y) - origin;
-		mVertices[2].position = Vector2f(mTextureRect.max.x, mTextureRect.max.y) - origin;
-		mVertices[3].position = Vector2f(mTextureRect.max.x, 0.f)                - origin;
+			// Update the positions
+		vertices[0].position = Vector3f(Vector2f(0.f,                0.f)               , getPosition().z);
+		vertices[1].position = Vector3f(Vector2f(0.f,                mTextureRect.max.y), getPosition().z);
+		vertices[2].position = Vector3f(Vector2f(mTextureRect.max.x, mTextureRect.max.y), getPosition().z);
+		vertices[3].position = Vector3f(Vector2f(mTextureRect.max.x, 0.f)               , getPosition().z);
 
-		// Update the model bounding box's position and size based on the minimum and maximum vertex positions
-		mModelBounds = Box2f(mVertices[0].position, mVertices[2].position - mVertices[0].position);
+			// Update the model bounding box's position and size based on the minimum and maximum vertex positions
+		mModelBounds = Box2f(vertices[0].position.xy, vertices[2].position.xy - vertices[0].position.xy);
 
-		// Update the UV coordinates
+			// Update the UV coordinates
 		const Vector2f TEXTURE_SIZE = (mTexture) ? Vector2f(mTexture->getSize()) : Vector2f(1.f, 1.f);
-		mVertices[0].uv = Vector2f(mTextureRect.min.x,                      mTextureRect.min.y + mTextureRect.max.y) / TEXTURE_SIZE;
-		mVertices[1].uv = Vector2f(mTextureRect.min.x,                      mTextureRect.min.y)                      / TEXTURE_SIZE;
-		mVertices[2].uv = Vector2f(mTextureRect.min.x + mTextureRect.max.x, mTextureRect.min.y)                      / TEXTURE_SIZE;
-		mVertices[3].uv = Vector2f(mTextureRect.min.x + mTextureRect.max.x, mTextureRect.min.y + mTextureRect.max.y) / TEXTURE_SIZE;
+		vertices[0].uv = Vector2f(mTextureRect.min.x,                      mTextureRect.min.y)                      / TEXTURE_SIZE;
+		vertices[1].uv = Vector2f(mTextureRect.min.x,                      mTextureRect.min.y + mTextureRect.max.y) / TEXTURE_SIZE;
+		vertices[2].uv = Vector2f(mTextureRect.min.x + mTextureRect.max.x, mTextureRect.min.y + mTextureRect.max.y) / TEXTURE_SIZE;
+		vertices[3].uv = Vector2f(mTextureRect.min.x + mTextureRect.max.x, mTextureRect.min.y)                      / TEXTURE_SIZE;
+
+		// Update indices (if necessary)
+		std::vector<unsigned int>& indices = getIndices();
+		if (indices.size() != 6) {
+			indices = {
+				0, 1, 2,
+				0, 2, 3
+			};
+		}
 	}
 
 	void Sprite::updateColor()
 	{
 		const Vector4f COLOR = mColor.normalize();
-		for (Vertex2D& vertex : mVertices) {
+		std::vector<Vertex2D>& vertices = getVertices();
+		for (Vertex2D& vertex : vertices) {
 			vertex.color = COLOR;
 		}
 	}
 
-	// Private virtual method(s)
-	bool Sprite::renderSelf(RenderStates states)
+	bool Sprite::updateVertices()
 	{
-		// Setup the appropriate render states
-		if (!states.shader) {
-			states.shader = GLResourceFactory::getInstance().get<Shader>("Sprite").get();
-		}
-		if (mColor.a != 255) {
-			states.blendMode = BlendMode::BlendAlpha;
-		}
-		states.texture = mTexture;
+		bool dirtyRender = false;
 
-		// Send the sprite to the renderer
-		Renderer2D::getInstance().submit(*this, states);
-		return true;
-	}
-
-	void Sprite::updateVertices()
-	{
 		// Update the vertices' properties
 		if (mUpdatePosUV) {
 			updatePosUV();
-			mUpdatePosUV = false;
+			correctProperties();
+			dirtyRender = std::exchange(mUpdatePosUV, false);
 		}
 		if (mUpdateColor) {
 			updateColor();
-			mUpdateColor = false;
+			dirtyRender = std::exchange(mUpdateColor, false);
 		}
+
+		return dirtyRender;
 	}
 
-	void Sprite::updateIndices()
+	// Private virtual method(s)
+	void Sprite::updateSelf(const Time& dt)
 	{
-		// Set the indices in a counter-clockwise position
-		mIndices = {
-			0, 1, 2,
-			0, 2, 3
-		};
+		// Update the sprite's properties which may raise the dirty render flag
+		setDirty(updateVertices());
+	}
+
+	void Sprite::renderSelf(RenderStates states) const
+	{
+		// Setup the appropriate render states
+		if (!states.shader) {
+			states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
+		}
+		states.blendMode = BlendMode::BlendAlpha;
+		states.texture = mTexture;
+
+		// Send the sprite to the renderer
+		Renderer2D::getInstance().submit(*this, states, isDirty());
 	}
 }

@@ -181,7 +181,7 @@ namespace ae
 
 	void Application::render()
 	{
-		mWindow->clear();
+		//mWindow->clear();
 		mStateStack.draw();
 		mWindow->display();
 	}

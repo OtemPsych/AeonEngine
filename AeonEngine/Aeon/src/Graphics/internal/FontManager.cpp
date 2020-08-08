@@ -20,70 +20,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <AEON/Graphics/Renderable2D.h>
+#include <AEON/Graphics/internal/FontManager.h>
+
+#include <string>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+#include <AEON/System/DebugLogger.h>
 
 namespace ae
 {
 	// Public constructor(s)
-	Renderable2D::~Renderable2D()
+	FontManager::~FontManager()
 	{
+		// Release the FreeType library's resources
+		if (mLibrary) {
+			FT_Library ftLibrary = static_cast<FT_Library>(mLibrary);
+			FT_Error ftError = FT_Done_FreeType(ftLibrary);
+			if (ftError) {
+				AEON_LOG_ERROR("Failed to release FreeType library", "Error code: " + std::to_string(ftError) + '.');
+			}
+		}
 	}
 
 	// Public method(s)
-	const std::vector<Vertex2D>& Renderable2D::getVertices() const noexcept
+	void* FontManager::getHandle() const noexcept
 	{
-		return mVertices;
+		return mLibrary;
 	}
 
-	const std::vector<unsigned int>& Renderable2D::getIndices() const noexcept
+	// Public static method(s)
+	FontManager& FontManager::getInstance()
 	{
-		return mIndices;
+		static FontManager instance;
+		return instance;
 	}
 
-	// Protected constructor(s)
-	Renderable2D::Renderable2D() noexcept
-		: mVertices()
-		, mIndices()
-		, mDirty(true)
+	// Private constructor(s)
+	FontManager::FontManager()
+		: mLibrary(nullptr)
 	{
-	}
+		// Initialize the FreeType library and make sure that no errors occurred
+		FT_Library ftLibrary;
+		FT_Error ftError = FT_Init_FreeType(&ftLibrary);
+		if (ftError) {
+			AEON_LOG_ERROR("Failed to initialize the FreeType library", "Error code: " + std::to_string(ftError) + '.');
+			return;
+		}
 
-	Renderable2D::Renderable2D(Renderable2D&& rvalue) noexcept
-		: mVertices(std::move(rvalue.mVertices))
-		, mIndices(std::move(rvalue.mIndices))
-		, mDirty(rvalue.mDirty)
-	{
-	}
-
-	// Protected operator(s)
-	Renderable2D& Renderable2D::operator=(Renderable2D&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		mVertices = std::move(rvalue.mVertices);
-		mIndices = std::move(rvalue.mIndices);
-		mDirty = rvalue.mDirty;
-
-		return *this;
-	}
-
-	// Protected method(s)
-	void Renderable2D::setDirty(bool flag) noexcept
-	{
-		mDirty = flag;
-	}
-
-	bool Renderable2D::isDirty() const noexcept
-	{
-		return mDirty;
-	}
-
-	std::vector<Vertex2D>& Renderable2D::getVertices() noexcept
-	{
-		return mVertices;
-	}
-
-	std::vector<unsigned int>& Renderable2D::getIndices() noexcept
-	{
-		return mIndices;
+		mLibrary = static_cast<void*>(ftLibrary);
 	}
 }

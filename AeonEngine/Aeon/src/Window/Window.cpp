@@ -226,7 +226,7 @@ namespace ae
 
 	void Window::enableVerticalSync(bool flag) const
 	{
-		glfwSwapInterval(1);
+		glfwSwapInterval(flag);
 	}
 
 	void Window::setTitle(const std::string& title)

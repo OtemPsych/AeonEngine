@@ -20,31 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <AEON/Graphics/internal/IndexBuffer.h>
-
-#include <GL/glew.h>
-
-#include <AEON/Graphics/internal/GLCommon.h>
+#include <AEON/Graphics/internal/Glyph.h>
 
 namespace ae
 {
 	// Public constructor(s)
-	IndexBuffer::IndexBuffer(uint32_t usage)
-		: Buffer(GL_ELEMENT_ARRAY_BUFFER)
-		, mCount(0)
-		, mUsage(usage)
+	Glyph::Glyph() noexcept
+		: textureRect()
+		, bearing()
+		, texture(nullptr)
+		, individualTexture(nullptr)
+		, advance(0)
 	{
-	}
-
-	// Public method(s)
-	void IndexBuffer::setData(unsigned int size, const unsigned int* data)
-	{
-		mCount = size / sizeof(unsigned int);
-		GLCall(glNamedBufferData(mHandle, size, data, mUsage));
-	}
-
-	unsigned int IndexBuffer::getCount() const noexcept
-	{
-		return mCount;
 	}
 }
