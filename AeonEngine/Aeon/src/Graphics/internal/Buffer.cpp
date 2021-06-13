@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -39,9 +39,24 @@ namespace ae
 		GLCall(glCreateBuffers(1, &mHandle));
 	}
 
-	// Virtual destructor
+	Buffer::Buffer(Buffer&& rvalue) noexcept
+		: GLResource(std::move(rvalue))
+		, mBindingTarget(rvalue.mBindingTarget)
+	{
+	}
+
 	Buffer::~Buffer()
 	{
+	}
+
+	// Public operator(s)
+	Buffer& Buffer::operator=(Buffer&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		GLResource::operator=(std::move(rvalue));
+		mBindingTarget = rvalue.mBindingTarget;
+
+		return *this;
 	}
 
 	// Public method(s)

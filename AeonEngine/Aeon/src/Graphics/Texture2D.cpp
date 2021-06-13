@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -36,21 +36,38 @@ namespace ae
 	// Public constructor(s)
 	Texture2D::Texture2D(Filter filter, Wrap wrap, InternalFormat internalFormat)
 		: Texture(GL_TEXTURE_2D, filter, wrap, internalFormat)
+		, mFilepath("")
 		, mSize(0, 0)
 	{
+	}
+
+	Texture2D::Texture2D(Texture2D&& rvalue) noexcept
+		: Texture(std::move(rvalue))
+		, mFilepath(std::move(rvalue.mFilepath))
+		, mSize(std::move(rvalue.mSize))
+	{
+	}
+
+	// Public operator(s)
+	Texture2D& Texture2D::operator=(Texture2D&& rvalue) noexcept
+	{
+		// Move the rvalue's data
+		Texture::operator=(std::move(rvalue));
+		mFilepath = std::move(rvalue.mFilepath);
+		mSize = std::move(rvalue.mSize);
+
+		return *this;
 	}
 
 	// Public method(s)
 	bool Texture2D::create(unsigned int width, unsigned int height, const void* data)
 	{
 		// Check that the dimensions provided are valid (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			const std::string WIDTH_STR = std::to_string(width);
-			const std::string HEIGHT_STR = std::to_string(height);
-
+		if _CONSTEXPR_IF (AEON_DEBUG)
+		{
 			// Emit error if the dimensions are null
 			if (width == 0 || height == 0) {
-				AEON_LOG_ERROR("Failed to create texture", "The dimensions (" + WIDTH_STR + "x" + HEIGHT_STR + ") are invalid.");
+				AEON_LOG_ERROR("Failed to create texture", "The dimensions (" + std::to_string(width) + "x" + std::to_string(height) + ") are invalid.");
 				return false;
 			}
 		}
@@ -88,8 +105,49 @@ namespace ae
 		return true;
 	}
 
+	bool Texture2D::update(unsigned int offsetX, unsigned int offsetY, unsigned int width, unsigned int height, const void* data)
+	{
+		// Check that the parameters provided are valid (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG)
+		{
+			// Emit error if the texture has yet to be created
+			if (mSize.x == 0 || mSize.y == 0) {
+				AEON_LOG_ERROR("Failed to update texture", "The texture has yet to be created.");
+				return false;
+			}
+			// Emit error if the offsets provided are greater than the texture's size
+			if (offsetX >= mSize.x || offsetY >= mSize.y) {
+				AEON_LOG_ERROR("Failed to update texture", "The offsets (" + std::to_string(offsetX) + ", " + std::to_string(offsetY) + ") are invalid.");
+				return false;
+			}
+			// Emit error if the dimensions are null or greater than the texture's size
+			if (width == 0 || height == 0 || width + offsetX > mSize.x || height + offsetY > mSize.y) {
+				AEON_LOG_ERROR("Failed to update texture", "The dimensions (" + std::to_string(width) + "x" + std::to_string(height) + ") are invalid.");
+				return false;
+			}
+		}
+
+		// Deactivate the byte alignment restriction if necessary
+		if (mFormat.internal == InternalFormat::R8 || mFormat.internal == InternalFormat::R16) {
+			GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+		}
+
+		// Modify the texture's image data
+		GLCall(glTextureSubImage2D(mHandle, 0, offsetX, offsetY, width, height, mFormat.base, GL_UNSIGNED_BYTE, data));
+
+		// Reactivate the byte alignment restriction if necessary
+		if (mFormat.internal == InternalFormat::R8 || mFormat.internal == InternalFormat::R16) {
+			GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
+		}
+
+		return true;
+	}
+
 	bool Texture2D::loadFromFile(const std::string& filename)
 	{
+		// Store filepath
+		mFilepath = filename;
+
 		// Load in the image data
 		int width, height, channels;
 		stbi_uc* pixels8 = (mFormat.bitCount == 8) ? stbi_load(filename.c_str(), &width, &height, &channels, mFormat.imposedChannels) : nullptr;
@@ -97,7 +155,7 @@ namespace ae
 
 		// Log an error message if the image couldn't be loaded in
 		if (!pixels8 && !pixels16) {
-			AEON_LOG_ERROR("Failed to load texture from file", stbi_failure_reason());
+			AEON_LOG_ERROR("Failed to load texture " + filename + " from file", stbi_failure_reason());
 			return false;
 		}
 		// Log a warning message if the image's dimensions aren't even numbers (ignored in Release mode)
@@ -140,6 +198,11 @@ namespace ae
 		}
 
 		return true;
+	}
+
+	const std::string& Texture2D::getFilepath() const noexcept
+	{
+		return mFilepath;
 	}
 
 	const Vector2u& Texture2D::getSize() const noexcept

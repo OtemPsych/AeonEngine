@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,6 +22,8 @@
 
 #ifndef Aeon_Graphics_Actor2D_H_
 #define Aeon_Graphics_Actor2D_H_
+
+#include <map>
 
 #include <AEON/System/Time.h>
 #include <AEON/Window/Event.h>
@@ -62,38 +64,46 @@ namespace ae
 		 \brief Default constructor.
 		 \details Event handling, updating and rendering are activated by default.
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		Actor2D();
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
+		 \note The \a copy's children won't be copied over.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Actor2D that will be copied
+
+		 \since v0.6.0
 		*/
-		Actor2D(const Actor2D&) = delete;
+		Actor2D(const Actor2D& copy);
 		/*!
 		 \brief Move constructor.
 
 		 \param[in] rvalue The ae::Actor2D that will be moved
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		Actor2D(Actor2D&& rvalue) noexcept;
 		/*!
 		 \brief Virtual destructor.
 		 \details A virtual destructor is needed as this class will be inherited.
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
-		virtual ~Actor2D();
+		virtual ~Actor2D() = default;
 	public:
 		// Public operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
+		 \note The caller's children won't be overwritten.
 
-		 \since v0.5.0
+		 \param[in] other The ae::Actor2D that will be copied
+
+		 \return The caller ae::Actor2D
+
+		 \since v0.6.0
 		*/
-		Actor2D& operator=(const Actor2D&) = delete;
+		Actor2D& operator=(const Actor2D& other);
 		/*!
 		 \brief Move assignment operator.
 
@@ -101,7 +111,7 @@ namespace ae
 
 		 \return The caller ae::Actor2D
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		Actor2D& operator=(Actor2D&& rvalue) noexcept;
 	public:
@@ -152,13 +162,13 @@ namespace ae
 		*/
 		std::unique_ptr<Actor2D> detachChild(const Actor2D& child);
 		/*!
-		 \brief Relatively aligns the caller ae::Transformable2D to another based on the flags provided.
-		 \details Can be used to easily center text inside a rectangle, placing elements below/above/next to other elements.
+		 \brief Relatively aligns the caller ae::Transformable2D to its parent based on the flags provided.
+		 \details Can be used to easily center text inside a rectangle, placing elements below/above/next to parent.
 		 \note This method has no effect if the caller doesn't have a parent.\n
 		 Padding isn't taken into account if the alignment flags center the caller.
 
 		 \param[in] alignmentFlags The ae::Transformable2D::OriginFlag to set using the OR bit operator
-		 \param[in] padding The padding (spacing) from the edge of the alignment \a target (not taken into account if the caller is centered)
+		 \param[in] padding The ae::Vector2f containing the horizontal and vertical padding (spacing) from the edge of the alignment \a target (not taken into account if the caller is centered)
 
 		 \par Example:
 		 \code
@@ -174,27 +184,29 @@ namespace ae
 		 childSpritePtr->setRelativeAlignment(ae::Sprite::OriginFlag::Center);
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		void setRelativeAlignment(uint32_t alignmentFlags, float padding = 0.f);
+		void setRelativeAlignment(uint32_t alignmentFlags, const Vector2f& padding = Vector2f(0.f));
 		/*!
 		 \brief Sends the event received to the current node and all of its children nodes for processing.
+		 \note The children handle the event before the caller.
 
 		 \param[in] event The polled input event
 
 		 \sa handleEventSelf(), handleEventChildren()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		void handleEvent(Event* const event);
 		/*!
 		 \brief Updates the current nodes and all of its children nodes.
+		 \note The caller is updated before its chilren.
 
 		 \param[in] dt The delta time between the current frame and the previous one
 
 		 \sa updateSelf(), updateChildren()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		void update(const Time& dt);
 		/*!
@@ -244,6 +256,7 @@ namespace ae
 		 \since v0.4.0
 		*/
 		_NODISCARD Vector2f getGlobalPosition();
+		_NODISCARD inline const Vector2f& getAlignmentPadding() const noexcept { return mAlignment.second.second; }
 
 		// Public virtual method(s)
 		/*!
@@ -387,12 +400,13 @@ namespace ae
 
 	protected:
 		// Protected member(s)
-		Actor2D*                                    mParent;    //!< The node's parent node
+		Actor2D*                                       mParent;          //!< The node's parent node
 	private:
 		// Private member(s)
-		std::vector<std::unique_ptr<Actor2D>>       mChildren;  //!< The list of attached children nodes
-		std::map<Func, std::map<Target, bool>>      mFuncs;     //!< The active functionalities
-		std::pair<bool, std::pair<uint32_t, float>> mAlignment; //!< The relative alignment to the parent node
+		Matrix4f                                       mGlobalTransform; //!< The cached global transform
+		std::vector<std::unique_ptr<Actor2D>>          mChildren;        //!< The list of attached children nodes
+		std::map<Func, std::map<Target, bool>>         mFuncs;           //!< The active functionalities
+		std::pair<bool, std::pair<uint32_t, Vector2f>> mAlignment;       //!< The relative alignment to the parent node
 	};
 }
 #endif // Aeon_Graphics_Actor2D_H_
@@ -407,7 +421,7 @@ namespace ae
  and drawing the caller node and its children.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.6.0
+ \date 2021.06.03
  \copyright MIT License
 */

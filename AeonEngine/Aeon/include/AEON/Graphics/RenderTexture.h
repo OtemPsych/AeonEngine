@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -80,9 +80,11 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \since v0.5.0
+		 \param[in] rvalue The ae::RenderTexture that will be moved
+
+		 \since v0.6.0
 		*/
-		RenderTexture(RenderTexture&&) noexcept = default;
+		RenderTexture(RenderTexture&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -94,9 +96,13 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \since v0.5.0
+		 \param[in] rvalue The ae::RenderTexture that will be moved
+
+		 \return The caller ae::RenderTexture
+
+		 \since v0.6.0
 		*/
-		RenderTexture& operator=(RenderTexture&&) noexcept = default;
+		RenderTexture& operator=(RenderTexture&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -172,7 +178,7 @@ namespace ae
  assigned to a sprite.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.07.30
+ \version v0.6.0
+ \date 2020.08.28
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,6 +24,7 @@
 #define Aeon_System_Time_H_
 
 #include <cstdint>
+#include <string>
 
 #include <AEON/Config.h>
 
@@ -47,8 +48,45 @@ namespace ae
 		 \since v0.3.0
 		*/
 		Time() noexcept;
+		/*!
+		 \brief Copy constructor.
+
+		 \param[in] copy The ae::Time that will be copied
+
+		 \since v0.6.0
+		*/
+		Time(const Time& copy) = default;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Time that will be moved
+
+		 \since v0.6.0
+		*/
+		Time(Time&& rvalue) noexcept;
 	public:
 		// Public operator(s)
+		/*!
+		 \brief Assignment operator.
+
+		 \param[in] other The ae::Time that will be copied
+
+		 \return The caller ae::Time
+
+		 \since v0.6.0
+		*/
+		Time& operator=(const Time& other) = default;
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Time that will be moved
+
+		 \return The caller ae::Time
+
+		 \since v0.6.0
+		*/
+		Time& operator=(Time&& rvalue) noexcept;
+
 		/*!
 		 \brief Addition operator.
 		 \details Performs an addition of the caller's and the \a other's time values.
@@ -91,7 +129,8 @@ namespace ae
 		_NODISCARD Time operator-(const Time& other) const noexcept;
 		/*!
 		 \brief Division operator.
-		 \details Performs a division of the caller's and the \a other's time values.
+		 \details Performs a division of the caller's and the \a other's time values.\n
+		 Performs a check to see if a division by 0 will occur.
 
 		 \param[in] other The ae::Time of which its time value will be the divisor of the caller's time value
 
@@ -106,7 +145,7 @@ namespace ae
 
 		 \sa operator+(const Time&), operator-(const Time&)
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		_NODISCARD Time operator/(const Time& other) const noexcept;
 
@@ -131,7 +170,8 @@ namespace ae
 		_NODISCARD Time operator*(double scale) const noexcept;
 		/*!
 		 \brief Division operator.
-		 \details Scales the ae::Time's time value by the scalar value provided.
+		 \details Scales the ae::Time's time value by the scalar value provided.\n
+		 Performs a check to see if a division by 0 will occur.
 
 		 \param[in] scale The scalar value which will scale the ae::Time's time value
 
@@ -145,7 +185,7 @@ namespace ae
 
 		 \sa operator*(double)
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		_NODISCARD Time operator/(double scale) const;
 
@@ -214,7 +254,8 @@ namespace ae
 		Time& operator*=(double scale) noexcept;
 		/*!
 		 \brief Division and assignment operator.
-		 \details Scales the ae::Time's time value by the scalar value provided, and assigns the quotient to the ae::Time.
+		 \details Scales the ae::Time's time value by the scalar value provided, and assigns the quotient to the ae::Time.\n
+		 Performs a check to see if a division by 0 will occur.
 
 		 \param[in] scale The scalar value which will scale the ae::Time's time value
 
@@ -508,6 +549,39 @@ namespace ae
 		 \since v0.3.0
 		*/
 		_NODISCARD static Time microseconds(int_fast64_t microseconds) noexcept;
+
+		/*!
+		 \brief Retrieves a formatted string containing the current system date.
+		 \details The format is: YYYY.MM.DD.
+
+		 \return A string containing the system date
+
+		 \par Example:
+		 \code
+		 std::string date = ae::Time::getSystemDate();
+		 \endcode
+
+		 \sa getSystemTime()
+
+		 \since v0.6.0
+		*/
+		_NODISCARD static std::string getSystemDate();
+		/*!
+		 \brief Retrieves a formatted string containing the current system time.
+		 \details The format is: HH:MM:SS.
+
+		 \return A string containing the system time
+
+		 \par Example:
+		 \code
+		 std::string time = ae::Time::getSystemTime();
+		 \endcode
+
+		 \sa getSystemDate()
+
+		 \since v0.6.0
+		*/
+		_NODISCARD static std::string getSystemTime();
 	private:
 		// Private constructor(s)
 		/*!
@@ -555,7 +629,7 @@ namespace ae
  \sa ae::Clock
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.07.30
+ \version v0.6.0
+ \date 2021.01.23
  \copyright MIT License
 */

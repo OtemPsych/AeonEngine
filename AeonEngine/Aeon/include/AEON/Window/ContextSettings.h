@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -268,7 +268,7 @@ namespace ae
 		_NODISCARD bool isSrgbEnabled() const noexcept;
 
 	private:
-		// Private member data
+		// Private member(s)
 		int  mAntialiasingLevel; //!< The anti-aliasing samples to use
 		int  mMajorVersion;      //!< The major number of the context version
 		int  mMinorVersion;      //!< The minor version of the context version
@@ -308,7 +308,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.29
+ \version v0.6.0
+ \date 2020.09.04
  \copyright MIT License
 */

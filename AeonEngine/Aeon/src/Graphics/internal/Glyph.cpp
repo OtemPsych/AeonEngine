@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -29,8 +29,29 @@ namespace ae
 		: textureRect()
 		, bearing()
 		, texture(nullptr)
-		, individualTexture(nullptr)
 		, advance(0)
 	{
+	}
+
+	Glyph::Glyph(Glyph&& rvalue) noexcept
+		: textureRect(std::move(rvalue.textureRect))
+		, bearing(std::move(rvalue.bearing))
+		, texture(rvalue.texture)
+		, individualTexture(std::move(rvalue.individualTexture))
+		, advance(rvalue.advance)
+	{
+	}
+
+	// Public operator(s)
+	Glyph& Glyph::operator=(Glyph&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		textureRect = std::move(rvalue.textureRect);
+		bearing = std::move(rvalue.bearing);
+		texture = rvalue.texture;
+		individualTexture = std::move(rvalue.individualTexture);
+		advance = rvalue.advance;
+
+		return *this;
 	}
 }

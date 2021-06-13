@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -25,9 +25,10 @@
 
 #include <yvals_core.h>
 #include <type_traits>
+#include <vector>
 
 #include <AEON/Config.h>
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/System/DebugLogger.h>
 #include <AEON/Window/Monitor.h>
 #include <AEON/Window/Keyboard.h>
@@ -62,6 +63,8 @@ namespace ae
 			WindowFocusGained,         //!< The window gained input focus
 			WindowFocusLost,           //!< The window lost input focus
 			WindowDamaged,             //!< The window's contents are damaged and need to be refreshed
+
+			PathDrop,                  //!< The filepaths of files were dropped on the window (data in PathDropEvent)
 
 			KeyPressed,                //!< A keyboard key was pressed (data in KeyEvent)
 			KeyReleased,               //!< A keyboard key was released (data in KeyEvent)
@@ -417,6 +420,56 @@ namespace ae
 		 \since v0.3.0
 		*/
 		WindowMoveEvent& operator=(WindowMoveEvent&&) = delete;
+	};
+
+	/*!
+	 \brief The derived class representing a filepath drop and its properties.
+	 \details An ae::PathDropEvent's associated types are: Type::PathDrop.\n
+	 This class inherits the ae::Event base class.
+	*/
+	class _NODISCARD AEON_API PathDropEvent : public Event
+	{
+	public:
+		// Public member(s)
+		std::vector<std::string> paths;
+
+	public:
+		// Public constructor(s)
+		/*!
+		 \brief Constructs the ae::PathDropEvent by providing the number of paths and the \a paths themselves.
+
+		 \param[in] count The number of paths dropped
+		 \param[in] paths The C-style strings of the paths dropped
+
+		 \since v0.6.0
+		*/
+		PathDropEvent(int count, const char** paths) noexcept;
+		/*!
+		 \brief Deleted copy constructor.
+
+		 \since v0.6.0
+		*/
+		PathDropEvent(const PathDropEvent&) = delete;
+		/*!
+		 \brief Deleted move constructor.
+
+		 \since v0.6.0
+		*/
+		PathDropEvent(PathDropEvent&&) = delete;
+	public:
+		// Public operator(s)
+		/*!
+		 \brief Deleted assignment operator.
+
+		 \since v0.6.0
+		*/
+		PathDropEvent& operator=(const PathDropEvent&) = delete;
+		/*!
+		 \brief Deleted move assignment operator.
+
+		 \since v0.6.0
+		*/
+		PathDropEvent& operator=(PathDropEvent&&) = delete;
 	};
 
 	/*!
@@ -910,6 +963,29 @@ namespace ae
  \author Filippos Gleglakos
  \version v0.3.0
  \date 2019.07.21
+ \copyright MIT License
+*/
+
+/*!
+ \class ae::PathDropEvent
+ \ingroup window
+
+ The ae::PathDropEvent is used to represent a drop of one or multiple filepaths
+ on the window. It contains the list of all the filepaths dropped in a stl
+ vector.
+
+ Usage example:
+ \code
+  // The 'event' parameter is provided by the overloaded method 'handleEvent()' of the ae::State class
+ if (event->type == ae::Event::Type::PathDrop) {
+	auto pathDropEvent = event->as<ae::PathDropEvent>();
+	const std::vector<std::string>& paths = pathDropEvent->paths;
+ }
+ \endcode
+
+ \author Filippos Gleglakos
+ \version v0.6.0
+ \date 2021.06.13
  \copyright MIT License
 */
 

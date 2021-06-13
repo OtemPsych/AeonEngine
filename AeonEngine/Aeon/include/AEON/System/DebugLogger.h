@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,7 +23,7 @@
 #ifndef Aeon_System_DebugLogger_H_
 #define Aeon_System_DebugLogger_H_
 
-#include <vector>
+#include <list>
 
 #include <AEON/Config.h>
 
@@ -47,17 +47,20 @@ namespace ae
 		*/
 		struct AEON_API Log
 		{
+			// Public enum(s)
 			/*!
 			 \brief Enumeration of the available levels of severity of a log.
 			*/
 			enum class Level { Info, Warning, Error };
 
+			// Public member(s)
 			std::string formattedInfo; //!< The log's formatted information
 			std::string metadata;      //!< The log's medata (file, line and function)
 			std::string description;   //!< The log's description
 			std::string title;         //!< The log's title
 			Level       level;         //!< The level of importance (Info, Warning, Error)
 
+			// Public constructor(s)
 			/*!
 			 \brief Constructs the ae::DebugLogger::Log by providing the \a level of importance, the \a title, the \a description and the metadata.
 			 \note The metadata \a file, \a line and \a function will be automatically provided by using one of the available macros.
@@ -75,26 +78,38 @@ namespace ae
 			 AEON_LOG_ERROR("Title of the error message", "Description of the error message");
 			 \endcode
 
-			 \since v0.1.0
+			 \since v0.6.0
 			*/
 			Log(std::string&& title, std::string&& description, std::string&& file,
 			    std::string&& function, Log::Level level, int line);
 			/*!
-			 \brief Move constructor.
-			 \details Moves over all of the \a rvalue's member data.
+			 \brief Copy constructor.
 
-			 \param[in] rvalue The ae::DebugLogger::Log rvalue that will be moved over
-
-			 \par Example:
-			 \code
-			 std::vector<ae::DebugLogger::Log> logs;
-			 ...
-			 \endcode
-
-			 \since v0.1.0
+			 \since v0.6.0
 			*/
-			Log(Log&& rvalue) noexcept;
+			Log(const Log&) = default;
+			/*!
+			 \brief Move constructor.
 
+			 \since v0.6.0
+			*/
+			Log(Log&&) noexcept = default;
+
+			// Public operator(s)
+			/*!
+			 \brief Assignment operator.
+
+			 \since v0.6.0
+			*/
+			Log& operator=(const Log&) = default;
+			/*!
+			 \brief Move assignment operator.
+
+			 \since v0.6.0
+			*/
+			Log& operator=(Log&&) noexcept = default;
+
+			// Friend operator(s)
 			/*!
 			 \brief Passes the \a log's formatted information to the output stream.
 
@@ -111,26 +126,41 @@ namespace ae
 			 }
 			 \endcode
 
-			 \since v0.1.0
+			 \since v0.6.0
 			*/
 			friend AEON_API std::ostream& operator<<(std::ostream& os, const Log& log);
 		};
 
 	public:
+		// Public constructor(s)
 		/*!
 		 \brief Deleted copy constructor.
 
 		 \since v0.1.0
 		*/
 		DebugLogger(const DebugLogger&) = delete;
+		/*!
+		 \brief Deleted move constructor.
+
+		 \since v0.6.0
+		*/
+		DebugLogger(DebugLogger&&) = delete;
 	public:
+		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
 
 		 \since v0.1.0
 		*/
 		DebugLogger& operator=(const DebugLogger&) = delete;
+		/*!
+		 \brief Deleted move assignment operator.
+
+		 \since v0.6.0
+		*/
+		DebugLogger& operator=(DebugLogger&&) = delete;
 	public:
+		// Public method(s)
 		/*!
 		 \brief Logs a new debug log that will be kept until the list is retrieved.
 		 \details The log's information will be displayed to the console in Debug mode and stored on a file on disk on Debug and Release mode.
@@ -151,7 +181,7 @@ namespace ae
 
 		 \sa getLogs()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		void log(std::string&& title, std::string&& description, std::string&& file,
 		         std::string&& function, Log::Level level, int line);
@@ -170,36 +200,39 @@ namespace ae
 
 		 \sa log()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD std::vector<Log> getLogs() noexcept;
+		_NODISCARD std::list<Log> getLogs() noexcept;
 
+		// Public static method(s)
 		/*!
-		 \brief Retrieves the ae::DebugLogger's unique instance.
+		 \brief Retrieves the ae::DebugLogger's single instance.
 		 \details The ae::DebugLogger will be constructed for the first time by calling this static method.
 
-		 \return The ae::DebugLogger's unique instance.
+		 \return The ae::DebugLogger's single instance
 
 		 \par Example:
 		 \code
-		 ae::DebugLogger& singleInstance = ae::DebugLogger::getInstance();
+		 ae::DebugLogger& debugLogger = ae::DebugLogger::getInstance();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		_NODISCARD static DebugLogger& getInstance();
 	private:
+		// Private constructor(s)
 		/*!
 		 \brief Default constructor.
-		 \details Initializes the list of logs and provides the name of the error log.
+		 \details All error and warning logs will be written in the aeon_errors.log file.
 
-		 \since v0.1.0
+		 \since v0.6.0
 		*/
 		DebugLogger();
 
 	private:
-		std::vector<Log> mLogs;     //!< The list of currently stored debug logs
-		std::string      mErrorLog; //!< The name of the file in which the logs will be stored
+		// Private member(s)
+		std::list<Log> mLogs;     //!< The list of currently stored debug logs
+		std::string    mErrorLog; //!< The name of the file in which the logs will be stored
 	};
 }
 #endif // Aeon_System_DebugLogger_H_
@@ -216,9 +249,11 @@ namespace ae
  The log's format is the following:
  \code
  =====================================================
+ YYYY.MM.DD HH:MM:SS
  <Level of importance> - <Title>
  -----------------------------------------------------
  <Description>
+
  File: <Filename>
  Line: <LineNumber>
  Function: <FunctionName>
@@ -243,7 +278,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.11
+ \version v0.6.0
+ \date 2021.01.23
  \copyright MIT License
 */

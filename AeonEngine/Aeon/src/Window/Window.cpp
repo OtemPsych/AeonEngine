@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -121,6 +121,8 @@ namespace ae
 		glfwSetWindowMaximizeCallback(mHandle, InputManager::window_maximize_callback);
 		glfwSetWindowFocusCallback(mHandle, InputManager::window_focus_callback);
 		glfwSetWindowRefreshCallback(mHandle, InputManager::window_refresh_callback);
+
+		glfwSetDropCallback(mHandle, InputManager::path_drop_callback);
 
 		glfwSetKeyCallback(mHandle, InputManager::key_callback);
 		glfwSetCharCallback(mHandle, InputManager::character_callback);

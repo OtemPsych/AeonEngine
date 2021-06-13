@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -93,7 +93,7 @@ namespace ae
 		#include <AEON/Shaders/Basic2D.fs>
 		;
 
-			// Text2D Shader
+				// Text2D Shader
 		std::string text2DShaderVertSource =
 		#include <AEON/Shaders/Text2D.vs>
 		;
@@ -103,26 +103,36 @@ namespace ae
 
 			// Create the shaders
 				// Basic2D Shader
-		auto basic2DShader = create<Shader>("_AEON_Basic2D");
+		std::shared_ptr<Shader> basic2DShader = create<Shader>("_AEON_Basic2D");
 		basic2DShader->loadFromSource(Shader::StageType::Vertex, basic2DShaderVertSource);
 		basic2DShader->loadFromSource(Shader::StageType::Fragment, basic2DShaderFragSource);
 		basic2DShader->link();
 
 				// Text2D Shader
-		auto text2DShader = create<Shader>("_AEON_Text2D");
+		std::shared_ptr<Shader> text2DShader = create<Shader>("_AEON_Text2D");
 		text2DShader->loadFromSource(Shader::StageType::Vertex, text2DShaderVertSource);
 		text2DShader->loadFromSource(Shader::StageType::Fragment, text2DShaderFragSource);
 		text2DShader->link();
 
-		// UBOs
-			// Create the UBOs
+			// Set the shaders' data layouts
+				// Basic2D Shader
+		VertexBuffer::Layout& basic2DShaderLayout = basic2DShader->getDataLayout();
+		basic2DShaderLayout.addElement(GL_FLOAT, 3, GL_FALSE);
+		basic2DShaderLayout.addElement(GL_FLOAT, 4, GL_FALSE);
+		basic2DShaderLayout.addElement(GL_FLOAT, 2, GL_FALSE);
+
+				// Text2D Shader
+		VertexBuffer::Layout& text2DShaderLayout = text2DShader->getDataLayout();
+		text2DShaderLayout.addElement(GL_FLOAT, 3, GL_FALSE);
+		text2DShaderLayout.addElement(GL_FLOAT, 4, GL_FALSE);
+		text2DShaderLayout.addElement(GL_FLOAT, 2, GL_FALSE);
+
+			// Create the UBOs and attach them to the shaders
 				// Transform UBO
 		auto transformUBO = create<UniformBuffer>("_AEON_TransformUBO");
 		transformUBO->queryLayout(*basic2DShader, "uTransformBlock", { "model", "view", "projection", "viewProjection", "mvp" });
-
-			// Assign the UBOs to the shaders
-		basic2DShader->addUniformBuffer(transformUBO.get());
-		text2DShader->addUniformBuffer(transformUBO.get());
+		basic2DShader->addUniformBuffer(*transformUBO);
+		text2DShader->addUniformBuffer(*transformUBO);
 
 		// VAOs
 			// Create the IBOs
@@ -134,7 +144,7 @@ namespace ae
 		vbo->getLayout().addElement(GL_FLOAT, 4, GL_FALSE);
 		vbo->getLayout().addElement(GL_FLOAT, 2, GL_FALSE);
 
-			// Create the VAOs
+			// Create the VAO and attach the VBOs and IBOs
 		auto vao = create<VertexArray>("_AEON_VAO");
 		vao->addVBO(std::move(vbo));
 		vao->addIBO(std::move(ibo));

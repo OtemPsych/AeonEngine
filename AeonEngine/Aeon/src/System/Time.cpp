@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -21,6 +21,9 @@
 // SOFTWARE.
 
 #include <AEON/System/Time.h>
+
+#include <ctime>
+
 #include <AEON/System/DebugLogger.h>
 
 namespace ae
@@ -34,7 +37,19 @@ namespace ae
 	{
 	}
 
+	Time::Time(Time&& rvalue) noexcept
+		: mSeconds(rvalue.mSeconds)
+	{
+	}
+
 	// Public operator(s)
+	Time& Time::operator=(Time&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data
+		mSeconds = rvalue.mSeconds;
+		return *this;
+	}
+
 	Time Time::operator+(const Time& other) const noexcept
 	{
 		return Time(mSeconds + other.mSeconds);
@@ -47,6 +62,14 @@ namespace ae
 
 	Time Time::operator/(const Time& other) const noexcept
 	{
+		// Check that the other's time value isn't equal to 0 (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (other.mSeconds == 0.0) {
+				AEON_LOG_ERROR("Attempt to divide by 0", "The time value provided is equal to 0.0.\nRetrieving erroneous data.");
+				return Time(mSeconds);
+			}
+		}
+
 		return Time(mSeconds / other.mSeconds);
 	}
 
@@ -61,7 +84,7 @@ namespace ae
 		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if (scale == 0.0) {
 				AEON_LOG_ERROR("Attempt to divide by 0", "The scale value provided is equal to 0.0.\nRetrieving erroneous data.");
-				return *this;
+				return Time(mSeconds);
 			}
 		}
 
@@ -171,6 +194,44 @@ namespace ae
 	Time Time::microseconds(int_fast64_t microseconds) noexcept
 	{
 		return Time(static_cast<double>(microseconds) / 1'000'000.0);
+	}
+
+	std::string Time::getSystemDate()
+	{
+		// Retrieve system time
+		time_t currentTime = time(0);
+		tm date;
+		localtime_s(&date, &currentTime);
+
+		// Setup leading zeros for the date
+		char day[3], month[3], year[5];
+		snprintf(day, sizeof(day), "%02d", date.tm_mday);
+		snprintf(month, sizeof(month), "%02d", 1 + date.tm_mon);
+		snprintf(year, sizeof(year), "%d", 1900 + date.tm_year);
+
+		char dateStr[11];
+		snprintf(dateStr, sizeof(dateStr), "%s.%s.%s", year, month, day);
+
+		return dateStr;
+	}
+
+	std::string Time::getSystemTime()
+	{
+		// Retrieve system time
+		time_t currentTime = time(0);
+		tm date;
+		localtime_s(&date, &currentTime);
+
+		// Setup leading zeros for the time
+		char hours[3], minutes[3], seconds[3];
+		snprintf(hours, 3, "%02d", date.tm_hour);
+		snprintf(minutes, 3, "%02d", date.tm_min);
+		snprintf(seconds, 3, "%02d", date.tm_sec);
+
+		char timeStr[9];
+		snprintf(timeStr, sizeof(timeStr), "%s:%s:%s", hours, minutes, seconds);
+
+		return timeStr;
 	}
 
 	// Private constructor(s)

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,7 +23,7 @@
 #ifndef Aeon_Graphics_Camera2D_H_
 #define Aeon_Graphics_Camera2D_H_
 
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/Graphics/Camera.h>
 
 namespace ae
@@ -57,7 +57,7 @@ namespace ae
 
 		 \since v0.5.0
 		*/
-		Camera2D(const Camera2D&) noexcept = default;
+		Camera2D(const Camera2D&) = default;
 		/*!
 		 \brief Move constructor.
 

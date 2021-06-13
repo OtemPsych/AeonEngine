@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,6 +24,7 @@
 
 #include <GL/glew.h>
 
+#include <AEON/Window/Application.h>
 #include <AEON/Graphics/internal/GLCommon.h>
 #include <AEON/Graphics/Color.h>
 
@@ -125,7 +126,7 @@ namespace ae
 		return Box2f(SIZE * viewport.min + 0.5f, SIZE * viewport.max + 0.5f);
 	}
 
-	Camera* const RenderTarget::getCamera()
+	Camera* RenderTarget::getCamera()
 	{
 		// Checks if the camera pointer is valid (ignored in Release mode)
 		if _CONSTEXPR_IF (AEON_DEBUG) {

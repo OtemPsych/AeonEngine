@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,40 +28,68 @@ namespace ae
 	Actor2D::Actor2D()
 		: Transformable2D()
 		, Renderable2D()
+		, mGlobalTransform(1.f)
 		, mParent(nullptr)
 		, mChildren()
-		, mFuncs()
-		, mAlignment(std::make_pair(false, std::make_pair(OriginFlag::Top | OriginFlag::Left, 0.f)))
-	{
-		// Initialize the associate functionalities and targets
-		mFuncs = {
+		, mFuncs({
 			{ Func::EventHandle, { { Target::Self, true }, { Target::Children, true } } },
 			{ Func::Update,      { { Target::Self, true }, { Target::Children, true } } },
-			{ Func::Render,      { { Target::Self, true }, { Target::Children, true } } }
-		};
+			{ Func::Render,      { { Target::Self, true }, { Target::Children, true } } }})
+		, mAlignment(std::make_pair(false, std::make_pair(OriginFlag::Top | OriginFlag::Left, Vector2f(0.f))))
+	{
+	}
+
+	Actor2D::Actor2D(const Actor2D& copy)
+		: Transformable2D(copy)
+		, Renderable2D(copy)
+		, mParent(copy.mParent)
+		, mGlobalTransform(1.f)
+		, mChildren()
+		, mFuncs(copy.mFuncs)
+		, mAlignment(copy.mAlignment)
+	{
 	}
 
 	Actor2D::Actor2D(Actor2D&& rvalue) noexcept
 		: Transformable2D(std::move(rvalue))
 		, Renderable2D(std::move(rvalue))
 		, mParent(rvalue.mParent)
-		, mChildren(std::move(mChildren))
+		, mGlobalTransform(std::move(rvalue.mGlobalTransform))
+		, mChildren(std::move(rvalue.mChildren))
 		, mFuncs(std::move(rvalue.mFuncs))
 		, mAlignment(std::move(rvalue.mAlignment))
 	{
 	}
 
-	Actor2D::~Actor2D()
+	// Public operator(s)
+	Actor2D& Actor2D::operator=(const Actor2D& other)
 	{
+		// Check if the caller is being assigned to itself (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (this == &other) {
+				AEON_LOG_WARNING("Invalid assignment", "The caller is being assigned to itself.\nAborting assignment.");
+				return *this;
+			}
+		}
+
+		// Copy the other's data except its children
+		Transformable2D::operator=(other);
+		Renderable2D::operator=(other);
+		mGlobalTransform = Matrix4f::identity();
+		mParent = other.mParent;
+		mFuncs = other.mFuncs;
+		mAlignment = other.mAlignment;
+
+		return *this;
 	}
 
-	// Public operator(s)
 	Actor2D& Actor2D::operator=(Actor2D&& rvalue) noexcept
 	{
-		// Copy the rvalue's trivial data and move the rest
+		// Copy the trival data and move the rest
 		Transformable2D::operator=(std::move(rvalue));
 		Renderable2D::operator=(std::move(rvalue));
 		mParent = rvalue.mParent;
+		mGlobalTransform = std::move(rvalue.mGlobalTransform);
 		mChildren = std::move(rvalue.mChildren);
 		mFuncs = std::move(rvalue.mFuncs);
 		mAlignment = std::move(rvalue.mAlignment);
@@ -76,8 +104,8 @@ namespace ae
 		mChildren.push_back(std::move(child));
 
 		// Update Z-ordering
-		const int ZINDEX = (mParent) ? static_cast<int>(getPosition().z) : 0;
-		updateZOrdering(ZINDEX);
+		const int Z_INDEX = (mParent) ? static_cast<int>(getPosition().z) : 0;
+		updateZOrdering(Z_INDEX);
 	}
 
 	std::unique_ptr<Actor2D> Actor2D::detachChild(const Actor2D& child)
@@ -97,10 +125,10 @@ namespace ae
 		result->updateZOrdering(0);
 		mChildren.erase(found);
 
-		return std::move(result);
+		return result;
 	}
 
-	void Actor2D::setRelativeAlignment(uint32_t alignmentFlags, float padding)
+	void Actor2D::setRelativeAlignment(uint32_t alignmentFlags, const Vector2f& padding)
 	{
 		// Check if the caller has a parent
 		if (!mParent) {
@@ -119,14 +147,14 @@ namespace ae
 				newPos.x = PARENT_BOUNDS.min.x + PARENT_BOUNDS.max.x / 2.f;
 			}
 			else if (alignmentFlags & OriginFlag::Right) {
-				newPos.x = PARENT_BOUNDS.min.x + PARENT_BOUNDS.max.x - padding;
+				newPos.x = PARENT_BOUNDS.min.x + PARENT_BOUNDS.max.x - padding.x;
 			}
 
 			if (alignmentFlags & OriginFlag::CenterY) {
 				newPos.y = PARENT_BOUNDS.min.y + PARENT_BOUNDS.max.y / 2.f;
 			}
 			else if (alignmentFlags & OriginFlag::Bottom) {
-				newPos.y = PARENT_BOUNDS.min.y + PARENT_BOUNDS.max.y - padding;
+				newPos.y = PARENT_BOUNDS.min.y + PARENT_BOUNDS.max.y - padding.y;
 			}
 
 			setPosition(newPos);
@@ -138,11 +166,11 @@ namespace ae
 
 	void Actor2D::handleEvent(Event* const event)
 	{
-		if (mFuncs[Func::EventHandle][Target::Self]) {
-			handleEventSelf(event);
-		}
 		if (mFuncs[Func::EventHandle][Target::Children]) {
 			handleEventChildren(event);
+		}
+		if (mFuncs[Func::EventHandle][Target::Self]) {
+			handleEventSelf(event);
 		}
 	}
 
@@ -171,12 +199,15 @@ namespace ae
 
 	Matrix4f Actor2D::getGlobalTransform()
 	{
-		Matrix4f globalTransform(1.f);
-		for (Actor2D* node = this; node != nullptr; node = node->mParent) {
-			globalTransform = node->getTransform() * globalTransform;
-		}
+		//if (mUpdateGlobalTransform) {
+			//mUpdateGlobalTransform = false;
+			mGlobalTransform = Matrix4f::identity();
+			for (Actor2D* node = this; node != nullptr; node = node->mParent) {
+				mGlobalTransform = node->getTransform() * mGlobalTransform;
+			}
+	//	}
 
-		return globalTransform;
+		return mGlobalTransform;
 	}
 
 	Box2f Actor2D::getGlobalBounds()
@@ -221,11 +252,11 @@ namespace ae
 	{
 		states.transform *= getTransform();
 
-		if (mFuncs[Func::Render][Target::Children]) {
-			renderChildren(states);
-		}
 		if (mFuncs[Func::Render][Target::Self]) {
 			renderSelf(states);
+		}
+		if (mFuncs[Func::Render][Target::Children]) {
+			renderChildren(states);
 		}
 	}
 
@@ -237,7 +268,7 @@ namespace ae
 	// Protected method(s)
 	void Actor2D::updateZOrdering(int zIndex)
 	{
-		// Set the z index provided to this node
+		// Set the z index provided to this node and raise flag to update global transform
 		const Vector3f& pos = getPosition();
 		setPosition(pos.x, pos.y, zIndex);
 

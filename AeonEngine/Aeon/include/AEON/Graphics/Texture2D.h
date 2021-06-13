@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,7 +23,7 @@
 #ifndef Aeon_Graphics_Texture2D_H_
 #define Aeon_Graphics_Texture2D_H_
 
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/Graphics/Texture.h>
 
 namespace ae
@@ -58,11 +58,13 @@ namespace ae
 		*/
 		Texture2D(const Texture2D&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Texture2D that will be moved
+
+		 \since v0.6.0
 		*/
-		Texture2D(Texture2D&&) = delete;
+		Texture2D(Texture2D&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -72,15 +74,19 @@ namespace ae
 		*/
 		Texture2D& operator=(const Texture2D&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Texture2D that will be moved
+
+		 \return The caller ae::Texture2D
+
+		 \since v0.6.0
 		*/
-		Texture2D& operator=(Texture2D&&) = delete;
+		Texture2D& operator=(Texture2D&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
-		 \brief Creates a texture with the dimensions \a width x \a height.
+		 \brief (Re)Creates a texture with the dimensions \a width x \a height.
 		 \details The dimensions provided should optimally be even numbers for correct results.
 
 		 \param[in] width The texture's width
@@ -97,12 +103,38 @@ namespace ae
 		 }
 		 \endcode
 
-		 \sa loadFromFile()
+		 \sa loadFromFile(), update()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		bool create(unsigned int width, unsigned int height, const void* data = nullptr);
-		//void update( const void* data)
+		/*!
+		 \brief Updates the ae::Texture's image data.
+		 \details This method is used to modify the texture's current data without recreating it.
+
+		 \param[in] offsetX The horizontal texel offset to place the new data
+		 \param[in] offsetY The vertical texel offset to place the new data
+		 \param[in] width The width of the subimage
+		 \param[in] height The height of the subimage
+		 \param[in] data The pixel data that will be placed within the constraints provided
+
+		 \return True if the texture was updated successfully, false otherwise
+
+		 \par Example:
+		 \code
+		 ae::Texture2D texture(ae::Texture2D::Filter::Nearest);
+		 ...
+		 const void* newData = ...;
+		 if (!texture.update(0, 0, 240, 480, newData)) {
+			std::cerr << "Error.." << std::endl;
+		 }
+		 \endcode
+		 
+		 \sa create()
+
+		 \since v0.6.0
+		*/
+		bool update(unsigned int offsetX, unsigned int offsetY, unsigned int width, unsigned int height, const void* data);
 		/*!
 		 \brief Loads in a texture from a file on disk.
 		 \details The image types supported:
@@ -134,9 +166,25 @@ namespace ae
 		*/
 		bool loadFromFile(const std::string& filename);
 		/*!
+		 \brief Retrieves the ae::Texture2D's loaded image's filepath.
+
+		 \return A std::string containing the texture's filepath
+
+		 \par Example:
+		 \code
+		 ae::Texture2D texture;
+		 texture.loadFromFile("Textures/texture.png");
+		 ...
+		 const std::string& filepath = texture.getFilepath();
+		 \endcode
+
+		 \since v0.6.0
+		*/
+		_NODISCARD const std::string& getFilepath() const noexcept;
+		/*!
 		 \brief Retrieves the ae::Texture2D's loaded image's size.
 		 
-		 \return An ae::Vector2u containing the texture's dimensions.
+		 \return An ae::Vector2u containing the texture's dimensions
 		 
 		 \par Example:
 		 \code
@@ -172,7 +220,8 @@ namespace ae
 
 	private:
 		// Private member(s)
-		Vector2u mSize; //!< The texture's size
+		std::string mFilepath; //!< The texture's filepath
+		Vector2u    mSize;     //!< The texture's size
 	};
 }
 #endif // Aeon_Graphics_Texture2D_H_
@@ -186,7 +235,7 @@ namespace ae
  located in the VRAM so this class is simply an intermediary to that data.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.01
+ \version v0.6.0
+ \date 2020.09.05
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Button_H_
-#define Aeon_Graphics_Button_H_
+#ifndef Aeon_Graphics_GUI_Button_H_
+#define Aeon_Graphics_GUI_Button_H_
 
-#include <AEON/Graphics/internal/Widget.h>
+#include <AEON/Graphics/GUI/internal/Widget.h>
 #include <AEON/Graphics/RectangleShape.h>
 
 namespace ae
@@ -33,7 +33,7 @@ namespace ae
 
 	/*!
 	 \brief Class representing a GUI button.
-	 \details The Idle, Hover and Press states need to be configured.
+	 \details The Idle and Hover states need to be configured.
 	*/
 	class _NODISCARD AEON_API Button : public Widget<RectangleShape>
 	{
@@ -43,7 +43,7 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the ae::Button's and the associated text's origins to their centers.
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		Button();
 		/*!
@@ -57,7 +57,7 @@ namespace ae
 
 		 \param[in] rvalue The ae::Button that will be moved
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		Button(Button&& rvalue) noexcept;
 	public:
@@ -75,7 +75,7 @@ namespace ae
 
 		 \return The caller ae::Button
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		Button& operator=(Button&& rvalue) noexcept;
 	public:
@@ -101,7 +101,7 @@ namespace ae
 
 		 \param[in] state The ae::Widget::State that will be enabled
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		virtual void enableState(State state) override final;
 		/*!
@@ -112,13 +112,22 @@ namespace ae
 		 \since v0.5.0
 		*/
 		virtual void updateSelf(const Time& dt) override final;
+		/*!
+		 \brief Updates the ae::Button's state based on the input event.
+		 \details Updates the active state based on mouse movement and mouse clicks.
+
+		 \param[in] event The polled input ae::Event
+
+		 \since v0.6.0
+		*/
+		virtual void handleEventSelf(Event* const event) override final;
 
 	private:
 		// Private member(s)
 		Text* mText; //!< The button's text
 	};
 }
-#endif // Aeon_Graphics_Button_H_
+#endif // Aeon_Graphics_GUI_Button_H_
 
 /*!
  \class ae::Button
@@ -129,7 +138,7 @@ namespace ae
  which is automatically situated at the center of the button.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.08
+ \version v0.6.0
+ \date 2020.08.17
  \copyright MIT License
 */

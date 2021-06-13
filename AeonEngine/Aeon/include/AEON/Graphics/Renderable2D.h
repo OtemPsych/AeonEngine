@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,14 +23,18 @@
 #ifndef Aeon_Graphics_Renderable2D_H_
 #define Aeon_Graphics_Renderable2D_H_
 
+#include <vector>
+
 #include <AEON/Config.h>
-#include <AEON/Math/Vector2.h>
-#include <AEON/Math/Vector3.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/Graphics/Color.h>
 #include <AEON/Graphics/RenderStates.h>
 
 namespace ae
 {
+	// Forward declaration(s)
+	class Renderer2D;
+
 	/*!
 	 \brief Struct representing a 2-dimensional vertex which Renderable2D entities will use.
 	*/
@@ -77,7 +81,6 @@ namespace ae
 		// Public virtual method(s)
 		/*!
 		 \brief Renders the ae::Renderable2D.
-		 \details While the method is called "render", it actually submits the appropriate vertices and indices to be rendered as a batch later on.
 
 		 \param[in] states The ae::RenderStates associated (texture, transform, blend mode, shader)
 		 
@@ -101,7 +104,7 @@ namespace ae
 
 		 \since v0.5.0
 		*/
-		virtual void render(RenderStates states) = 0;
+		virtual void render(RenderStates states = RenderStates()) = 0;
 	protected:
 		// Protected constructor(s)
 		/*!
@@ -112,11 +115,13 @@ namespace ae
 		*/
 		Renderable2D() noexcept;
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Renderable2D that will be copied
+
+		 \since v0.6.0
 		*/
-		Renderable2D(const Renderable2D&) = delete;
+		Renderable2D(const Renderable2D& copy) = default;
 		/*!
 		 \brief Move constructor.
 
@@ -128,11 +133,15 @@ namespace ae
 	protected:
 		// Protected operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
-		 \since v0.5.0
+		 \param[in] other The ae::Renderable2D that will be copied
+
+		 \return The caller ae::Renderable2D
+
+		 \since v0.6.0
 		*/
-		Renderable2D& operator=(const Renderable2D&) = delete;
+		Renderable2D& operator=(const Renderable2D& other) = default;
 		/*!
 		 \brief Move assignment operator.
 
@@ -153,9 +162,9 @@ namespace ae
 
 		 \sa isDirty()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		void setDirty(bool flag) noexcept;
+		void setDirty(bool flag) const noexcept;
 		/*!
 		 \brief Whether or not the ae::Renderable2D's render properties need to be updated.
 		 \details This flag needs to be passed on to a renderer to update its cached properties.
@@ -188,7 +197,7 @@ namespace ae
 		// Private member(s)
 		std::vector<Vertex2D>     mVertices; //!< The list of vertices to be passed on to a renderer
 		std::vector<unsigned int> mIndices;  //!< The list of indices to be passed on to a renderer
-		bool                      mDirty;    //!< Whether the render properties need to be updated
+		mutable bool              mDirty;    //!< Whether the render properties need to be updated
 	};
 }
 #endif // Aeon_Graphics_Renderable2D_H_
@@ -203,7 +212,7 @@ namespace ae
  4) and a list of indices that will automatically be passed on to the GPU.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.6.0
+ \date 2020.08.31
  \copyright MIT License
 */

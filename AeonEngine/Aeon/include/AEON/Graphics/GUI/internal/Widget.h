@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,11 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Widget_H_
-#define Aeon_Graphics_Widget_H_
+#ifndef Aeon_Graphics_GUI_Widget_H_
+#define Aeon_Graphics_GUI_Widget_H_
 
 #include <AEON/Window/Application.h>
 #include <AEON/Graphics/Actor2D.h>
+#include <AEON/Graphics/Camera2D.h>
 
 namespace ae
 {
@@ -48,8 +49,8 @@ namespace ae
 			Disabled,  //!< The widget won't receive any input
 			Idle,      //!< The widget's idle state, awaiting input
 			Click,     //!< The widget was clicked
+			Focus,     //!< The widget in being focused
 			Hover,     //!< The widget is currently being hovered over
-			Press,     //!< The widget is currently being pressed down (a click was detected on the widget but it hasn't been released)
 			StateCount //!< The number of states available
 		};
 
@@ -109,6 +110,10 @@ namespace ae
 		_NODISCARD State getActiveState() const noexcept
 		{
 			return mActiveState;
+		}
+		void setRenderTarget(RenderTarget& target) noexcept
+		{
+			mTarget = &target;
 		}
 		/*!
 		 \brief Retrieves the ae::Widget's state associated to the ae::Widget::State provided.
@@ -191,7 +196,7 @@ namespace ae
 		Widget(Widget<T>&& rvalue) noexcept
 			: Actor2D(std::move(rvalue))
 			, mTarget(rvalue.mTarget)
-			, mStates(std::move(rvalue.mStates))
+			, mStates(rvalue.mStates)
 			, mActiveState(rvalue.mActiveState)
 		{
 		}
@@ -217,7 +222,7 @@ namespace ae
 			// Copy the rvalue's trivial data and move the rest
 			Actor2D::operator=(std::move(rvalue));
 			mTarget = rvalue.mTarget;
-			mStates = std::move(rvalue.mStates);
+			mStates = rvalue.mStates;
 			mActiveState = rvalue.mActiveState;
 
 			return *this;
@@ -251,7 +256,16 @@ namespace ae
 		*/
 		_NODISCARD virtual bool isHoveredOver(const Vector2d& mousePos)
 		{
-			return getGlobalBounds().contains(mTarget->mapPixelToCoords(static_cast<Vector2f>(mousePos)));
+			Window& appWindow = Application::getInstance().getWindow();
+			if (&appWindow != mTarget) {
+				const Matrix4f GLOBAL_TRANSFORM = mTarget->getCamera()->getViewMatrix() * getGlobalTransform();
+				const Box2f MODEL_BOUNDS = getModelBounds();
+				const Box2f GLOBAL_BOUNDS(Vector2f(GLOBAL_TRANSFORM * Vector3f(MODEL_BOUNDS.min)), Vector2f(GLOBAL_TRANSFORM * Vector3f(MODEL_BOUNDS.max)));
+				return GLOBAL_BOUNDS.contains(appWindow.mapPixelToCoords(mousePos));
+			}
+			else {
+				return getGlobalBounds().contains(mTarget->mapPixelToCoords(mousePos));
+			}
 		}
 	protected:
 		// Protected virtual method(s)
@@ -268,60 +282,17 @@ namespace ae
 		{
 			correctProperties();
 		}
-		/*!
-		 \brief The ae::Widget processes the polled input event.
-		 \details Updates the active state based on mouse movement and mouse clicks.
-
-		 \param[in] event The polled input ae::Event
-
-		 \since v0.5.0
-		*/
-		virtual void handleEventSelf(Event* const event) override
-		{
-			// Check if the widget has been disabled
-			if (mActiveState == State::Disabled) {
-				return;
-			}
-
-			// Check if the widget is being hovered over, pressed down or clicked
-			if (event->type == Event::Type::MouseMoved && (mActiveState == State::Idle || mActiveState == State::Hover)) {
-				auto mouseMoveEvent = event->as<MouseMoveEvent>();
-
-				const bool HOVERED_OVER = (isHoveredOver(mouseMoveEvent->position));
-				if (HOVERED_OVER && mActiveState == State::Idle) {
-					enableState(State::Hover);
-				}
-				else if (!HOVERED_OVER && mActiveState == State::Hover) {
-					enableState(State::Idle);
-				}
-			}
-			else if (event->type == Event::Type::MouseButtonPressed && !event->handled && (mActiveState == State::Idle || mActiveState == State::Hover)) {
-				auto mouseButtonEvent = event->as<MouseButtonEvent>();
-				if (mouseButtonEvent->button == Mouse::Button::Left && (mActiveState == State::Hover || isHoveredOver(Mouse::getPosition()))) {
-					enableState(State::Press);
-					event->handled = true;
-				}
-			}
-			else if (event->type == Event::Type::MouseButtonReleased && !event->handled && mActiveState == State::Press) {
-				auto mouseButtonEvent = event->as<MouseButtonEvent>();
-				if (mouseButtonEvent->button == Mouse::Button::Left) {
-					enableState((isHoveredOver(Mouse::getPosition())) ? State::Click : State::Idle);
-					event->handled = true;
-				}
-			}
-		}
 
 	protected:
 		// Protected member(s)
-		const RenderTarget*               mTarget;      //!< The widget's render target
+		RenderTarget*               mTarget;      //!< The widget's render target
 	private:
 		// Private member(s)
 		std::array<T*, State::StateCount> mStates;      //!< The different widgets based on the active state
 		State                             mActiveState; //!< The widget's active state
 	};
 }
-//#include <AEON/Graphics/internal/Widget.inl>
-#endif // Aeon_Graphics_Widget_H_
+#endif // Aeon_Graphics_GUI_Widget_H_
 
 /*!
  \class ae::Widget
@@ -331,7 +302,7 @@ namespace ae
  all GUI widgets available.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.02
+ \version v0.6.0
+ \date 2020.08.17
  \copyright MIT License
 */

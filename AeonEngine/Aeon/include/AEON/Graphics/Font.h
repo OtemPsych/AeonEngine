@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -65,9 +65,9 @@ namespace ae
 
 			 \param[in] copy The ae::Font::Page that will be copied
 
-			 \since v0.5.0
+			 \since v0.6.0
 			*/
-			Page(const Page& copy);
+			Page(const Page& copy) = default;
 			/*!
 			 \brief Move constructor.
 
@@ -92,9 +92,9 @@ namespace ae
 
 			 \return The caller ae::Font::Page
 
-			 \since v0.5.0
+			 \since v0.6.0
 			*/
-			Page& operator=(const Page& other);
+			Page& operator=(const Page& other) = default;
 			/*!
 			 \brief Move assignment operator.
 
@@ -132,7 +132,7 @@ namespace ae
 
 		 \since v0.5.0
 		*/
-		Font(Font&& rvalue) noexcept;
+		Font(Font&& rvalue) noexcept = default;
 	public:
 		// Public operator(s)
 		/*!
@@ -150,7 +150,7 @@ namespace ae
 
 		 \since v0.5.0
 		*/
-		Font& operator=(Font&& rvalue) noexcept;
+		Font& operator=(Font&& rvalue) noexcept = default;
 	public:
 		// Public method(s)
 		/*!
@@ -168,12 +168,12 @@ namespace ae
 
 		 \sa getGlyph()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		void loadFromFile(const std::string& filename);
 		/*!
 		 \brief Retrieves the glyph corresponding to the parameters provided.
-		 \details If the glyph requested doesn't exist, it will be created.
+		 \details If the glyph requested hasn't been loaded in, it will be created.
 		 \note A font must be loaded prior to calling this method.
 
 		 \param[in] codepoint The glyph's unicode to retrieve
@@ -191,7 +191,7 @@ namespace ae
 
 		 \sa loadFromFile()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		_NODISCARD const Glyph& getGlyph(uint32_t codepoint, unsigned int characterSize);
 	private:
@@ -210,7 +210,7 @@ namespace ae
 		_NODISCARD PageItr createPage(unsigned int characterSize);
 		/*!
 		 \brief Loads in the requested glyph to the appropriate page.
-		 \details Creates the ae::Glyph, assigns the metadata extracted, creates the individual texture and loads it into the page's texture atlas.
+		 \details Creates the ae::Glyph, assigns the metadata extracted, creates the individual texture and loads it into the texture atlas.
 
 		 \param[in] page The ae::Font::Page wherein the glyph will be stored
 		 \param[in] codepoint The unicode of the glyph to load in
@@ -219,17 +219,17 @@ namespace ae
 
 		 \sa createPage(), getGlyph()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		_NODISCARD GlyphItr loadGlyph(PageItr& page, uint32_t codepoint);
 		/*!
-		 \brief Assigns the individual textures' packed positions to the glyphs' texture rects.
+		 \brief Packs all individual textures and assigns the packed positions to the glyphs' texture rects.
 
 		 \sa loadGlyph()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		void updateAtlasTexture(PageItr& page);
+		void updateAtlasTexture();
 
 	private:
 		// Private member(s)
@@ -265,7 +265,7 @@ namespace ae
  therefore improving performance.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.6.0
+ \date 2020.09.07
  \copyright MIT License
 */

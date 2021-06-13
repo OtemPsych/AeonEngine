@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -25,7 +25,6 @@
 
 #include <cmath>
 
-#include <AEON/Config.h>
 #include <AEON/System/DebugLogger.h>
 
 namespace ae
@@ -42,7 +41,7 @@ namespace ae
 		using FLOATING_POINT_POLICY = std::enable_if_t<std::is_floating_point_v<T>>; //!< The template parameter will only be enabled if it's a floating point
 
 		// Constant(s)
-		_CONSTEXPR17 const float PI = 3.14159265358f; //!< The mathematical constant of pi
+		_CONSTEXPR17 const float PI = 3.14159265359f; //!< The mathematical constant of pi
 
 		/*!
 		 \brief Converts the angle provided in \a degrees into radians.
@@ -60,10 +59,10 @@ namespace ae
 		 
 		 \sa toDegrees()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		_NODISCARD _CONSTEXPR17 T toRadians(T degrees) noexcept
+		_NODISCARD inline _CONSTEXPR17 T toRadians(T degrees) noexcept
 		{
 			return degrees * (PI / 180.f);
 		}
@@ -83,10 +82,10 @@ namespace ae
 
 		 \sa toRadians()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
-		_NODISCARD _CONSTEXPR17 T toDegrees(T radians) noexcept
+		_NODISCARD inline _CONSTEXPR17 T toDegrees(T radians) noexcept
 		{
 			return radians * (180.f / PI);
 		}
@@ -94,6 +93,7 @@ namespace ae
 		/*!
 		 \brief Retrieves a random value situated between the values \a min and \a max.
 		 \details The retrieved value will be of the same type as the values provided.
+		 \note A seed must be set using srand for a different series of numbers at each execution.
 
 		 \param[in] min The minimum value
 		 \param[in] max The maximum value
@@ -106,7 +106,7 @@ namespace ae
 		 int randomInt = ae::Math::random(2, 5);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T random(T min, T max)
@@ -142,13 +142,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T cos(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::cos(value);
-			}
-			else {
-				return static_cast<T>(::cos(static_cast<double>(value)));
-			}
+			return static_cast<T>(::cos(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Calculates the sine of the \a value provided after casting it to a double (if necessary).
@@ -170,13 +164,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T sin(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::sin(value);
-			}
-			else {
-				return static_cast<T>(::sin(static_cast<double>(value)));
-			}
+			return static_cast<T>(::sin(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Calculates the tangent of the \a value provided after casting it to a double (if necessary).
@@ -198,13 +186,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T tan(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::tan(value);
-			}
-			else {
-				return static_cast<T>(::tan(static_cast<double>(value)));
-			}
+			return static_cast<T>(::tan(static_cast<double>(value)));
 		}
 
 		/*!
@@ -227,13 +209,7 @@ namespace ae
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
 		_NODISCARD inline T acos(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::acos(value);
-			}
-			else {
-				return static_cast<T>(::acos(static_cast<double>(value)));
-			}
+			return static_cast<T>(::acos(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Calculates the inverse sine of the \a value provided after casting it to a double (if necessary).
@@ -255,13 +231,7 @@ namespace ae
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
 		_NODISCARD inline T asin(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::asin(value);
-			}
-			else {
-				return static_cast<T>(::asin(static_cast<double>(value)));
-			}
+			return static_cast<T>(::asin(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Calculates the inverse tangent of the \a value provided after casting it to a double (if necessary).
@@ -283,13 +253,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T atan(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::atan(value);
-			}
-			else {
-				return static_cast<T>(::atan(static_cast<double>(value)));
-			}
+			return static_cast<T>(::atan(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Calculates the inverse tangent of the \a v1 and \a v2 values after casting them to doubles (if necessary).
@@ -313,13 +277,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T atan2(T v1, T v2) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::atan2(v1, v2);
-			}
-			else {
-				return static_cast<T>(::atan2(static_cast<double>(v1), static_cast<double>(v2)));
-			}
+			return static_cast<T>(::atan2(static_cast<double>(v1), static_cast<double>(v2)));
 		}
 
 		/*!
@@ -342,13 +300,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T sqrt(T value)
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::sqrt(value);
-			}
-			else {
-				return static_cast<T>(::sqrt(static_cast<double>(value)));
-			}
+			return static_cast<T>(::sqrt(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Calculates the inverse square root of the \a value provided after casting it to a double (if necessary).
@@ -370,13 +322,7 @@ namespace ae
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
 		_NODISCARD inline T rsqrt(T value)
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return (1.0 / ::sqrt(value));
-			}
-			else {
-				return static_cast<T>(1.0 / ::sqrt(static_cast<double>(value)));
-			}
+			return static_cast<T>(1.0 / ::sqrt(static_cast<double>(value)));
 		}
 
 		/*!
@@ -398,13 +344,7 @@ namespace ae
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
 		_NODISCARD inline T floor(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::floor(value);
-			}
-			else {
-				return static_cast<T>(::floor(static_cast<double>(value)));
-			}
+			return static_cast<T>(::floor(static_cast<double>(value)));
 		}
 		/*!
 		 \brief Retrieves the rounded up value to the nearest integer of the \a value provided.
@@ -425,13 +365,7 @@ namespace ae
 		template <typename T, typename = FLOATING_POINT_POLICY<T>>
 		_NODISCARD inline T ceil(T value) noexcept
 		{
-			// Avoid the casts if the T type is already a double during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, double>) {
-				return ::ceil(value);
-			}
-			else {
-				return static_cast<T>(::ceil(static_cast<double>(value)));
-			}
+			return static_cast<T>(::ceil(static_cast<double>(value)));
 		}
 
 		/*!
@@ -453,7 +387,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		_NODISCARD _CONSTEXPR17 T min(T v1, T v2) noexcept
+		_NODISCARD inline _CONSTEXPR17 T min(T v1, T v2) noexcept
 		{
 			return (v1 < v2) ? v1 : v2;
 		}
@@ -476,7 +410,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		_NODISCARD _CONSTEXPR17 T max(T v1, T v2) noexcept
+		_NODISCARD inline _CONSTEXPR17 T max(T v1, T v2) noexcept
 		{
 			return (v1 > v2) ? v1 : v2;
 		}
@@ -506,7 +440,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		_NODISCARD _CONSTEXPR17 T clamp(T value, T minValue, T maxValue) noexcept
+		_NODISCARD inline _CONSTEXPR17 T clamp(T value, T minValue, T maxValue) noexcept
 		{
 			return min(max(value, minValue), maxValue);
 		}
@@ -537,7 +471,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		template <typename T, typename = ARITHMETIC_POLICY<T>>
-		_NODISCARD _CONSTEXPR17 T lerp(T start, T end, T t) noexcept
+		_NODISCARD inline _CONSTEXPR17 T lerp(T start, T end, T t) noexcept
 		{
 			return (start + t * (end - start));
 		}
@@ -553,7 +487,7 @@ namespace ae
  the development of a game, whether it be 2D or 3D.
  
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.02
+ \version v0.6.0
+ \date 2021.01.22
  \copyright MIT License
 */

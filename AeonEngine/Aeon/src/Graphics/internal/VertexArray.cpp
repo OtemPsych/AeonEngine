@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -41,6 +41,26 @@ namespace ae
 	{
 		// Create the VAO
 		GLCall(glCreateVertexArrays(1, &mHandle));
+	}
+
+	VertexArray::VertexArray(VertexArray&& rvalue) noexcept
+		: GLResource(std::move(rvalue))
+		, mVBOs(std::move(rvalue.mVBOs))
+		, mIBO(std::move(rvalue.mIBO))
+		, mAttributeIndex(rvalue.mAttributeIndex)
+	{
+	}
+
+	// Public operator(s)
+	VertexArray& VertexArray::operator=(VertexArray&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		GLResource::operator=(std::move(rvalue));
+		mVBOs = std::move(rvalue.mVBOs);
+		mIBO = std::move(rvalue.mIBO);
+		mAttributeIndex = rvalue.mAttributeIndex;
+
+		return *this;
 	}
 
 	// Public method(s)

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -44,7 +44,7 @@ namespace ae
 		class _NODISCARD AEON_API Layout
 		{
 		public:
-			// Public enumeration(s)
+			// Public struct(s)
 			/*!
 			 \brief The struct representing a single format element associated to a vertex attribute.
 			*/
@@ -65,6 +65,44 @@ namespace ae
 			 \since v0.4.0
 			*/
 			Layout() noexcept;
+			/*!
+			 \brief Copy constructor.
+
+			 \param[in] copy The ae::VertexBuffer::Layout that will be copied
+
+			 \since v0.6.0
+			*/
+			Layout(const Layout& copy);
+			/*!
+			 \brief Move constructor.
+
+			 \param[in] rvalue The ae::VertexBuffer::Layout that will be moved
+
+			 \since v0.6.0
+			*/
+			Layout(Layout&& rvalue) noexcept;
+		public:
+			// Public operator(s)
+			/*!
+			 \brief Assignment operator.
+
+			 \param[in] other The ae::VertexBuffer::Layout that will be copied
+
+			 \return The caller ae::VertexBuffer::Layout
+
+			 \since v0.6.0
+			*/
+			Layout& operator=(const Layout& other);
+			/*!
+			 \brief Move assignment operator.
+
+			 \param[in] rvalue The ae::VertexBuffer::Layout that will be moved
+
+			 \return The caller ae::VertexBuffer::Layout
+
+			 \since v0.6.0
+			*/
+			Layout& operator=(Layout&& rvalue) noexcept;
 		public:
 			// Public method(s)
 			/*!
@@ -157,11 +195,13 @@ namespace ae
 		*/
 		VertexBuffer(const VertexBuffer&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::VertexBuffer that will be moved
+
+		 \since v0.6.0
 		*/
-		VertexBuffer(VertexBuffer&&) = delete;
+		VertexBuffer(VertexBuffer&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -171,11 +211,15 @@ namespace ae
 		*/
 		VertexBuffer& operator=(const VertexBuffer&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::VertexBuffer that will be moved
+
+		 \return The caller ae::VertexBuffer
+
+		 \since v0.6.0
 		*/
-		VertexBuffer& operator=(VertexBuffer&&) = delete;
+		VertexBuffer& operator=(VertexBuffer&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -261,6 +305,31 @@ namespace ae
 		 \since v0.4.0
 		*/
 		_NODISCARD Layout& getLayout() noexcept;
+		/*!
+		 \brief Retrieves the ae::VertexBuffer::Layout that describes the data format of the ae::VertexBuffer.
+
+		 \return An ae::VertexBuffer::Layout describing the data format
+
+		 \par Example:
+		 \code
+		 // Some data
+		 const GLfloat data[] = {
+			 0.25, -0.25, 0.5, 1.0,
+			-0.25, -0.25, 0.5, 1.0,
+			 0.25,  0.25, 0.5, 1.0
+		 };
+
+		 // Instantiate a VBO and create its data store
+		 auto vbo = std::make_unique<ae::VertexBuffer>(GL_STATIC_DRAW);
+		 vbo->setData(sizeof(data), data);
+
+		 // Retrieve the VBO's read-only layout
+		 const ae::VertexBuffer::Layout& layout = vbo->getLayout();
+		 \endcode
+
+		 \since v0.6.0
+		*/
+		_NODISCARD const Layout& getLayout() const noexcept;
 
 	private:
 		// Private member(s)
@@ -282,8 +351,8 @@ namespace ae
  which will, in turn, automatically calculate these offsets and strides.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.01.05
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */
 
@@ -327,7 +396,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.10.14
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

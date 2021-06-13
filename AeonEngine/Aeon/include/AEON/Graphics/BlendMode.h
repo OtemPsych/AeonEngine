@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -85,20 +85,16 @@ namespace ae
 		BlendMode() noexcept;
 		/*!
 		 \brief Copy constructor.
-		 
-		 \param[in] copy The ae::BlendMode that will be copied
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		BlendMode(const BlendMode& copy) noexcept = default;
+		BlendMode(const BlendMode&) = default;
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::BlendMode that will be copied
-
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		BlendMode(BlendMode&& rvalue) noexcept;
+		BlendMode(BlendMode&&) noexcept = default;
 		/*!
 		 \brief Constructs the ae::BlendMode by providing the blending factors and equations to use.
 		 \details The same factors and the same equation will be used for both the color channels and the alpha channel.
@@ -139,25 +135,16 @@ namespace ae
 		// Public operator(s)
 		/*!
 		 \brief Assignment operator.
-		 \details Checks if the caller is being assigned to itself.
 
-		 \param[in] other The ae::BlendMode that will be copied
-
-		 \return The caller ae::BlendMode
-
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		BlendMode& operator=(const BlendMode& other);
+		BlendMode& operator=(const BlendMode&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::BlendMode that will be copied
-
-		 \return The caller ae::BlendMode
-
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		BlendMode& operator=(BlendMode&& rvalue) noexcept;
+		BlendMode& operator=(BlendMode&&) noexcept = default;
 		/*!
 		 \brief Equality operator.
 		 \details Checks if the caller's and the \a other's members are respectively equal.
@@ -263,7 +250,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.06.09
+ \version v0.6.0
+ \date 2021.01.30
  \copyright MIT License
 */

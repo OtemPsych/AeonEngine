@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,7 +24,7 @@
 #define Aeon_Graphics_RenderTarget_H_
 
 #include <AEON/Config.h>
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/Math/AABoxCollider.h>
 #include <AEON/Graphics/Camera.h>
 
@@ -147,7 +147,7 @@ namespace ae
 
 		 \since v0.4.0
 		*/
-		_NODISCARD Camera* const getCamera();
+		_NODISCARD Camera* getCamera();
 		/*!
 		 \brief Retrieves the ae::RenderTarget's framebuffer size which is in pixels.
 		 \details There's no gurantee that a window's size which is in screen coordinates will map 1:1 with the framebuffer size which is in pixels.

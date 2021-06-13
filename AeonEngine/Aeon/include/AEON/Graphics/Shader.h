@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -25,11 +25,10 @@
 
 #include <map>
 
-#include <AEON/Math/Vector2.h>
-#include <AEON/Math/Vector3.h>
-#include <AEON/Math/Vector4.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/Math/Matrix.h>
 #include <AEON/Graphics/internal/GLResource.h>
+#include <AEON/Graphics/internal/VertexBuffer.h>
 
 namespace ae
 {
@@ -92,11 +91,11 @@ namespace ae
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
 		 // Create a monolithic and a separable shader
-		 std::shared_ptr<ae::Shader> monolithicShader = glResourceFactory.createShader();
-		 std::shared_ptr<ae::Shader> separableShader = glResourceFactory.createShader(ae::Shader::LinkType::Separable);
+		 std::shared_ptr<ae::Shader> monolithicShader = glResourceFactory.create<ae::Shader>("myShader");
+		 std::shared_ptr<ae::Shader> separableShader = glResourceFactory.create<ae::Shader>("myShader2", ae::Shader::LinkType::Separable);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		explicit Shader(LinkType linkType = LinkType::Monolithic);
 		/*!
@@ -106,11 +105,13 @@ namespace ae
 		*/
 		Shader(const Shader&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Shader that will be moved
+
+		 \since v0.6.0
 		*/
-		Shader(Shader&&) = delete;
+		Shader(Shader&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -120,11 +121,15 @@ namespace ae
 		*/
 		Shader& operator=(const Shader&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Shader that will be moved
+
+		 \return The caller ae::Shader
+
+		 \since v0.6.0
 		*/
-		Shader& operator=(Shader&&) = delete;
+		Shader& operator=(Shader&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -149,13 +154,13 @@ namespace ae
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 		 
 		 // Create the shader program and attach the shader stage that will be created within the shader program
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromSource(ae::Shader::StageType::Vertex, vertShaderSource);
 		 \endcode
 
 		 \sa loadFromFile()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void loadFromSource(StageType type, const std::string& source);
 		/*!
@@ -171,13 +176,13 @@ namespace ae
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
 		 // Create the shader program and attach the shader stage that will be created within the shader program
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertShader.vs");
 		 \endcode
 
 		 \sa loadFromSource()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void loadFromFile(StageType type, const std::string& filename);
 		/*!
@@ -190,7 +195,7 @@ namespace ae
 		 // Retrieve the single instance of the GLResourceFactory
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertShader.vs");
 		 shader->loadFromFile(ae::Shader::StageType::Fragment, "Shaders/fragShader.fs");
 		 ...
@@ -199,7 +204,7 @@ namespace ae
 
 		 \sa loadFromSource(), loadFromFile()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void link() const;
 		/*!
@@ -211,12 +216,12 @@ namespace ae
 		 \code
 		 // The string containing the source code
 		 std::string vertShaderSource =
-			"#version 450 core                          \n"
-			"                                           \n"
-			"void main()                                \n"
-			"{                                          \n"
-			"	gl_Position = vec4(0.0, 0.0, 0.5, 1.0); \n"
-			"}";
+		 	"#version 450 core                          \n"
+		 	"                                           \n"
+		 	"void main()                                \n"
+		 	"{                                          \n"
+		 	"	gl_Position = vec4(0.0, 0.0, 0.5, 1.0); \n"
+		 	"}";
 		 
 		 // Create the shader program and load one shader from source and one from a file
 		 ae::Shader shader;
@@ -244,7 +249,7 @@ namespace ae
 		 // Retrieve the single instance of the GLResourceFactory
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertShader.vs");
 		 shader->loadFromFile(ae::Shader::StageType::Fragment, "Shaders/fragShader.fs");
 		 shader->link();
@@ -260,14 +265,14 @@ namespace ae
 
 		 \sa bind()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		_NODISCARD bool isBound() const;
 
 		/*!
 		 \brief Retrieves the ae::Shader's uniform block's index and assigns the ae::UniformBuffer's binding point to the uniform block's index.
 		 
-		 \param[in] ubo A pointer to an ae::UniformBuffer from which the uniform block data will be retrieved
+		 \param[in] ubo A ae::UniformBuffer from which the uniform block data will be retrieved
 
 		 \par Example:
 		 \code
@@ -275,7 +280,7 @@ namespace ae
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
 		 // Create the shader program and attach the shader stages that will be created within the shader program
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertexShader.vs");
 		 shader->loadFromFile(ae::Shader::StageType::Fragment, "Shaders/fragmentShader.fs");
 		 shader->link();
@@ -285,12 +290,12 @@ namespace ae
 		 ubo->queryLayout(*shader, "uTransformBlock", { "model", "view", "projection" });
 
 		 // Add the UBO to the shader so that the shader automatically retrieves data from the UBO
-		 shader->addUniformBuffer(ubo.get());
+		 shader->addUniformBuffer(*ubo);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
-		void addUniformBuffer(const UniformBuffer* const ubo);
+		void addUniformBuffer(const UniformBuffer& ubo);
 
 		/*!
 		 \brief Sets the \a value provided to the uniform \a name.
@@ -301,11 +306,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uFloatValue", 5.f);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, float value);
 		/*!
@@ -317,11 +322,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uIntValue", 5);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, int value);
 		/*!
@@ -333,11 +338,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uUnsignedIntValue", 5u);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, unsigned int value);
 		/*!
@@ -349,11 +354,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uVec2f", ae::Vector2f(1.f, 0.f));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Vector2f& vec);
 		/*!
@@ -365,11 +370,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uVec3f", ae::Vector3f(1.f, 0.f, -0.5f));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Vector3f& vec);
 		/*!
@@ -381,11 +386,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uVec4f", ae::Vector4f(1.f, 0.f, -0.5f, 1.f));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Vector4f& vec);
 		/*!
@@ -397,11 +402,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uVec2i", ae::Vector2i(1, 0));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Vector2i& vec);
 		/*!
@@ -413,11 +418,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uVec3i", ae::Vector3i(1, 0, -5));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Vector3i& vec);
 		/*!
@@ -429,11 +434,11 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uVec4i", ae::Vector4i(1, 0, -5, 1));
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Vector4i& vec);
 		/*!
@@ -445,13 +450,39 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->setUniform("uMat4f", ae::Matrix4f::identity());
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setUniform(const std::string& name, const Matrix4f& mat);
+
+		/*!
+		 \brief Retrieves a modifiable ae::VertexBuffer::Layout that's used to describe the data format of the ae::Shader's attributes.
+
+		 \return An ae::VertexBuffer::Layout describing the data format of the ae::Shader's attributes
+
+		 \par Example:
+		 \code
+		 // Retrieve the single instance of the GLResourceFactory
+		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
+
+		 // Create the shader program and attach the shader stages that will be created within the shader program
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
+		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertexShader.vs");
+		 shader->loadFromFile(ae::Shader::StageType::Fragment, "Shaders/fragmentShader.fs");
+		 shader->link();
+
+		 // Modify the vertex buffer data layout based on the shader's attributes (OpenGL must be added to project)
+		 ae::VertexBuffer::Layout& layout = shader->getDataLayout();
+		 layout.addElement(GL_FLOAT, 3, GL_FALSE);
+		 layout.addElement(GL_FLOAT, 4, GL_FALSE);
+		 \endcode
+
+		 \since v0.6.0
+		*/
+		_NODISCARD VertexBuffer::Layout& getDataLayout() noexcept;
 
 		// Public virtual method(s)
 		/*!
@@ -487,7 +518,7 @@ namespace ae
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
 		 // Create and configure a shader
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertShader.vs");
 		 shader->loadFromFile(ae::Shader::StageType::Fragment, "Shaders/fragShader.fs");
 		 shader->link();
@@ -499,7 +530,7 @@ namespace ae
 
 		 \sa unbind(), isBound(), link()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		virtual void bind() const override final;
 		/*!
@@ -512,7 +543,7 @@ namespace ae
 		 ae::GLResourceFactory& glResourceFactory = ae::GLResourceFactory::getInstance();
 
 		 // Create and configure a shader
-		 std::shared_ptr<ae::Shader> shader = glResourceFactory.createShader();
+		 std::shared_ptr<ae::Shader> shader = glResourceFactory.create<ae::Shader>("myShader");
 		 shader->loadFromFile(ae::Shader::StageType::Vertex, "Shaders/vertShader.vs");
 		 shader->loadFromFile(ae::Shader::StageType::Fragment, "Shaders/fragShader.fs");
 		 shader->link();
@@ -524,7 +555,7 @@ namespace ae
 
 		 \sa bind(), isBound()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		virtual void unbind() const override final;
 	private:
@@ -576,9 +607,10 @@ namespace ae
 
 	private:
 		// Private member(s)
-		std::map<StageType, Stage> mStages;   //!< The source code of all the loaded shader stages
-		std::map<std::string, int> mUniforms; //!< The cached uniform names and locations
-		LinkType                   mLinkType; //!< The link type of the shader
+		std::map<StageType, Stage> mStages;     //!< The source code of all the loaded shader stages
+		std::map<std::string, int> mUniforms;   //!< The cached uniform names and locations
+		VertexBuffer::Layout       mDataLayout; //!< The shader's data layout
+		LinkType                   mLinkType;   //!< The link type of the shader
 	};
 }
 #endif // Aeon_Graphics_Shader_H_
@@ -594,7 +626,18 @@ namespace ae
 
  While it is possible for the API user to create their own shaders,
  pre-compiled shaders that are the most common can be found in the
- ae::ShaderManager singleton class that can immediately be used by the API user.
+ ae::GLResourceFactory singleton class that can immediately be used by the API
+ user.
+
+ There are three main steps to creating a custom shader:
+ \li Writing and attaching the GLSL shaders (at least one vertex shader and one
+ fragment shader) using the loadFromSource or loadFromFile methods
+ \li Linking the shader stages together using the link method after attaching
+ all the necessary shader stages
+ \li Setting the data layout of the shader attributes using the getDataLayout
+ method and adding the appropriate elements
+ \li (Situational) If the shader stages contain uniforms, the API user needs to
+ either create a UniformBuffer or use one of the setUniform methods
 
  All ae::Shader instances should be created via the ae::GLResourceFactory
  instance in order for it to be responsible for their lifetime and for the
@@ -604,7 +647,7 @@ namespace ae
  longer needed.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.10.26
+ \version v0.6.0
+ \date 2020.09.04
  \copyright MIT License
 */

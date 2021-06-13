@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -21,12 +21,34 @@
 // SOFTWARE.
 
 #include <AEON/Window/VideoMode.h>
+
 #include <AEON/Window/MonitorManager.h>
-#include <AEON/Window/Monitor.h>
 
 namespace ae
 {
 	// Public constructor(s)
+	VideoMode::VideoMode(const Monitor* const monitor)
+		: mResolution()
+		, mRefreshRate(0)
+		, mRedBits(0)
+		, mGreenBits(0)
+		, mBlueBits(0)
+		, mAssociatedMonitor((monitor) ? monitor : MonitorManager::getInstance().getPrimaryMonitor())
+	{
+		// Log an error if the pointer to the monitor provided is invalid
+		if (!mAssociatedMonitor) {
+			AEON_LOG_ERROR("Invalid pointer to monitor", "The pointer to the monitor provided isn't valid.\nPossible problem: no monitors detected.");
+		}
+
+		// Retrieve the associated monitor's properties
+		const VideoMode& desktopMode = mAssociatedMonitor->getDesktopMode();
+		mResolution = desktopMode.getResolution();
+		mRefreshRate = desktopMode.getRefreshRate();
+		mRedBits = desktopMode.getRedBits();
+		mGreenBits = desktopMode.getGreenBits();
+		mBlueBits = desktopMode.getBlueBits();
+	}
+
 	VideoMode::VideoMode(const Vector2i& resolution, int refreshRate, int redBits, int greenBits, int blueBits, const Monitor* const monitor)
 		: VideoMode(resolution.x, resolution.y, refreshRate, redBits, greenBits, blueBits, monitor)
 	{
@@ -120,45 +142,5 @@ namespace ae
 		auto found = std::find(fullscreenModes.begin(), fullscreenModes.end(), *this);
 
 		return (found != fullscreenModes.end());
-	}
-
-	const Vector2i& VideoMode::getResolution() const noexcept
-	{
-		return mResolution;
-	}
-
-	int VideoMode::getWidth() const noexcept
-	{
-		return mResolution.x;
-	}
-
-	int VideoMode::getHeight() const noexcept
-	{
-		return mResolution.y;
-	}
-
-	int VideoMode::getRefreshRate() const noexcept
-	{
-		return mRefreshRate;
-	}
-
-	int VideoMode::getRedBits() const noexcept
-	{
-		return mRedBits;
-	}
-
-	int VideoMode::getGreenBits() const noexcept
-	{
-		return mGreenBits;
-	}
-
-	int VideoMode::getBlueBits() const noexcept
-	{
-		return mBlueBits;
-	}
-
-	const Monitor* const VideoMode::getAssociatedMonitor() const noexcept
-	{
-		return mAssociatedMonitor;
 	}
 }

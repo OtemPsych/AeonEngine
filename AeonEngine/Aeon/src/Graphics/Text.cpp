@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,11 +22,10 @@
 
 #include <AEON/Graphics/Text.h>
 
-#include <AEON/Graphics/Font.h>
 #include <AEON/Graphics/internal/Glyph.h>
+#include <AEON/Graphics/internal/Renderer2D.h>
+#include <AEON/Graphics/Font.h>
 #include <AEON/Graphics/GLResourceFactory.h>
-#include <AEON/Graphics/Renderer2D.h>
-#include <AEON/Graphics/Sprite.h>
 
 namespace ae
 {
@@ -39,8 +38,9 @@ namespace ae
 		, mColor(Color::White)
 		, mFont(nullptr)
 		, mCharacterSize(48)
-		, mUpdatePosUVs(true)
-		, mUpdateColors(true)
+		, mUpdatePos(false)
+		, mUpdateUV(false)
+		, mUpdateColor(false)
 	{
 	}
 
@@ -52,8 +52,9 @@ namespace ae
 		, mColor(std::move(rvalue.mColor))
 		, mFont(rvalue.mFont)
 		, mCharacterSize(rvalue.mCharacterSize)
-		, mUpdatePosUVs(rvalue.mUpdatePosUVs)
-		, mUpdateColors(rvalue.mUpdateColors)
+		, mUpdatePos(rvalue.mUpdatePos)
+		, mUpdateUV(rvalue.mUpdateUV)
+		, mUpdateColor(rvalue.mUpdateColor)
 	{
 	}
 
@@ -68,8 +69,9 @@ namespace ae
 		mColor = std::move(rvalue.mColor);
 		mFont = rvalue.mFont;
 		mCharacterSize = rvalue.mCharacterSize;
-		mUpdatePosUVs = rvalue.mUpdatePosUVs;
-		mUpdateColors = rvalue.mUpdateColors;
+		mUpdatePos = rvalue.mUpdatePos;
+		mUpdateUV = rvalue.mUpdateUV;
+		mUpdateColor = rvalue.mUpdateColor;
 
 		return *this;
 	}
@@ -77,26 +79,91 @@ namespace ae
 	// Public method(s)
 	void Text::setFont(Font& font) noexcept
 	{
+		// Check if the same font is being set (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (mFont == &font) {
+				AEON_LOG_WARNING("Unnecessary call", "The font provided is already assigned to the text instance.");
+				return;
+			}
+		}
+
 		mFont = &font;
-		mUpdatePosUVs = true;
+		mUpdatePos = true;
+		mUpdateUV = true;
 	}
 
 	void Text::setText(const std::string& text) noexcept
 	{
+		// Check if the same text is being set (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (mText == text) {
+				AEON_LOG_WARNING("Unnecessary call", "The text string provided is already assigned to the text instance.");
+				return;
+			}
+		}
+
 		mText = text;
-		mUpdatePosUVs = true;
+		mUpdatePos = true;
+		mUpdateUV = true;
 	}
 
 	void Text::setCharacterSize(unsigned int characterSize) noexcept
 	{
+		// Check if the same character size is being set (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (mCharacterSize == characterSize) {
+				AEON_LOG_WARNING("Unnecessary call", "The character size provided is already assigned to the text instance.");
+				return;
+			}
+		}
+
 		mCharacterSize = characterSize;
-		mUpdatePosUVs = true;
+		mUpdatePos = true;
+		mUpdateUV = true;
 	}
 
 	void Text::setColor(const Color& color) noexcept
 	{
+		// Check if the same color is being set (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (mColor == color) {
+				AEON_LOG_WARNING("Unnecessary call", "The color provided is already assigned to the text instance.");
+				return;
+			}
+		}
+
 		mColor = color;
-		mUpdateColors = true;
+		mUpdateColor = true;
+	}
+
+	Vector2f Text::findCharPos(size_t index) const
+	{
+		// Check if a text has been set and whether the index is valid (ignored in Release mode)
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (mGlyphs.empty()) {
+				AEON_LOG_WARNING("Unassigned text", "No text string has been assigned.\nAborting operation.");
+				return Vector2f();
+			}
+			if (index >= mGlyphs.size()) {
+				AEON_LOG_WARNING("Invalid index", "The character index provided is invalid.\nAborting operation.");
+				return Vector2f();
+			}
+		}
+
+		// Calculate the character's horizontal advance
+		float offsetX = 0.f;
+		for (size_t i = 0; i < index; ++i) {
+			offsetX += static_cast<float>(mGlyphs[i]->advance >> 6);
+		}
+
+		// Calculate the character's top-left position and return it
+		return Vector2f(offsetX + static_cast<float>(mGlyphs[index]->bearing.x),
+		                -static_cast<float>(mGlyphs[index]->bearing.y));
+	}
+
+	const Font* const Text::getFont() const noexcept
+	{
+		return mFont;
 	}
 
 	const std::string& Text::getText() const noexcept
@@ -121,18 +188,23 @@ namespace ae
 	}
 
 	// Private method(s)
-	void Text::updatePosUVs()
+	void Text::updatePos()
 	{
-		// Make sure that a font and a string of text have been set (ignored in Release mode)
+		// Make sure that a font has been set (ignored in Release mode)
 		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if (!mFont) {
 				AEON_LOG_ERROR("No font found", "A font hasn't yet been set.");
 				return;
 			}
-			if (mText.empty()) {
-				AEON_LOG_ERROR("No text found", "A string of text hasn't yet been set.");
-				return;
-			}
+		}
+
+		if (mText.empty()) {
+			mGlyphs.clear();
+			getVertices().clear();
+			getIndices().clear();
+			mUpdateUV = false;
+			mUpdateColor = false;
+			return;
 		}
 
 		// Retrieve the glyphs required to display the text
@@ -144,37 +216,27 @@ namespace ae
 			mGlyphs.emplace_back(&glyph);
 		}
 
-		// Additional text data
-		const float POS_Z = getPosition().z;
-		const Vector2f TEXTURE_SIZE = Vector2f(mGlyphs.front()->texture->getSize());
-
 		// Raise the flag indicating that the colors will need to be updated if the vertex count is different
 		std::vector<Vertex2D>& vertices = getVertices();
 		if (vertices.size() != mGlyphs.size() * 4) {
 			vertices.resize(mGlyphs.size() * 4);
-			mUpdateColors = true;
+			mUpdateColor = true;
 		}
 
 		// Update the vertices
+		const float POS_Z = getPosition().z;
 		float offsetX = 0.f;
 		for (size_t i = 0; i < mGlyphs.size(); ++i) {
 			// Update the positions
 			const Vector2f RECT_SIZE = mGlyphs[i]->textureRect.size;
-			Vector3f startPos(offsetX + mGlyphs[i]->bearing.x, -mGlyphs[i]->bearing.y, POS_Z);
+			Vector2f startPos(offsetX + mGlyphs[i]->bearing.x, -mGlyphs[i]->bearing.y);
 
 			vertices[i * 4 + 0].position = Vector3f(Vector2f(startPos.x,               startPos.y)              , POS_Z);
 			vertices[i * 4 + 1].position = Vector3f(Vector2f(startPos.x,               startPos.y + RECT_SIZE.y), POS_Z);
 			vertices[i * 4 + 2].position = Vector3f(Vector2f(startPos.x + RECT_SIZE.x, startPos.y + RECT_SIZE.y), POS_Z);
 			vertices[i * 4 + 3].position = Vector3f(Vector2f(startPos.x + RECT_SIZE.x, startPos.y)              , POS_Z);
 
-			offsetX += (mGlyphs[i]->advance >> 6);
-
-			// Update the uv coordinates
-			const Vector2i& rectPos = mGlyphs[i]->textureRect.position;
-			vertices[i * 4 + 0].uv = Vector2f(rectPos.x,               rectPos.y)               / TEXTURE_SIZE;
-			vertices[i * 4 + 1].uv = Vector2f(rectPos.x,               rectPos.y + RECT_SIZE.y) / TEXTURE_SIZE;
-			vertices[i * 4 + 2].uv = Vector2f(rectPos.x + RECT_SIZE.x, rectPos.y + RECT_SIZE.y) / TEXTURE_SIZE;
-			vertices[i * 4 + 3].uv = Vector2f(rectPos.x + RECT_SIZE.x, rectPos.y)               / TEXTURE_SIZE;
+			offsetX += static_cast<float>(mGlyphs[i]->advance >> 6);
 		}
 
 		// Update the model bounding box's position and size based on the minimum and maximum vertex positions
@@ -186,11 +248,40 @@ namespace ae
 		mModelBounds = Box2f(minPos, maxPos - minPos);
 
 		// Update the indices (if necessary)
-		std::vector<unsigned int>& indices = getIndices();
-		if (indices.size() != mGlyphs.size() * 6) {
-			indices.clear();
-			indices.reserve(mGlyphs.size() * 6);
+		updateIndices();
+	}
+
+	void Text::updateUV()
+	{
+		if (!mGlyphs.empty()) {
+			const Vector2f TEXTURE_SIZE = mGlyphs.front()->texture->getSize();
+
+			// Update the vertices' uv coordinates
+			std::vector<Vertex2D>& vertices = getVertices();
 			for (size_t i = 0; i < mGlyphs.size(); ++i) {
+				const Vector2f RECT_POS = mGlyphs[i]->textureRect.position;
+				const Vector2f RECT_SIZE = mGlyphs[i]->textureRect.size;
+
+				vertices[i * 4 + 0].uv = Vector2f(RECT_POS.x,               RECT_POS.y)               / TEXTURE_SIZE;
+				vertices[i * 4 + 1].uv = Vector2f(RECT_POS.x,               RECT_POS.y + RECT_SIZE.y) / TEXTURE_SIZE;
+				vertices[i * 4 + 2].uv = Vector2f(RECT_POS.x + RECT_SIZE.x, RECT_POS.y + RECT_SIZE.y) / TEXTURE_SIZE;
+				vertices[i * 4 + 3].uv = Vector2f(RECT_POS.x + RECT_SIZE.x, RECT_POS.y)               / TEXTURE_SIZE;
+			}
+		}
+	}
+
+	void Text::updateIndices()
+	{
+		const size_t GLYPH_COUNT = mGlyphs.size();
+
+		// Check if the indices need to be updated based on the current number of glyphs
+		std::vector<unsigned int>& indices = getIndices();
+		if (indices.size() != GLYPH_COUNT * 6)
+		{
+			// Recalculate the appropriate indices
+			indices.clear();
+			indices.reserve(GLYPH_COUNT * 6);
+			for (size_t i = 0; i < GLYPH_COUNT; ++i) {
 				indices.emplace_back(i * 4 + 0);
 				indices.emplace_back(i * 4 + 1);
 				indices.emplace_back(i * 4 + 2);
@@ -202,31 +293,14 @@ namespace ae
 		}
 	}
 
-	void Text::updateColors()
+	void Text::updateColor()
 	{
 		const Vector4f COLOR = mColor.normalize();
+
 		std::vector<Vertex2D>& vertices = getVertices();
 		for (Vertex2D& vertex : vertices) {
 			vertex.color = COLOR;
 		}
-	}
-
-	bool Text::updateVertices()
-	{
-		bool dirtyRender = false;
-
-		// Update the vertices' properties
-		if (mUpdatePosUVs) {
-			updatePosUVs();
-			correctProperties();
-			dirtyRender = std::exchange(mUpdatePosUVs, false);
-		}
-		if (mUpdateColors) {
-			updateColors();
-			dirtyRender = std::exchange(mUpdateColors, false);
-		}
-
-		return dirtyRender;
 	}
 
 	// Private virtual method(s)
@@ -235,7 +309,7 @@ namespace ae
 		if (event->type == Event::Type::FontUpdated) {
 			auto fontEvent = event->as<FontEvent>();
 			if (fontEvent->font == mFont) {
-				mUpdatePosUVs = true;
+				mUpdateUV = true;
 			}
 		}
 	}
@@ -243,19 +317,38 @@ namespace ae
 	void Text::updateSelf(const Time& dt)
 	{
 		// Update the text's properties which may raise the dirty render flag
-		setDirty(updateVertices());
+		if (mUpdatePos) {
+			updatePos();
+			correctProperties();
+			setDirty(std::exchange(mUpdatePos, false));
+		}
+		if (mUpdateUV) {
+			updateUV();
+			setDirty(std::exchange(mUpdateUV, false));
+		}
+		if (mUpdateColor) {
+			updateColor();
+			setDirty(std::exchange(mUpdateColor, false));
+		}
 	}
 
 	void Text::renderSelf(RenderStates states) const
 	{
-		// Setup the appropriate render states
-		if (!states.shader) {
-			states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Text2D").get();
-		}
-		states.blendMode = BlendMode::BlendAlpha;
-		states.texture = mGlyphs.front()->texture;
+		if (!mGlyphs.empty())
+		{
+			// Setup the appropriate render states
+			if (!states.shader) {
+				states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Text2D").get();
+			}
+			states.blendMode = BlendMode::BlendAlpha;
+			states.texture = mGlyphs.front()->texture;
+			states.dirty = isDirty();
 		
-		// Submit the glyphs
-		Renderer2D::getInstance().submit(*this, states, isDirty());
+			// Submit the glyphs
+			Renderer2D::getActiveInstance()->submit(getVertices(), getIndices(), states);
+
+			// Drop the dirty render flag
+			setDirty(false);
+		}
 	}
 }

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -141,6 +141,18 @@ namespace ae
 		AEON_API void window_refresh_callback(GLFWwindow* glfwWindow);
 
 		/*!
+		 \brief Callback function that receives the filepaths dropped on the window.
+		 \details Enqueues an ae::Event::Type::PathDrop event.
+
+		 \param[in] glfwWindow The GLFW handle to the window
+		 \param[in] count The number of filepaths dropped
+		 \param[in] paths The filepaths dropped
+
+		 \since v0.6.0
+		*/
+		AEON_API void path_drop_callback(GLFWwindow* glfwWindow, int count, const char** paths);
+
+		/*!
 		 \brief Callback function that receives the recently changed state of a key.
 		 \details Enqueues an ae::Event::Type::KeyPressed or an ae::Event::Type::KeyReleased event.
 		 
@@ -225,7 +237,7 @@ namespace ae
  doesn't need to by concerned with it .
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.08
+ \version v0.6.0
+ \date 2021.06.13
  \copyright MIT License
 */

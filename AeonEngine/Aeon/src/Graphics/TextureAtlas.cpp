@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,31 +28,48 @@
 
 #include <AEON/Graphics/internal/GLCommon.h>
 #include <AEON/Graphics/GLResourceFactory.h>
+#include <AEON/Graphics/Sprite.h>
+#include <AEON/Graphics/BasicRenderer2D.h>
 
 namespace ae
 {
 	// Public constructor(s)
 	TextureAtlas::TextureAtlas(Texture2D::InternalFormat format)
-		: mAtlas(GLResourceFactory::getInstance().create<Texture2D>("", ae::Texture2D::Filter::Linear, ae::Texture2D::Wrap::ClampToBorder, ae::Texture2D::InternalFormat::R8))
-		, mTextures()
+		: mTextures()
+		, mAtlas(GLResourceFactory::getInstance().create<Texture2D>("", Texture2D::Filter::Linear, Texture2D::Wrap::ClampToEdge, format))
 	{
+	}
+
+	TextureAtlas::TextureAtlas(TextureAtlas&& rvalue) noexcept
+		: mTextures(std::move(rvalue.mTextures))
+		, mAtlas(std::move(rvalue.mAtlas))
+	{
+	}
+
+	// Public operator(s)
+	TextureAtlas& TextureAtlas::operator=(TextureAtlas&& rvalue) noexcept
+	{
+		// Move the rvalue's data
+		mTextures = std::move(rvalue.mTextures);
+		mAtlas = std::move(rvalue.mAtlas);
+
+		return *this;
 	}
 
 	// Public method(s)
-	void TextureAtlas::addTexture(const Texture2D* const texture)
+	void TextureAtlas::add(const Texture2D& texture)
 	{
-		// Check if the texture provided is valid
-		if (!texture) {
-			AEON_LOG_ERROR("Invalid texture pointer", "The texture pointer provided is null.\nAborting operation.");
-			return;
-		}
-
 		// Add the texture and its size to the hashmap
-		const Vector2u& textureSize = texture->getSize();
-		mTextures.try_emplace(texture, 0, 0, textureSize.x, textureSize.y);
+		const Vector2u& textureSize = texture.getSize();
+		const bool SUCCESS = mTextures.try_emplace(&texture, 0, 0, textureSize.x, textureSize.y).second;
+
+		// Check if the texture was successfully added
+		if (!SUCCESS) {
+			AEON_LOG_WARNING("Texture emplacement failed", "The texture provided may have already been previously added.");
+		}
 	}
 
-	void TextureAtlas::packTextures()
+	void TextureAtlas::pack()
 	{
 		// Check if there is at least one texture added
 		if (mTextures.empty()) {
@@ -66,21 +83,21 @@ namespace ae
 		// (Re)Create the texture atlas and copy each individual texture's image data
 		mAtlas->create(ATLAS_SIZE.x, ATLAS_SIZE.y);
 		for (auto& texture : mTextures) {
-				GLCall(glCopyImageSubData(texture.first->getHandle(), GL_TEXTURE_2D, 0, 0, 0, 0,
-										  mAtlas->getHandle(), GL_TEXTURE_2D, 0, texture.second.position.x, texture.second.position.y, 0,
-										  texture.second.size.x, texture.second.size.y, 1));
+			GLCall(glCopyImageSubData(texture.first->getHandle(), GL_TEXTURE_2D, 0, 0, 0, 0,
+			                          mAtlas->getHandle(), GL_TEXTURE_2D, 0, texture.second.position.x, texture.second.position.y, 0,
+			                          texture.second.size.x, texture.second.size.y, 1));
 		}
 	}
 
-	const Texture2D* const TextureAtlas::getTexture() const noexcept
+	const Texture2D& TextureAtlas::getTexture() const noexcept
 	{
-		return mAtlas.get();
+		return *mAtlas;
 	}
 
-	Box2i TextureAtlas::getTextureRect(const Texture2D* const texture) const noexcept
+	Box2i TextureAtlas::getTextureRect(const Texture2D& texture) const noexcept
 	{
 		// Find the texture requested
-		auto itr = mTextures.find(texture);
+		auto itr = mTextures.find(&texture);
 		if (itr == mTextures.end()) {
 			AEON_LOG_WARNING("Invalid texture pointer", "The pointer provided hasn't been added to the texture atlas.\nReturning empty rect.");
 			return Box2i();
@@ -103,11 +120,11 @@ namespace ae
 		std::vector<rp2d_rectType> rp2d_rects;
 		rp2d_rects.reserve(mTextures.size());
 		for (const auto& texture : mTextures) {
-			rp2d_rects.emplace_back(0, 0, texture.second.size.x, texture.second.size.y);
+			rp2d_rects.emplace_back(0, 0, texture.second.size.x + 1, texture.second.size.y + 1);
 		}
 
 		// Calculate the optimal positions for the rectpack2D rectangles
-		const auto rp2d_textureAtlas = rectpack2D::find_best_packing_dont_sort<rp2d_spacesType>(
+		const auto rp2d_textureAtlas = rectpack2D::find_best_packing<rp2d_spacesType>(
 			rp2d_rects,
 			rectpack2D::make_finder_input(
 				rp2d_maxSize,

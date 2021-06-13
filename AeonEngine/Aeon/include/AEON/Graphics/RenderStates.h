@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,16 +23,15 @@
 #ifndef Aeon_Graphics_RenderStates_H_
 #define Aeon_Graphics_RenderStates_H_
 
-#include <cstdint>
-
-#include <AEON/Config.h>
 #include <AEON/Math/Matrix.h>
 #include <AEON/Graphics/BlendMode.h>
-#include <AEON/Graphics/Texture2D.h>
-#include <AEON/Graphics/Shader.h>
 
 namespace ae
 {
+	// Forward declaration(s)
+	class Texture;
+	class Shader;
+
 	/*!
 	 \brief Struct representing the render states to apply prior to rendering.
 	*/
@@ -43,13 +42,14 @@ namespace ae
 		Matrix4f       transform; //!< The transform that will be applied to the vertices
 		const Texture* texture;   //!< The texture to apply
 		const Shader*  shader;    //!< The shader used to display the vertices
+		bool           dirty;     //!< Whether the corresponding renderable is marked as dirty
 
 		// Public constructor(s)
 		/*!
 		 \brief Default constructor.
 		 \details Creates a default set of render states wherein: BlendAlpha, identity transform, null texture and null shader are used.
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		RenderStates() noexcept;
 		/*!
@@ -57,7 +57,7 @@ namespace ae
 
 		 \param[in] blendMode The custom ae::BlendMode to use
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		RenderStates(const BlendMode& blendMode) noexcept;
 		/*!
@@ -65,23 +65,23 @@ namespace ae
 
 		 \param[in] transform The custom ae::Matrix4f transform to use
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		RenderStates(const Matrix4f& transform) noexcept;
 		/*!
 		 \brief Constructs a default set of render states with a custom texture.
 
-		 \param[in] texture The custom ae::Texture2D to use
+		 \param[in] texture The custom ae::Texture to use
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
-		RenderStates(const Texture2D& texture) noexcept;
+		RenderStates(const Texture& texture) noexcept;
 		/*!
 		 \brief Constructs a default set of render states with a custom shader.
 
 		 \param[in] shader The custom ae::Shader to use
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		RenderStates(const Shader& shader) noexcept;
 		/*!
@@ -89,12 +89,50 @@ namespace ae
 
 		 \param[in] blendMode The custom ae::BlendMode to use
 		 \param[in] transform The custom ae::Matrix4f transform to use
-		 \param[in] texture The custom ae::Texture2D to use
+		 \param[in] texture The custom ae::Texture to use
 		 \param[in] shader The custom ae::Shader to use
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
-		RenderStates(const BlendMode& blendMode, const Matrix4f& transform, const Texture2D& texture, const Shader& shader) noexcept;
+		RenderStates(const BlendMode& blendMode, const Matrix4f& transform, const Texture& texture, const Shader& shader) noexcept;
+		/*!
+		 \brief Copy constructor.
+
+		 \param[in] copy The ae::RenderStates that will be copied
+
+		 \since v0.6.0
+		*/
+		RenderStates(const RenderStates& copy) = default;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::RenderStates that will be moved
+		 
+		 \since v0.6.0
+		*/
+		RenderStates(RenderStates&& rvalue) noexcept;
+
+		// Public operator(s)
+		/*!
+		 \brief Assignment operator.
+
+		 \param[in] other The ae::RenderStates that will be copied
+
+		 \return The caller ae::RenderStates
+
+		 \since v0.6.0
+		*/
+		RenderStates& operator=(const RenderStates& other) = default;
+		/*!
+		 \brief Move assignment operator.
+		 
+		 \param[in] rvalue The ae::RenderStates that will be moved
+
+		 \return The caller ae::RenderStates
+
+		 \since v0.6.0
+		*/
+		RenderStates& operator=(RenderStates&& rvalue) noexcept;
 	};
 }
 #endif // Aeon_Graphics_RenderStates_H_
@@ -108,7 +146,7 @@ namespace ae
  they haven't been manually filled (the texture will always be modified).
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.15
+ \version v0.6.0
+ \date 2020.08.29
  \copyright MIT License
 */

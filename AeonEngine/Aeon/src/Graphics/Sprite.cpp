@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,7 +22,8 @@
 
 #include <AEON/Graphics/Sprite.h>
 
-#include <AEON/Graphics/Renderer2D.h>
+#include <AEON/Graphics/internal/Renderer2D.h>
+#include <AEON/Graphics/GLResourceFactory.h>
 
 namespace ae
 {
@@ -141,10 +142,11 @@ namespace ae
 		}
 
 			// Update the positions
-		vertices[0].position = Vector3f(Vector2f(0.f,                0.f)               , getPosition().z);
-		vertices[1].position = Vector3f(Vector2f(0.f,                mTextureRect.max.y), getPosition().z);
-		vertices[2].position = Vector3f(Vector2f(mTextureRect.max.x, mTextureRect.max.y), getPosition().z);
-		vertices[3].position = Vector3f(Vector2f(mTextureRect.max.x, 0.f)               , getPosition().z);
+		const float POS_Z = getPosition().z;
+		vertices[0].position = Vector3f(Vector2f(0.f,                0.f)               , POS_Z);
+		vertices[1].position = Vector3f(Vector2f(0.f,                mTextureRect.max.y), POS_Z);
+		vertices[2].position = Vector3f(Vector2f(mTextureRect.max.x, mTextureRect.max.y), POS_Z);
+		vertices[3].position = Vector3f(Vector2f(mTextureRect.max.x, 0.f)               , POS_Z);
 
 			// Update the model bounding box's position and size based on the minimum and maximum vertex positions
 		mModelBounds = Box2f(vertices[0].position.xy, vertices[2].position.xy - vertices[0].position.xy);
@@ -168,48 +170,49 @@ namespace ae
 
 	void Sprite::updateColor()
 	{
+		// Normalize the color so that it may be passed on to the shader
 		const Vector4f COLOR = mColor.normalize();
+
+		// Assign the normalized color to all the vertices
 		std::vector<Vertex2D>& vertices = getVertices();
 		for (Vertex2D& vertex : vertices) {
 			vertex.color = COLOR;
 		}
 	}
 
-	bool Sprite::updateVertices()
-	{
-		bool dirtyRender = false;
-
-		// Update the vertices' properties
-		if (mUpdatePosUV) {
-			updatePosUV();
-			correctProperties();
-			dirtyRender = std::exchange(mUpdatePosUV, false);
-		}
-		if (mUpdateColor) {
-			updateColor();
-			dirtyRender = std::exchange(mUpdateColor, false);
-		}
-
-		return dirtyRender;
-	}
-
 	// Private virtual method(s)
 	void Sprite::updateSelf(const Time& dt)
 	{
 		// Update the sprite's properties which may raise the dirty render flag
-		setDirty(updateVertices());
+		if (mUpdatePosUV) {
+			updatePosUV();
+			correctProperties();
+			setDirty(std::exchange(mUpdatePosUV, false));
+		}
+		if (mUpdateColor) {
+			updateColor();
+			setDirty(std::exchange(mUpdateColor, false));
+		}
 	}
 
 	void Sprite::renderSelf(RenderStates states) const
 	{
-		// Setup the appropriate render states
-		if (!states.shader) {
-			states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
-		}
-		states.blendMode = BlendMode::BlendAlpha;
-		states.texture = mTexture;
+		// Only render the sprite if a texture has been assigned
+		if (mTexture)
+		{
+			// Setup the appropriate render states
+			if (!states.shader) {
+				states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
+			}
+			states.blendMode = BlendMode::BlendAlpha;
+			states.texture = mTexture;
+			states.dirty = isDirty();
 
-		// Send the sprite to the renderer
-		Renderer2D::getInstance().submit(*this, states, isDirty());
+			// Send the sprite to the renderer
+			Renderer2D::getActiveInstance()->submit(getVertices(), getIndices(), states);
+
+			// Drop the dirty render flag
+			setDirty(false);
+		}
 	}
 }

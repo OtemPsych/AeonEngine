@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -52,11 +52,13 @@ namespace ae
 		*/
 		Framebuffer(const Framebuffer&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Framebuffer that will be moved
+
+		 \since v0.6.0
 		*/
-		Framebuffer(Framebuffer&&) = delete;
+		Framebuffer(Framebuffer&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -66,11 +68,15 @@ namespace ae
 		*/
 		Framebuffer& operator=(const Framebuffer&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Framebuffer that will be moved
+
+		 \return The caller ae::Framebuffer
 		 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
-		Framebuffer& operator=(Framebuffer&&) = delete;
+		Framebuffer& operator=(Framebuffer&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -123,7 +129,7 @@ namespace ae
  to a render texture.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.20
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

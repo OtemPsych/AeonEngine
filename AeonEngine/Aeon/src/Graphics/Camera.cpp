@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -38,7 +38,9 @@ namespace ae
 
 	void Camera::setPosition(float posX, float posY, float posZ) noexcept
 	{
-		mPosition = Vector3f(posX, posY, posZ);
+		mPosition.x = posX;
+		mPosition.y = posY;
+		mPosition.z = posZ;
 		mUpdateViewMatrix = true;
 	}
 
@@ -52,7 +54,7 @@ namespace ae
 	{
 		// Check if the nearPlane value is greater than the farPlane value or vice versa (ignored in Release mode)
 		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (nearPlane > farPlane && farPlane < nearPlane) {
+			if (nearPlane > farPlane) {
 				AEON_LOG_WARNING("Inverted plane frustum values", "The near plane value (\"" + std::to_string(nearPlane) + "\") and the far plane value (\"" + std::to_string(farPlane) + "\") may be inverted.");
 			}
 		}
@@ -91,7 +93,9 @@ namespace ae
 
 	void Camera::move(float offsetX, float offsetY, float offsetZ) noexcept
 	{
-		mPosition += Vector3f(offsetX, offsetY, offsetZ);
+		mPosition.x += offsetX;
+		mPosition.y += offsetY;
+		mPosition.z += offsetZ;
 		mUpdateViewMatrix = true;
 	}
 
@@ -105,7 +109,8 @@ namespace ae
 	void Camera::lookAt(const Vector3f& focus) noexcept
 	{
 		mViewMatrix = Matrix4f::lookat(mPosition, focus, Vector3f::Up);
-		mUpdateInvViewMatrix = std::exchange(mUpdateViewMatrix, false);
+		mUpdateViewMatrix = false;
+		mUpdateInvViewMatrix = true;
 	}
 
 	void Camera::setTarget(const RenderTarget* const target) noexcept
@@ -230,33 +235,6 @@ namespace ae
 	}
 
 	// Protected operator(s)
-	Camera& Camera::operator=(const Camera& other)
-	{
-		// Check if the caller is being assigned to itself
-		if (this == &other) {
-			AEON_LOG_WARNING("Invalid assignment", "The caller Camera is being assigned to itself.");
-			return *this;
-		}
-
-		// Copy the other's data
-		mViewMatrix = other.mViewMatrix;
-		mProjectionMatrix = other.mProjectionMatrix;
-		mRotation = other.mRotation;
-		mUpdateViewMatrix = other.mUpdateViewMatrix;
-		mUpdateInvViewMatrix = other.mUpdateInvViewMatrix;
-		mUpdateProjectionMatrix = other.mUpdateProjectionMatrix;
-		mUpdateInvProjectionMatrix = other.mUpdateInvProjectionMatrix;
-		mTarget = other.mTarget;
-		mInvViewMatrix = other.mInvViewMatrix;
-		mInvProjectionMatrix = other.mInvProjectionMatrix;
-		mViewport = other.mViewport;
-		mPosition = other.mPosition;
-		mNearPlane = other.mNearPlane;
-		mFarPlane = other.mFarPlane;
-
-		return *this;
-	}
-
 	Camera& Camera::operator=(Camera&& rvalue) noexcept
 	{
 		// Copy the rvalue's trivial data and move the rest

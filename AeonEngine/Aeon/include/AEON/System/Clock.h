@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -41,6 +41,44 @@ namespace ae
 		 \since v0.3.0
 		*/
 		Clock();
+		/*!
+		 \brief Copy constructor.
+
+		 \param[in] copy The ae::Clock that will be copied
+
+		 \since v0.6.0
+		*/
+		Clock(const Clock& copy) = default;
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Clock that will be moved
+
+		 \since v0.6.0
+		*/
+		Clock(Clock&& rvalue) noexcept = default;
+	public:
+		// Public operator(s)
+		/*!
+		 \brief Assignment operator.
+
+		 \param[in] other The ae::Clock that will be copied
+
+		 \return The caller ae::Clock
+
+		 \since v0.6.0
+		*/
+		Clock& operator=(const Clock& other) = default;
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Clock that will be moved
+
+		 \return The caller ae::Clock
+
+		 \since v0.6.0
+		*/
+		Clock& operator=(Clock&& rvalue) noexcept = default;
 	public:
 		// Public method(s)
 		/*!
@@ -109,7 +147,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.13
+ \version v0.6.0
+ \date 2020.09.01
  \copyright MIT License
 */

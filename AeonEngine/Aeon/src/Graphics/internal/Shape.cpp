@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,10 +22,9 @@
 
 #include <AEON/Graphics/internal/Shape.h>
 
+#include <AEON/Graphics/internal/Renderer2D.h>
 #include <AEON/Graphics/GLResourceFactory.h>
-#include <AEON/Graphics/Renderer2D.h>
-
-#include <iostream>
+#include <AEON/Graphics/Texture2D.h>
 
 namespace ae
 {
@@ -179,7 +178,6 @@ namespace ae
 	// Private method(s)
 	void Shape::updatePositions()
 	{
-
 		// Retrieve the total number of points and raise the flags indicating that uv coordinates and colors need to
 		const size_t COUNT = getPointCount();
 
@@ -228,7 +226,6 @@ namespace ae
 				indices.emplace_back(next);
 			}
 		}
-
 	}
 
 	void Shape::updateUVs()
@@ -254,27 +251,23 @@ namespace ae
 		}
 	}
 
-	bool Shape::updateShape()
+	void Shape::updateShape()
 	{
-		bool dirtyRender = false;
-
 		// Updates the vertices' properties
 		if (mUpdatePositions) {
 			updatePositions();
 			mUpdateOutlinePositions = true;
 			correctProperties();
-			dirtyRender = std::exchange(mUpdatePositions, false);
+			setDirty(std::exchange(mUpdatePositions, false));
 		}
 		if (mUpdateUVs) {
 			updateUVs();
-			dirtyRender = std::exchange(mUpdateUVs, false);
+			setDirty(std::exchange(mUpdateUVs, false));
 		}
 		if (mUpdateFillColors) {
 			updateFillColors();
-			dirtyRender = std::exchange(mUpdateFillColors, false);
+			setDirty(std::exchange(mUpdateFillColors, false));
 		}
-
-		return dirtyRender;
 	}
 
 	void Shape::updateOutlinePositions()
@@ -356,62 +349,61 @@ namespace ae
 		}
 	}
 
-	bool Shape::updateOutline()
+	void Shape::updateOutline()
 	{
-		bool dirtyRender = false;
-
 		// Update the outline's vertices' properties
 		if (mUpdateOutlinePositions) {
 			updateOutlinePositions();
 			correctProperties();
-			dirtyRender = std::exchange(mUpdateOutlinePositions, false);
+			setDirty(std::exchange(mUpdateOutlinePositions, false));
 		}
 		if (mUpdateOutlineColors) {
 			updateOutlineColors();
-			dirtyRender = std::exchange(mUpdateOutlineColors, false);
+			setDirty(std::exchange(mUpdateOutlineColors, false));
 		}
-
-		return dirtyRender;
 	}
 
 	// Private virtual method(s)
 	void Shape::updateSelf(const Time& dt)
 	{
 		// Update the shape's properties which may raise the dirty render flag
-		bool dirtyShapeRender = updateShape();
+		updateShape();
 
 		// Update the outline's (if there is one) properties which may raise the dirty render flag
-		bool dirtyOutlineRender = false;
 		if (mOutlineThickness != 0.f) {
-			dirtyOutlineRender = updateOutline();
+			updateOutline();
 		}
-
-		// Raise/Drop the dirty render flag
-		setDirty(dirtyShapeRender || dirtyOutlineRender);
 	}
 
 	void Shape::renderSelf(RenderStates states) const
 	{
-		// Setup the shader used by both the outline and the shape
-		if (!states.shader) {
-			states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
+		if (!getVertices().empty())
+		{
+			// Setup the render states used by both the outline and the shape
+			if (!states.shader) {
+				states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
+			}
+			states.dirty = isDirty();
+
+			// Render the outline (if there is one)
+			if (mOutlineThickness != 0.f) {
+				// Setup the appropriate render states
+				states.blendMode = BlendMode::BlendNone;
+				states.texture = nullptr;
+
+				// Send the outline to the renderer
+				Renderer2D::getActiveInstance()->submit(mOutlineVertices, mOutlineIndices, states);
+			}
+
+			// Setup the shape's render states
+			states.blendMode = BlendMode::BlendAlpha;
+			states.texture = mTexture;
+
+			// Send the shape to the renderer
+			Renderer2D::getActiveInstance()->submit(getVertices(), getIndices(), states);
+
+			// Drop the dirty render flag
+			setDirty(false);
 		}
-
-		// Render the outline (if there is one)
-		if (mOutlineThickness != 0.f) {
-			// Setup the appropriate render states
-			states.blendMode = BlendMode::BlendNone;
-			states.texture = nullptr;
-
-			// Send the outline to the renderer
-			Renderer2D::getInstance().submit(mOutlineVertices, mOutlineIndices, states, isDirty());
-		}
-
-		// Setup the shape's render states
-		states.blendMode = BlendMode::BlendAlpha;
-		states.texture = mTexture;
-
-		// Send the shape to the renderer
-		Renderer2D::getInstance().submit(*this, states, isDirty());
 	}
 }

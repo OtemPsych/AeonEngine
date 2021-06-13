@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -67,11 +67,13 @@ namespace ae
 		*/
 		IndexBuffer(const IndexBuffer&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::IndexBuffer that will be moved
+
+		 \since v0.6.0
 		*/
-		IndexBuffer(IndexBuffer&&) = delete;
+		IndexBuffer(IndexBuffer&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -81,11 +83,15 @@ namespace ae
 		*/
 		IndexBuffer& operator=(const IndexBuffer&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::IndexBuffer that will be moved
+
+		 \return The caller ae::IndexBuffer
+
+		 \since v0.6.0
 		*/
-		IndexBuffer& operator=(IndexBuffer&&) = delete;
+		IndexBuffer& operator=(IndexBuffer&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -149,7 +155,7 @@ namespace ae
  same index will be used to refer to them thus optimizing rendering.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.01.04
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

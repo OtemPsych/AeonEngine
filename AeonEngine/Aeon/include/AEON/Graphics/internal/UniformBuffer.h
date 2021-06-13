@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -55,11 +55,13 @@ namespace ae
 		*/
 		UniformBuffer(const UniformBuffer&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::UniformBuffer that will be moved
+
+		 \since v0.6.0
 		*/
-		UniformBuffer(UniformBuffer&&) = delete;
+		UniformBuffer(UniformBuffer&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
@@ -69,11 +71,15 @@ namespace ae
 		*/
 		UniformBuffer& operator=(const UniformBuffer&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::UniformBuffer that will be moved
+
+		 \return The caller ae::UniformBuffer
+
+		 \since v0.6.0
 		*/
-		UniformBuffer& operator=(UniformBuffer&&) = delete;
+		UniformBuffer& operator=(UniformBuffer&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -294,7 +300,7 @@ namespace ae
  this class will query said layout.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.09
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -37,6 +37,7 @@ namespace ae
 	class AEON_API MonitorManager
 	{
 	public:
+		// Public constructor(s)
 		/*!
 		 \brief Deleted copy constructor.
 
@@ -50,6 +51,7 @@ namespace ae
 		*/
 		MonitorManager(MonitorManager&&) = delete;
 	public:
+		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
 
@@ -67,13 +69,14 @@ namespace ae
 		*/
 		MonitorManager& operator=(MonitorManager&&) = delete;
 	public:
+		// Public method(s)
 		/*!
 		 \brief Updates the list of connected monitors.
 		 \details This method is automatically called when a monitor is connected or disconnected.
 
 		 \param[in] monitorEvent The pointer to the ae::MonitorEvent containing the monitor that was (dis)connected
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
 		void update(MonitorEvent* const monitorEvent);
 		/*!
@@ -128,6 +131,8 @@ namespace ae
 		 \since v0.3.0
 		*/
 		_NODISCARD const Monitor* const getPrimaryMonitor() const;
+
+		// Public static method(s)
 		/*!
 		 \brief Retrieves the single instance of the ae::MonitorManager.
 		 \details The ae::MonitorManager will be instantiated for the first time by calling this static method.
@@ -143,6 +148,7 @@ namespace ae
 		*/
 		_NODISCARD static MonitorManager& getInstance() noexcept;
 	private:
+		// Private constructor(s)
 		/*!
 		 \brief Default constructor.
 		 \details Retrieves and stores the list of connected monitors.
@@ -150,8 +156,18 @@ namespace ae
 		 \since v0.3.0
 		*/
 		MonitorManager() noexcept;
+	private:
+		// Private method(s)
+		/*!
+		 \brief Sorts the list of connected monitors and the monitors' properties.
+		 \details Called when a monitor is connected or disconnected.
+
+		 \since v0.6.0
+		*/
+		void sortMonitors();
 
 	private:
+		// Private member(s)
 		std::vector<Monitor> mMonitors; //!< The list of monitors
 	};
 }

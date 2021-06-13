@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -30,6 +30,7 @@ namespace ae
 		, transform(Matrix4f::identity())
 		, texture(nullptr)
 		, shader(nullptr)
+		, dirty(false)
 	{
 	}
 
@@ -38,6 +39,7 @@ namespace ae
 		, transform(Matrix4f::identity())
 		, texture(nullptr)
 		, shader(nullptr)
+		, dirty(false)
 	{
 	}
 
@@ -46,14 +48,16 @@ namespace ae
 		, transform(transform)
 		, texture(nullptr)
 		, shader(nullptr)
+		, dirty(false)
 	{
 	}
 
-	RenderStates::RenderStates(const Texture2D& texture) noexcept
+	RenderStates::RenderStates(const Texture& texture) noexcept
 		: blendMode(BlendMode::BlendAlpha)
 		, transform(Matrix4f::identity())
 		, texture(&texture)
 		, shader(nullptr)
+		, dirty(false)
 	{
 	}
 
@@ -62,14 +66,38 @@ namespace ae
 		, transform(Matrix4f::identity())
 		, texture(nullptr)
 		, shader(&shader)
+		, dirty(false)
 	{
 	}
 
-	RenderStates::RenderStates(const BlendMode& blendMode, const Matrix4f& transform, const Texture2D& texture, const Shader& shader) noexcept
+	RenderStates::RenderStates(const BlendMode& blendMode, const Matrix4f& transform, const Texture& texture, const Shader& shader) noexcept
 		: blendMode(blendMode)
 		, transform(transform)
 		, texture(&texture)
 		, shader(&shader)
+		, dirty(false)
 	{
+	}
+
+	RenderStates::RenderStates(RenderStates&& rvalue) noexcept
+		: blendMode(std::move(rvalue.blendMode))
+		, transform(std::move(rvalue.transform))
+		, texture(rvalue.texture)
+		, shader(rvalue.shader)
+		, dirty(rvalue.dirty)
+	{
+	}
+
+	// Public operator(s)
+	RenderStates& RenderStates::operator=(RenderStates&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		blendMode = std::move(rvalue.blendMode);
+		transform = std::move(rvalue.transform);
+		texture = rvalue.texture;
+		shader = rvalue.shader;
+		dirty = rvalue.dirty;
+
+		return *this;
 	}
 }

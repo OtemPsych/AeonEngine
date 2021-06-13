@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,6 +22,8 @@
 
 #ifndef Aeon_Graphics_Transformable2D_H_
 #define Aeon_Graphics_Transformable2D_H_
+
+#include <climits>
 
 #include <AEON/Config.h>
 #include <AEON/Math/Matrix.h>
@@ -60,7 +62,7 @@ namespace ae
 
 		 \since v0.4.0
 		*/
-		virtual ~Transformable2D();
+		virtual ~Transformable2D() = default;
 	public:
 		// Public method(s)
 		/*!
@@ -69,10 +71,10 @@ namespace ae
 		 position to manually handle z-ordering, but this is also managed
 		 automatically by the ae::Actor2D scene graph architecture.
 		 \note This method replaces the previous position.
-		 A z-index of 0 will not replace the current position along the Z axis.
+		 A z-index of INT_MAX (which is usually 2147483647) will not replace the current position along the Z axis.
 
 		 \param[in] position A 2-dimensional ae::Vector containing the new position
-		 \param[in] zIndex The z position to manually handle z-ordering, 0 by default
+		 \param[in] zIndex The z position to manually handle z-ordering, INT_MAX by default
 
 		 \par Example:
 		 \code
@@ -82,20 +84,20 @@ namespace ae
 
 		 \sa move(), getPosition()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		void setPosition(const Vector2f& position, int zIndex = 0) noexcept;
+		void setPosition(const Vector2f& position, int zIndex = INT_MAX) noexcept;
 		/*!
 		 \brief Sets the ae::Transformable2D's position in world-space.
 		 \details It's also possible to set the ae::Transformable2D's z
 		 position to manually handle z-ordering, but this is also managed
 		 automatically by the ae::Actor2D scene graph architecture.
 		 \note This method replaces the previous position.
-		 A z-index of 0 will not replace the current position along the Z axis.
+		 A z-index of INT_MAX (which is usually 2147483647) will not replace the current position along the Z axis.
 
 		 \param[in] posX The new horizontal position
 		 \param[in] posY The new vertical position
-		 \param[in] zIndex The z position to manually handle z-ordering, 0 by default
+		 \param[in] zIndex The z position to manually handle z-ordering, INT_MAX by default
 
 		 \par Example:
 		 \code
@@ -105,9 +107,9 @@ namespace ae
 
 		 \sa move(), getPosition()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
-		void setPosition(float posX, float posY, int zIndex = 0) noexcept;
+		void setPosition(float posX, float posY, int zIndex = INT_MAX) noexcept;
 		/*!
 		 \brief Sets the ae::Transformable2D's rotation by providing an angle in degrees.
 		 \note This method replaces the previous rotation.
@@ -339,7 +341,7 @@ namespace ae
 
 		 \sa getInverseTransform()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		const Matrix4f& getTransform();
 		/*!
@@ -478,11 +480,13 @@ namespace ae
 		*/
 		Transformable2D() noexcept;
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Transformable2D that will be copied
+
+		 \since v0.6.0
 		*/
-		Transformable2D(const Transformable2D&) = delete;
+		Transformable2D(const Transformable2D& copy) = default;
 		/*!
 		 \brief Move constructor.
 
@@ -490,15 +494,19 @@ namespace ae
 
 		 \since v0.5.0
 		*/
-		Transformable2D(Transformable2D&& rvalue) noexcept;
+		Transformable2D(Transformable2D&& rvalue) noexcept = default;
 	protected:
 		// Protected operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
-		 \since v0.5.0
+		 \param[in] other The ae::Transformable2D that will be copied
+
+		 \return The caller ae::Transformable2D
+
+		 \since v0.6.0
 		*/
-		Transformable2D& operator=(const Transformable2D&) = delete;
+		Transformable2D& operator=(const Transformable2D& other) = default;
 		/*!
 		 \brief Move assignment operator.
 
@@ -508,7 +516,7 @@ namespace ae
 
 		 \since v0.5.0
 		*/
-		Transformable2D& operator=(Transformable2D&& rvalue) noexcept;
+		Transformable2D& operator=(Transformable2D&& rvalue) noexcept = default;
 	protected:
 		// Protected virtual method(s)
 		/*!
@@ -544,7 +552,7 @@ namespace ae
  rotated and scaled.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.6.0
+ \date 2021.06.03
  \copyright MIT License
 */

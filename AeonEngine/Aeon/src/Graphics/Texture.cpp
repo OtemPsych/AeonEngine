@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -154,6 +154,30 @@ namespace ae
 		}
 	}
 
+	Texture::Texture(Texture&& rvalue) noexcept
+		: GLResource(std::move(rvalue))
+		, mFormat(std::move(rvalue.mFormat))
+		, mWrap(rvalue.mWrap)
+		, mBindingTarget(rvalue.mBindingTarget)
+		, mHasMipmap(rvalue.mHasMipmap)
+		, mFilter(rvalue.mFilter)
+	{
+	}
+
+	// Protected operator(s)
+	Texture& Texture::operator=(Texture&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		GLResource::operator=(std::move(rvalue));
+		mFormat = std::move(rvalue.mFormat);
+		mWrap = rvalue.mWrap;
+		mBindingTarget = rvalue.mBindingTarget;
+		mHasMipmap = rvalue.mHasMipmap;
+		mFilter = rvalue.mFilter;
+
+		return *this;
+	}
+
 	// Texture::Format
 		// Public constructor(s)
 	Texture::Format::Format(InternalFormat internalFormat) noexcept
@@ -193,5 +217,25 @@ namespace ae
 			imposedChannels = 4;
 			bitCount = 16;
 		}
+	}
+
+	Texture::Format::Format(Format&& rvalue) noexcept
+		: internal(rvalue.internal)
+		, base(rvalue.base)
+		, imposedChannels(rvalue.imposedChannels)
+		, bitCount(rvalue.bitCount)
+	{
+	}
+
+		// Public operator(s)
+	Texture::Format& Texture::Format::operator=(Format&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data
+		internal = rvalue.internal;
+		base = rvalue.base;
+		imposedChannels = rvalue.imposedChannels;
+		bitCount = rvalue.bitCount;
+
+		return *this;
 	}
 }

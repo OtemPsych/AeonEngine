@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -72,11 +72,13 @@ namespace ae
 		*/
 		Buffer(const Buffer&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Buffer that will be moved
+
+		 \since v0.6.0
 		*/
-		Buffer(Buffer&&) = delete;
+		Buffer(Buffer&& rvalue) noexcept;
 		/*!
 		 \brief Virtual destructor.
 		 \details It's needed as this class will be inherited by others.
@@ -93,11 +95,13 @@ namespace ae
 		*/
 		Buffer& operator=(const Buffer&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::Buffer that will be moved
+
+		 \since v0.6.0
 		*/
-		Buffer& operator=(Buffer&&) = delete;
+		Buffer& operator=(Buffer&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -251,7 +255,7 @@ namespace ae
  use and should be used instead of the ae::Buffer base class.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.08.09
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

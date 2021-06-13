@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,11 +24,6 @@
 
 namespace ae
 {
-	// Public constructor(s)
-	Transformable2D::~Transformable2D()
-	{
-	}
-
 	// Public method(s)
 	void Transformable2D::setPosition(const Vector2f& position, int zIndex) noexcept
 	{
@@ -36,7 +31,7 @@ namespace ae
 		mUpdateTransform = true;
 
 		// Only modify the z position if it was manually set
-		if (zIndex != 0) {
+		if (zIndex != INT_MAX) {
 			mPosition.z = static_cast<float>(zIndex);
 		}
 	}
@@ -48,7 +43,7 @@ namespace ae
 		mUpdateTransform = true;
 
 		// Only modify the z position if it was manually set
-		if (zIndex != 0) {
+		if (zIndex != INT_MAX) {
 			mPosition.z = static_cast<float>(zIndex);
 		}
 	}
@@ -148,14 +143,21 @@ namespace ae
 	{
 		// Update the model transform if necessary
 		if (mUpdateTransform) {
-			// Calculate the rotation based on the origin
+			// Calculate the base rotation and scale
 			Matrix4f rotation = Matrix4f::rotate(Math::toRadians(mRotation), Vector3f::ZAxis);
-			if (mOrigin != Vector2f()) {
-				rotation = Matrix4f::translate(Vector3f(mOrigin)) * rotation * Matrix4f::translate(Vector3f(-mOrigin));
+			Matrix4f scale = Matrix4f::scale(Vector3f(mScale));
+
+			// Calculate the final rotation and scale based on the origin
+			if (mOrigin.x != 0.f && mOrigin.y != 0.f) {
+				const Matrix4f ORIGIN_POS_OFFSET = Matrix4f::translate(Vector3f(mOrigin));
+				const Matrix4f ORIGIN_NEG_OFFSET = Matrix4f::translate(Vector3f(-mOrigin));
+
+				rotation = ORIGIN_POS_OFFSET * rotation * ORIGIN_NEG_OFFSET;
+				scale = ORIGIN_POS_OFFSET * scale * ORIGIN_NEG_OFFSET;
 			}
 
 			// Calculate the model transform
-			mTransform = Matrix4f::translate(mPosition - Vector3f(mOrigin)) * rotation * Matrix4f::scale(Vector3f(mScale));
+			mTransform = Matrix4f::translate(mPosition - Vector3f(mOrigin)) * rotation * scale;
 			mUpdateInvTransform = std::exchange(mUpdateTransform, false);
 		}
 
@@ -213,36 +215,6 @@ namespace ae
 		, mUpdateTransform(false)
 		, mUpdateInvTransform(false)
 	{
-	}
-
-	Transformable2D::Transformable2D(Transformable2D&& rvalue) noexcept
-		: mTransform(std::move(rvalue.mTransform))
-		, mInvTransform(std::move(rvalue.mInvTransform))
-		, mPosition(std::move(rvalue.mPosition))
-		, mScale(std::move(rvalue.mScale))
-		, mOrigin(std::move(rvalue.mOrigin))
-		, mRotation(rvalue.mRotation)
-		, mOriginFlags(rvalue.mOriginFlags)
-		, mUpdateTransform(rvalue.mUpdateTransform)
-		, mUpdateInvTransform(rvalue.mUpdateInvTransform)
-	{
-	}
-
-	// Protected operator(s)
-	Transformable2D& Transformable2D::operator=(Transformable2D&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		mTransform = std::move(rvalue.mTransform);
-		mInvTransform = std::move(rvalue.mInvTransform);
-		mPosition = std::move(rvalue.mPosition);
-		mScale = std::move(rvalue.mScale);
-		mOrigin = std::move(rvalue.mOrigin);
-		mRotation = rvalue.mRotation;
-		mOriginFlags = rvalue.mOriginFlags;
-		mUpdateTransform = rvalue.mUpdateTransform;
-		mUpdateInvTransform = rvalue.mUpdateInvTransform;
-
-		return *this;
 	}
 
 	// Protected virtual method(s)

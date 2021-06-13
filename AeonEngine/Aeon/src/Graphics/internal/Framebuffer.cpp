@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,6 +23,7 @@
 #include <AEON/Graphics/internal/Framebuffer.h>
 
 #include <string>
+#include <vector>
 
 #include <GL/glew.h>
 
@@ -37,6 +38,22 @@ namespace ae
 		, mColorAttachmentCount(0)
 	{
 		GLCall(glCreateFramebuffers(1, &mHandle));
+	}
+
+	Framebuffer::Framebuffer(Framebuffer&& rvalue) noexcept
+		: GLResource(std::move(rvalue))
+		, mColorAttachmentCount(rvalue.mColorAttachmentCount)
+	{
+	}
+
+	// Public operator(s)
+	Framebuffer& Framebuffer::operator=(Framebuffer&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		GLResource::operator=(std::move(rvalue));
+		mColorAttachmentCount = rvalue.mColorAttachmentCount;
+
+		return *this;
 	}
 
 	// Public method(s)
@@ -83,6 +100,13 @@ namespace ae
 			}
 
 			GLCall(glNamedFramebufferDrawBuffers(mHandle, static_cast<GLsizei>(drawBuffers.size()), drawBuffers.data()));
+
+			// Check that the framebuffer is complete (ignored in Release mode)
+			if _CONSTEXPR_IF (AEON_DEBUG) {
+				if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+					AEON_LOG_ERROR("Incomplete framebuffer", "The framebuffer wasn't correctly set up.");
+				}
+			}
 		}
 	}
 

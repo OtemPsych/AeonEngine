@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -34,6 +34,24 @@ namespace ae
 		, mCount(0)
 		, mUsage(usage)
 	{
+	}
+
+	IndexBuffer::IndexBuffer(IndexBuffer&& rvalue) noexcept
+		: Buffer(std::move(rvalue))
+		, mCount(rvalue.mCount)
+		, mUsage(rvalue.mUsage)
+	{
+	}
+
+	// Public operator(s)
+	IndexBuffer& IndexBuffer::operator=(IndexBuffer&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		Buffer::operator=(std::move(rvalue));
+		mCount = rvalue.mCount;
+		mUsage = rvalue.mUsage;
+
+		return *this;
 	}
 
 	// Public method(s)

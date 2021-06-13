@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -27,7 +27,7 @@
 
 #include <AEON/Config.h>
 #include <AEON/Math/AABoxCollider.h>
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 
 namespace ae
 {
@@ -43,7 +43,7 @@ namespace ae
 		Box2i                      textureRect;       //!< The position and size of the glyph within the texture
 		Vector2i                   bearing;           //!< The glyph's offset in pixels based on its origin
 		const Texture2D*           texture;           //!< The texture atlas containing the glyph
-		std::shared_ptr<Texture2D> individualTexture; //!< The individual texture containing the glyph
+		std::shared_ptr<Texture2D> individualTexture; //!< The glyph's individual texture
 		unsigned int               advance;           //!< The horizontal offset in 1/64 pixels to the next glyph's origin
 
 		// Public constructor(s)
@@ -56,15 +56,19 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Glyph that will be copied
+
+		 \since v0.6.0
 		*/
-		Glyph(const Glyph&) = default;
+		Glyph(const Glyph& copy) = default;
 		/*!
 		 \brief Move constructor.
 
-		 \since v0.5.0
+		 \param[in] rvalue The ae::Glyph that will be moved
+
+		 \since v0.6.0
 		*/
-		Glyph(Glyph&&) noexcept = default;
+		Glyph(Glyph&& rvalue) noexcept;
 
 		// Public operator(s)
 		/*!
@@ -76,9 +80,13 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \since v0.5.0
+		 \param[in] rvalue The ae::Glyph that will be moved
+
+		 \return The caller ae::Glyph
+
+		 \since v0.6.0
 		*/
-		Glyph& operator=(Glyph&&) noexcept = default;
+		Glyph& operator=(Glyph&& rvalue) noexcept;
 	};
 }
 #endif // Aeon_Graphics_Glyph_H_
@@ -91,14 +99,14 @@ namespace ae
 
  The ae::Glyph structure possesses the following information in order to handle
  a glyph:
- \li The pointer to the individual texture that contains only the bitmap of the glyph
- \li The pointer to the texture atlas that contains part of the bitmap of the glyph
  \li The texture rect indicating its position within the texture and the its size
  \li The glyph's offset in pixels based on its origin
+ \li The pointer to the texture atlas that contains part of the bitmap of the glyph
+ \li The pointer to the glyph's individual texture
  \li The horizontal offset in 1/64 pixels by the glyph's origin until the origin of the next glyph
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.02
+ \version v0.6.0
+ \date 2020.09.07
  \copyright MIT License
 */

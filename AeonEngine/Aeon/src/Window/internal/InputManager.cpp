@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -105,6 +105,13 @@ namespace ae
 		{
 			// Create and enqueue the event
 			auto event = std::make_unique<Event>(Event::Type::WindowDamaged);
+			eventQueue.enqueueEvent(std::move(event));
+		}
+
+		void path_drop_callback(GLFWwindow* glfwWindow, int count, const char** paths)
+		{
+			// Create and enqueue the event
+			auto event = std::make_unique<PathDropEvent>(count, paths);
 			eventQueue.enqueueEvent(std::move(event));
 		}
 

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -33,29 +33,6 @@ namespace ae
 	// Public method(s)
 	void MonitorManager::update(MonitorEvent* const monitorEvent)
 	{
-		// The custom sort function for the list of connected monitors
-		auto sortMonitors = [](std::vector<Monitor>& monitors) {
-			// Retrieve the updated list of connected monitors
-			int monitorCount;
-			GLFWmonitor** glfwMonitors = glfwGetMonitors(&monitorCount);
-
-			// Reorder stored list of connected monitors
-			int currentMonitorIndex = 0;
-			for (int i = 0; i < monitorCount; ++i) {
-				if (monitors[i].getHandle() != glfwMonitors[i]) {
-					if (monitors[currentMonitorIndex].getHandle() == glfwMonitors[i]) {
-						std::swap(monitors[i], monitors[currentMonitorIndex]);
-						currentMonitorIndex = std::exchange(i, 0);
-					}
-				}
-			}
-
-			// Update the monitors' properties that are dependent on the monitor setup
-			for (Monitor& monitor : monitors) {
-				monitor.update();
-			}
-		};
-
 		// Check if the monitor provided by the event is in the list
 		auto found = std::find_if(mMonitors.begin(), mMonitors.end(), [monitorEvent](const Monitor& monitor) {
 			return monitorEvent->handle == monitor.getHandle();
@@ -73,7 +50,7 @@ namespace ae
 			monitorEvent->monitor = &mMonitors.emplace_back(monitorEvent->handle);
 
 			// Sort the list of connected monitors and make sure that the monitor event still holds the correct pointer after the sort
-			sortMonitors(mMonitors);
+			sortMonitors();
 			if (monitorEvent->monitor->getHandle() != monitorEvent->handle) {
 				monitorEvent->monitor = &(*std::find_if(mMonitors.begin(), mMonitors.end(), [monitorEvent](const Monitor& monitor) {
 					return monitorEvent->handle == monitor.getHandle();
@@ -92,7 +69,7 @@ namespace ae
 			mMonitors.shrink_to_fit();
 
 			// Sort the list of connected monitors and nullify the event's pointer to the monitor
-			sortMonitors(mMonitors);
+			sortMonitors();
 			monitorEvent->monitor = nullptr;
 		}
 	}
@@ -145,6 +122,28 @@ namespace ae
 		mMonitors.reserve(monitorCount);
 		for (int i = 0; i < monitorCount; ++i) {
 			mMonitors.emplace_back(glfwMonitors[i]);
+		}
+	}
+
+	// Private method(s)
+	void MonitorManager::sortMonitors()
+	{
+		// Retrieve the updated list of connected monitors
+		int monitorCount;
+		GLFWmonitor** glfwMonitors = glfwGetMonitors(&monitorCount);
+
+		// Reorder the internal list of connected monitors
+		int currentMonitorIndex = 0;
+		for (int i = 0; i < monitorCount; ++i) {
+			if (mMonitors[i].getHandle() != glfwMonitors[i] && mMonitors[currentMonitorIndex].getHandle() == glfwMonitors[i]) {
+				std::swap(mMonitors[i], mMonitors[currentMonitorIndex]);
+				currentMonitorIndex = std::exchange(i, -1);
+			}
+		}
+
+		// Update the monitors' properties that are dependent on the monitor setup
+		for (Monitor& monitor : mMonitors) {
+			monitor.update();
 		}
 	}
 }

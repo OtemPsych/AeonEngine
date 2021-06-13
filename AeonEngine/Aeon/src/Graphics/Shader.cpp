@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -35,10 +35,33 @@ namespace ae
 		: GLResource()
 		, mStages()
 		, mUniforms()
+		, mDataLayout()
 		, mLinkType(linkType)
 	{
 		// Create the shader program object
 		mHandle = GLCall(glCreateProgram());
+	}
+
+	Shader::Shader(Shader&& rvalue) noexcept
+		: GLResource(std::move(rvalue))
+		, mStages(std::move(rvalue.mStages))
+		, mUniforms(std::move(rvalue.mUniforms))
+		, mDataLayout(std::move(rvalue.mDataLayout))
+		, mLinkType(rvalue.mLinkType)
+	{
+	}
+
+	// Public operator(s)
+	Shader& Shader::operator=(Shader&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data and move the rest
+		GLResource::operator=(std::move(rvalue));
+		mStages = std::move(rvalue.mStages);
+		mUniforms = std::move(rvalue.mUniforms);
+		mDataLayout = std::move(rvalue.mDataLayout);
+		mLinkType = rvalue.mLinkType;
+
+		return *this;
 	}
 
 	// Public method(s)
@@ -73,7 +96,7 @@ namespace ae
 		// Check that the contents of the file are valid (ignored in Release mode)
 		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if (SOURCE.empty()) {
-				AEON_LOG_ERROR("The source code retrieved is invalid", "The filepath of the soure code is either invalid or its contents are empty.\nAborting operation.");
+				AEON_LOG_ERROR("The source code retrieved is invalid", "The filepath of the source code is either invalid or its contents are empty.\nAborting operation.");
 				return;
 			}
 		}
@@ -103,7 +126,7 @@ namespace ae
 		GLCall(glValidateProgram(mHandle));
 		checkProgramStatus(GL_VALIDATE_STATUS);
 
-		// Activate the shader stages' deletion flag and detach all currently attached shader stages
+		// Raise the shader stages' deletion flag and detach all shader stages
 		for (const auto& stage : mStages) {
 			GLCall(glDeleteShader(stage.second.handle));
 			checkShaderStatus(stage.second.handle, GL_DELETE_STATUS);
@@ -136,11 +159,11 @@ namespace ae
 		return (boundProgram == mHandle);
 	}
 
-	void Shader::addUniformBuffer(const UniformBuffer* const ubo)
+	void Shader::addUniformBuffer(const UniformBuffer& ubo)
 	{
 		// Retrieve the uniform block's index from the shader and assign a buffer binding to the uniform block
-		GLuint blockIndex = GLCall(glGetUniformBlockIndex(mHandle, ubo->getBlockName().c_str()));
-		GLCall(glUniformBlockBinding(mHandle, blockIndex, ubo->getBindingPoint()));
+		GLuint blockIndex = GLCall(glGetUniformBlockIndex(mHandle, ubo.getBlockName().c_str()));
+		GLCall(glUniformBlockBinding(mHandle, blockIndex, ubo.getBindingPoint()));
 	}
 
 	void Shader::setUniform(const std::string& name, float value)
@@ -221,6 +244,11 @@ namespace ae
 		if (location != -1) {
 			GLCall(glProgramUniformMatrix4fv(mHandle, location, 1, GL_FALSE, mat.elements.data()));
 		}
+	}
+
+	VertexBuffer::Layout& Shader::getDataLayout() noexcept
+	{
+		return mDataLayout;
 	}
 
 	// Public virtual method(s)

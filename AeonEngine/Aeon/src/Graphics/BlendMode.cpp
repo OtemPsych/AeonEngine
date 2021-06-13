@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -45,16 +45,6 @@ namespace ae
 	{
 	}
 
-	BlendMode::BlendMode(BlendMode&& rvalue) noexcept
-		: colorSrcFactor(rvalue.colorSrcFactor)
-		, colorDstFactor(rvalue.colorDstFactor)
-		, colorEquation(rvalue.colorEquation)
-		, alphaSrcFactor(rvalue.alphaSrcFactor)
-		, alphaDstFactor(rvalue.alphaDstFactor)
-		, alphaEquation(rvalue.alphaEquation)
-	{
-	}
-
 	BlendMode::BlendMode(Factor srcFactor, Factor dstFactor, Equation equation) noexcept
 		: colorSrcFactor(srcFactor)
 		, colorDstFactor(dstFactor)
@@ -77,38 +67,6 @@ namespace ae
 	}
 
 	// Public operator(s)
-	BlendMode& BlendMode::operator=(const BlendMode& other)
-	{
-		// Check if the caller is being assigned to itself
-		if (this == &other) {
-			AEON_LOG_WARNING("Invalid assignment", "The caller BlendMode is being assigned to itself.");
-			return *this;
-		}
-
-		// Copy the other's data
-		colorSrcFactor = other.colorSrcFactor;
-		colorDstFactor = other.colorDstFactor;
-		colorEquation = other.colorEquation;
-		alphaSrcFactor = other.alphaSrcFactor;
-		alphaDstFactor = other.alphaDstFactor;
-		alphaEquation = other.alphaEquation;
-
-		return *this;
-	}
-
-	BlendMode& BlendMode::operator=(BlendMode&& rvalue) noexcept
-	{
-		// Copy the rvalue's data as moving them is redundant
-		colorSrcFactor = rvalue.colorSrcFactor;
-		colorDstFactor = rvalue.colorDstFactor;
-		colorEquation = rvalue.colorEquation;
-		alphaSrcFactor = rvalue.alphaSrcFactor;
-		alphaDstFactor = rvalue.alphaDstFactor;
-		alphaEquation = rvalue.alphaEquation;
-
-		return *this;
-	}
-
 	bool BlendMode::operator==(const BlendMode& other) const noexcept
 	{
 		return (colorSrcFactor == other.colorSrcFactor) &&

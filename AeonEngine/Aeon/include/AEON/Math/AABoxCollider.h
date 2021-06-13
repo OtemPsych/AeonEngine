@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,9 +23,7 @@
 #ifndef Aeon_Math_AABoxCollider_H_
 #define Aeon_Math_AABoxCollider_H_
 
-#include <AEON/Math/Vector4.h>
-#include <AEON/Math/Vector3.h>
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 
 namespace ae
 {

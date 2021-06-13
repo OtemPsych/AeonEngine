@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -64,12 +64,6 @@ namespace ae
 		success = true;
 	}
 
-	Font::Page::Page(const Page& copy)
-		: glyphs(copy.glyphs)
-		, face(copy.face)
-	{
-	}
-
 	Font::Page::Page(Page&& rvalue) noexcept
 		: glyphs(std::move(rvalue.glyphs))
 		, face(rvalue.face)
@@ -89,21 +83,6 @@ namespace ae
 	}
 
 		// Public operator(s)
-	Font::Page& Font::Page::operator=(const Page& other)
-	{
-		// Check if the caller is being assigned to itself
-		if (this == &other) {
-			AEON_LOG_WARNING("Invalid assignment", "The caller is being assigned to itself.\nAborting operation.");
-			return *this;
-		}
-
-		// Copy the other's data
-		glyphs = other.glyphs;
-		face = other.face;
-
-		return *this;
-	}
-
 	Font::Page& Font::Page::operator=(Page&& rvalue) noexcept
 	{
 		// Copy the rvalue's trivial data and move the rest
@@ -122,33 +101,22 @@ namespace ae
 	{
 	}
 
-	Font::Font(Font&& rvalue) noexcept
-		: mPages(std::move(rvalue.mPages))
-		, mAtlas(std::move(rvalue.mAtlas))
-		, mFilename(std::move(rvalue.mFilename))
-	{
-	}
-
-		// Public operator(s)
-	Font& Font::operator=(Font&& rvalue) noexcept
-	{
-		// Move the rvalue's data
-		mPages = std::move(rvalue.mPages);
-		mAtlas = std::move(rvalue.mAtlas);
-		mFilename = std::move(rvalue.mFilename);
-
-		return *this;
-	}
-
 		// Public method(s)
 	void Font::loadFromFile(const std::string& filename)
 	{
-		// Reinitialise the glyph pages as only one font may be represented
-		if (mFilename.empty() || mFilename != filename) {
-			std::map<unsigned int, Page>().swap(mPages);
-			mAtlas = TextureAtlas();
-			mFilename = filename;
+		// Check if the same filename is being requested
+		if (mFilename == filename || filename.empty()) {
+			return;
 		}
+
+		// Reinitialize the glyph pages and the atlas if necessary
+		if (!mFilename.empty()) {
+			std::map<unsigned int, Page>().swap(mPages);
+			mAtlas = TextureAtlas(Texture2D::InternalFormat::R8);
+		}
+
+		// Set the new filename
+		mFilename = filename;
 	}
 
 	const Glyph& Font::getGlyph(uint32_t codepoint, unsigned int characterSize)
@@ -209,9 +177,12 @@ namespace ae
 		// Create the glyph
 			// Create and store the glyph's texture within the texture atlas
 		FT_GlyphSlot ftGlyph = ftFace->glyph;
-		auto glyphTexture = GLResourceFactory::getInstance().create<Texture2D>("", Texture2D::Filter::Linear, Texture2D::Wrap::ClampToBorder, Texture2D::InternalFormat::R8);
-		if (ftGlyph->bitmap.buffer && glyphTexture->create(ftGlyph->bitmap.width, ftGlyph->bitmap.rows, ftGlyph->bitmap.buffer)) {
-			mAtlas.addTexture(glyphTexture.get());
+		std::shared_ptr<Texture2D> glyphTexture = nullptr;
+		if (ftGlyph->bitmap.buffer) {
+			glyphTexture = GLResourceFactory::getInstance().create<Texture2D>("", Texture2D::Filter::Linear, Texture2D::Wrap::ClampToEdge, Texture2D::InternalFormat::R8);
+			if (glyphTexture->create(ftGlyph->bitmap.width, ftGlyph->bitmap.rows, ftGlyph->bitmap.buffer)) {
+				mAtlas.add(*glyphTexture);
+			}
 		}
 
 			// Set the glyph's metadata
@@ -224,25 +195,30 @@ namespace ae
 		glyph.individualTexture = (ftGlyph->bitmap.buffer) ? glyphTexture : nullptr;
 		glyph.advance = ftGlyph->advance.x;
 
-		// Update the corresponding page's atlas texture
-		updateAtlasTexture(page);
+		// Pack together all individual textures and assign the packed positions to the glyphs
+		updateAtlasTexture();
 
 		// Return the loaded glyph's iterator
 		return glyphItr;
 	}
 
-	void Font::updateAtlasTexture(PageItr& page)
+	void Font::updateAtlasTexture()
 	{
 		// Pack together all individual textures amassed thus far
-		mAtlas.packTextures();
+		mAtlas.pack();
 
 		// Assign the packed position and texture atlas to all glyphs inside the page
-		const Texture2D* const atlasTexture = mAtlas.getTexture();
-		for (auto& glyphItr : page->second.glyphs) {
-			if (glyphItr.second.individualTexture) {
-				glyphItr.second.textureRect.position = mAtlas.getTextureRect(glyphItr.second.individualTexture.get()).position;
+		const Texture2D& atlasTexture = mAtlas.getTexture();
+		for (auto& pageItr : mPages)
+		{
+			for (auto& glyphItr : pageItr.second.glyphs)
+			{
+				Glyph& glyph = glyphItr.second;
+				if (glyph.individualTexture) {
+					glyph.textureRect.position = mAtlas.getTextureRect(*glyph.individualTexture).position;
+				}
+				glyph.texture = &atlasTexture;
 			}
-			glyphItr.second.texture = atlasTexture;
 		}
 
 		// Enqueue an event indicating that corresponding texts should update their uv coordinates

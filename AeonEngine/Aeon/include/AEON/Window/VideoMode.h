@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,8 +23,7 @@
 #ifndef Aeon_Window_VideoMode_H_
 #define Aeon_Window_VideoMode_H_
 
-#include <AEON/Config.h>
-#include <AEON/Math/Vector2.h>
+#include <AEON/Math/Vector.h>
 
 namespace ae
 {
@@ -34,10 +33,29 @@ namespace ae
 	/*!
 	 \brief The class that represents a single video mode of a monitor or of the active window.
 	*/
-	class _NODISCARD AEON_API VideoMode
+	class AEON_API VideoMode
 	{
 	public:
 		// Public constructor(s)
+		/*!
+		 \brief Constructs the ae::VideoMode by providing an optional pointer to a \a monitor that will retrieve its desktop video mode.
+		 \details If no pointer to a monitor is provided, the primary monitor will be automatically retrieved.
+
+		 \param[in] monitor The pointer to the associated ae::Monitor, the primary monitor by default
+
+		 \par Example:
+		 \code
+		 // Automatically select the primary monitor
+		 ae::VideoMode primaryDesktopMode;
+
+		 // Provide a specific monitor
+		 const ae::MonitorManager& monitorManager = ae::MonitorManager::getInstance();
+		 ae::VideoMode secondMonitorDesktopMode(monitorManager.getMonitor(1));
+		 \endcode
+
+		 \since v0.6.0
+		*/
+		explicit VideoMode(const Monitor* const monitor = nullptr);
 		/*!
 		 \brief Constructs the ae::VideoMode by providing the resolution, the refresh rate, the bits per channel and the pointer to the associated monitor.
 		 \details The \a redBits, \a greenBits, \a blueBits and \a monitor parameters are optional.\n
@@ -157,77 +175,30 @@ namespace ae
 		VideoMode(int width, int height, const VideoMode& vmode) noexcept;
 		/*!
 		 \brief Copy constructor.
-		 \details Sets the ae::VideoMode's member data to the \a copy's member data.
 
-		 \param[in] copy The ae::VideoMode that will be copied
-
-		 \par Example:
-		 \code
-		 ae::VideoMode vmode1(ae::Vector2i(1280, 720)); // the desktop mode of the primary monitor will be chosen
-		 ae::VideoMode vmode2(vmode1);
-		 \endcode
-
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		VideoMode(const VideoMode& copy) noexcept = default;
+		VideoMode(const VideoMode&) = default;
 		/*!
 		 \brief Move constructor.
-		 \details Performs a move operation on the \a rvalue's member data to the lvalue ae::VideoMode's member data.
 
-		 \param[in] rvalue The ae::VideoMode rvalue that will be moved
-
-		 \par Example:
-		 \code
-		 // Emplacing new video modes will cause a reallocation, therefore calling the move constructor
-		 std::vector<ae::VideoMode> vmodes;
-		 ...
-		 \endcode
-
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		VideoMode(VideoMode&& rvalue) noexcept = default;
+		VideoMode(VideoMode&&) noexcept = default;
 	public:
 		// Public operator(s)
 		/*!
 		 \brief Assignment operator.
-		 \details Performs a memberwise assignment from the \a other's member data to the caller ae::VideoMode's member data.
 
-		 \param[in] other The ae::VideoMode of which its member data will be copied over to the caller's ones
-
-		 \return The caller ae::VideoMode containing the new member data
-
-		 \par Example:
-		 \code
-		 const ae::MonitorManager& monitorManager = ae::MonitorManager::getInstance();
-		 ae::VideoMode vmode1(1280, 720, monitorManager.getMonitor(1)); // the desktop mode of the second monitor will be chosen
-		 ae::VideoMode vmode2(1280, 720);                               // the desktop mode of the primary monitor will be chosen
-		 ...
-		 vmode1 = vmode2;
-		 \endcode
-
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		VideoMode& operator=(const VideoMode& other) noexcept = default;
+		VideoMode& operator=(const VideoMode&) = default;
 		/*!
 		 \brief Move assignment operator.
-		 \details Performs a memberwise move assignment from the \a rvalue's member data to the caller ae::VideoMode's ones.
 
-		 \param[in] rvalue The rvalue ae::VideoMode of which its member data will be moved over to the caller's ones
-
-		 \return The caller ae::VideoMode containing the moved member data
-
-		 \par Example:
-		 \code
-		 const ae::MonitorManager& monitorManager = ae::MonitorManager::getInstance();
-		 ae::VideoMode vmode1(1280, 720, monitorManager.getMonitor(1)); // the desktop mode of the second monitor will be chosen
-		 ae::VideoMode vmode2(1280, 720); // the desktop mode of the primary monitor will be chosen
-		 ...
-		 vmode1 = std::move(vmode2);
-		 \endcode
-
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		VideoMode& operator=(VideoMode&& rvalue) noexcept = default;
+		VideoMode& operator=(VideoMode&&) noexcept = default;
 		/*!
 		 \brief Equality operator.
 		 \details Checks if the respective data of the caller and of the \a other are equal.\n
@@ -321,9 +292,9 @@ namespace ae
 
 		 \sa getWidth(), getHeight()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD const Vector2i& getResolution() const noexcept;
+		_NODISCARD inline const Vector2i& getResolution() const noexcept { return mResolution; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's width / horizontal resolution.
 		 \details This member is considered as the horizontal resolution if the associated window is in fullscreen and as the width if it's in windowed mode.
@@ -339,9 +310,9 @@ namespace ae
 
 		 \sa getHeight(), getResolution()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD int getWidth() const noexcept;
+		_NODISCARD inline int getWidth() const noexcept { return mResolution.x; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's height / vertical resolution.
 		 \details This member is considered as the vertical resolution if the associated window is in fullscreen and as the height if it's in windowed mode.
@@ -357,9 +328,9 @@ namespace ae
 
 		 \sa getWidth(), getResolution()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD int getHeight() const noexcept;
+		_NODISCARD inline int getHeight() const noexcept { return mResolution.y; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's refresh rate.
 
@@ -372,9 +343,9 @@ namespace ae
 		 int refreshRate = vmode.getRefreshRate();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD int getRefreshRate() const noexcept;
+		_NODISCARD inline int getRefreshRate() const noexcept { return mRefreshRate; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's bit depth of the red channel.
 		 \details The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
@@ -390,9 +361,9 @@ namespace ae
 
 		 \sa getGreenBits(), getBlueBits()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD int getRedBits() const noexcept;
+		_NODISCARD inline int getRedBits() const noexcept { return mRedBits; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's bit depth of the green channel.
 		 \details The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
@@ -408,9 +379,9 @@ namespace ae
 
 		 \sa getRedBits(), getBlueBits()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD int getGreenBits() const noexcept;
+		_NODISCARD inline int getGreenBits() const noexcept { return mGreenBits; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's bit depth of the blue channel.
 		 \details The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
@@ -426,9 +397,9 @@ namespace ae
 
 		 \sa getRedBits(), getGreenBits()
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD int getBlueBits() const noexcept;
+		_NODISCARD inline int getBlueBits() const noexcept { return mBlueBits; }
 		/*!
 		 \brief Retrieves the pointer to the ae::VideoMode's associated monitor.
 		 
@@ -445,9 +416,9 @@ namespace ae
 		 ae::VideoMode vmode2(1280, 720, monitorManager.getMonitor(1));
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.6.0
 		*/
-		_NODISCARD const Monitor* const getAssociatedMonitor() const noexcept;
+		_NODISCARD inline const Monitor* const getAssociatedMonitor() const noexcept { return mAssociatedMonitor; }
 
 	private:
 		// Private member data
@@ -475,7 +446,7 @@ namespace ae
  creation of the window may fail.
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.15
+ \version v0.6.0
+ \date 2021.01.23
  \copyright MIT License
 */

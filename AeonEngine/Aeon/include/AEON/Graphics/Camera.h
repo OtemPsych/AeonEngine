@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,7 +23,7 @@
 #ifndef Aeon_Graphics_Camera_H_
 #define Aeon_Graphics_Camera_H_
 
-#include <AEON/Math/Vector3.h>
+#include <AEON/Math/Vector.h>
 #include <AEON/Math/Matrix.h>
 #include <AEON/Math/AABoxCollider.h>
 #include <AEON/Math/internal/Quaternion.h>
@@ -83,7 +83,7 @@ namespace ae
 
 		 \sa move(), getPosition()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void setPosition(float posX, float posY, float posZ) noexcept;
 		/*!
@@ -178,7 +178,7 @@ namespace ae
 
 		 \sa setPosition(), getPosition()
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		void move(float offsetX, float offsetY, float offsetZ) noexcept;
 		/*!
@@ -452,9 +452,11 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Camera that will be copied
+
+		 \since v0.6.0
 		*/
-		Camera(const Camera&) noexcept = default;
+		Camera(const Camera& copy) = default;
 		/*!
 		 \brief Move constructor.
 
@@ -467,15 +469,14 @@ namespace ae
 		// Protected operator(s)
 		/*!
 		 \brief Assignment operator.
-		 \details Checks if the caller is being assigned to itself.
 
 		 \param[in] other The ae::Camera that will be copied
 
 		 \return The caller ae::Camera
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		Camera& operator=(const Camera& other);
+		Camera& operator=(const Camera& other) = default;
 		/*!
 		 \brief Move assignment operator.
 
@@ -519,7 +520,7 @@ namespace ae
  scene objects are rendered.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.06.03
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

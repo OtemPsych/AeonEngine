@@ -1,3 +1,27 @@
+v0.6.0 | 2021.06.13
+  Features
+    * Added a ConvexShape class used to represent a 2D convex polygon with an arbitrary number of points
+    * Added a BatchRenderer2D singleton class which sorts submissions assuring proper rendering order, the opaque instances are rendered back-to-front and trasparent ones front-to-back
+    * Added a BasicRenderer2D singleton class which directly sets the render states provided and renders whatever geometry is provided to it
+    * Added a constructor allowing a VideoMode to be created by passing an optional pointer to a Monitor or the primary monitor will be associated by default
+    * Added static methods to retrieve pre-formatted current system date and time from the Time class
+    * Added a PathDropEvent class allowing users to drop files onto the window
+  Updates
+    - GLResource instances are now movable and move-assignable
+    - Texture2D instances are now movable and move-assignable
+    - TextureAtlas instances are now movable and move-assignable
+    - The Renderer2D singleton class is now an abstract base class for all derived 2D renderers
+    - The DebugLogger's formatted logs' separators now cover their respective log's longest string
+    - Improved the DebugLogger's documentation
+    - Debug logs now display the current system date and time of the logged information
+	- The z-index of the setPosition() method of the Transformable2D class that automatically handles z-ordering is now by default INT_MAX (from 0) to allow greater flexibility
+  Bug Fixes
+    ~ Fixed a bug which caused TextureAtlas instances to only create a R8 texture atlas
+    ~ Fixed a bug which caused submissions in the Renderer2D to be needlessly recreated every frame
+    ~ Corrected the Shader's code documentation
+    ~ Fixed a bug which caused artifacts when rendering text
+	~ Fixed a bug which caused Sprite instances to not be rendered if they weren't provided with a texture at construction
+
 v0.5.0 | 2020.08.07
   Features
     * Added Z-ordering for all instances deriving from the Actor2D class (all children are now rendered on top of their parents)
@@ -8,7 +32,7 @@ v0.5.0 | 2020.08.07
     * Added a TextureAtlas class used for dynamically generating a texture atlas during runtime
     * Added a Font class used to represent a font
     * Added a Text class used to represent a renderable string of characters
-    * Added equality and inequality operators to the ae::Matrix struct
+    * Added equality and inequality operators to the Matrix struct
     * Added a dirty render flag to the Renderable2D class used to inform the appropriate renderer to update its cached properties
     * Added a Widget abstract base class providing basic GUI functionalities
     * Added a Button class used to represent a GUI button

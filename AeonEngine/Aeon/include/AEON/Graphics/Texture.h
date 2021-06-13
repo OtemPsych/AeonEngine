@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -95,12 +95,6 @@ namespace ae
 		*/
 		Texture(const Texture&) = delete;
 		/*!
-		 \brief Deleted move constructor.
-
-		 \since v0.4.0
-		*/
-		Texture(Texture&&) = delete;
-		/*!
 		 \brief Virtual destructor.
 		 \details It's needed as this class will be inherited by others.
 
@@ -115,12 +109,6 @@ namespace ae
 		 \since v0.4.0
 		*/
 		Texture& operator=(const Texture&) = delete;
-		/*!
-		 \brief Deleted move assignment operator.
-
-		 \since v0.4.0
-		*/
-		Texture& operator=(Texture&&) = delete;
 	public:
 		// Public method(s)
 		/*!
@@ -263,6 +251,26 @@ namespace ae
 		 \since v0.5.0
 		*/
 		Texture(uint32_t target, Filter filter, Wrap wrap, InternalFormat internalFormat);
+		/*!
+		 \brief Move constructor.
+
+		 \param[in] rvalue The ae::Texture that will be moved
+
+		 \since v0.6.0
+		*/
+		Texture(Texture&& rvalue) noexcept;
+	protected:
+		// Protected operator(s)
+		/*!
+		 \brief Move assignment operator.
+
+		 \param[in] rvalue The ae::Texture that will be moved
+
+		 \return The caller ae::Texture
+
+		 \since v0.6.0
+		*/
+		Texture& operator=(Texture&& rvalue) noexcept;
 
 	protected:
 		// Protected struct(s)
@@ -271,11 +279,13 @@ namespace ae
 		*/
 		struct Format
 		{
+			// Public member(s)
 			InternalFormat internal;        //!< The sized internal format
 			uint32_t       base;            //!< The OpenGL base format
 			int            imposedChannels; //!< The number of imposed channels
 			int            bitCount;        //!< The number of bits per channel
 
+			// Public constructor(s)
 			/*!
 			 \brief Constructs the ae::Texture::Format by providing the sized internal format.
 			 \details The OpenGL base format, number of channels and the bit count will be calculated based on the internal format provided.
@@ -285,6 +295,38 @@ namespace ae
 			 \since v0.5.0
 			*/
 			explicit Format(InternalFormat internalFormat) noexcept;
+			/*!
+			 \brief Deleted copy constructor.
+
+			 \since v0.6.0
+			*/
+			Format(const Format&) = delete;
+			/*!
+			 \brief Move constructor.
+
+			 \param[in] rvalue The ae::Texture::Format that will be moved
+
+			 \since v0.6.0
+			*/
+			Format(Format&& rvalue) noexcept;
+
+			// Public operator(s)
+			/*!
+			 \brief Deleted assignment operator.
+
+			 \since v0.6.0
+			*/
+			Format& operator=(const Format&) = delete;
+			/*!
+			 \brief Move assignment operator.
+
+			 \param[in] rvalue The ae::Texture::Format that will be moved
+
+			 \return The caller ae::Texture::Format
+
+			 \since v0.6.0
+			*/
+			Format& operator=(Format&& rvalue) noexcept;
 		};
 	protected:
 		// Protected member(s)
@@ -308,7 +350,7 @@ namespace ae
  VRAM so this class is simply an intermediary to that data.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.01
+ \version v0.6.0
+ \date 2020.09.05
  \copyright MIT License
 */

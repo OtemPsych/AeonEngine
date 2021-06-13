@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -40,15 +40,17 @@ namespace ae
 		/*!
 		 \brief Deleted copy constructor.
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		GLResource(const GLResource&) = delete;
 		/*!
-		 \brief Deleted move constructor.
+		 \brief Move constructor.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::GLResource that will be moved
+
+		 \since v0.6.0
 		*/
-		GLResource(GLResource&&) = delete;
+		GLResource(GLResource&& rvalue) noexcept;
 		/*!
 		 \brief Virtual destructor.
 		 \details It's needed as this class will be inherited by others.
@@ -61,15 +63,19 @@ namespace ae
 		/*!
 		 \brief Deleted assignment operator.
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		GLResource& operator=(const GLResource&) = delete;
 		/*!
-		 \brief Deleted move assignment operator.
+		 \brief Move assignment operator.
 
-		 \since v0.4.0
+		 \param[in] rvalue The ae::GLResource that will be moved
+
+		 \return The caller ae::GLResource
+
+		 \since v0.6.0
 		*/
-		GLResource& operator=(GLResource&&) = delete;
+		GLResource& operator=(GLResource&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
@@ -140,7 +146,7 @@ namespace ae
  of allocated resources on the GPU.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2019.08.09
+ \version v0.6.0
+ \date 2020.08.27
  \copyright MIT License
 */

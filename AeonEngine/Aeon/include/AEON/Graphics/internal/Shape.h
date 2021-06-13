@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -27,6 +27,9 @@
 
 namespace ae
 {
+	// Forward declaration(s)
+	class Texture2D;
+
 	/*!
 	 \brief Abstract base class representing 2D shapes.
 	 \note No direct instance of this class can be created.
@@ -301,11 +304,13 @@ namespace ae
 		*/
 		Shape();
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Shape that will be copied
+
+		 \since v0.6.0
 		*/
-		Shape(const Shape&) = delete;
+		Shape(const Shape& copy) = default;
 		/*!
 		 \brief Move constructor.
 
@@ -317,11 +322,15 @@ namespace ae
 	protected:
 		// Protected operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
-		 \since v0.5.0
+		 \param[in] other The ae::Shape that will be copied
+
+		 \return The caller ae::Shape
+
+		 \since v0.6.0
 		*/
-		Shape& operator=(const Shape&) = delete;
+		Shape& operator=(const Shape& other) = default;
 		/*!
 		 \brief Move assignment operator.
 
@@ -367,9 +376,9 @@ namespace ae
 
 		 \sa updatePositions(), updateUVs(), updateFillColors()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		bool updateShape();
+		void updateShape();
 		/*!
 		 \brief Updates the stored outline vertices' positions and the stored outline indices.
 		 \details Called when the size/radius has changed.
@@ -397,9 +406,9 @@ namespace ae
 
 		 \sa updateOutlinePositions(), updateOutlineColors()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		bool updateOutline();
+		void updateOutline();
 
 		// Private virtual method(s)
 		/*!
@@ -409,7 +418,7 @@ namespace ae
 
 		 \sa renderSelf()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		virtual void updateSelf(const Time& dt) override;
 		/*!
@@ -420,7 +429,7 @@ namespace ae
 
 		 \sa updateSelf()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		virtual void renderSelf(RenderStates states) const override final;
 
@@ -456,7 +465,7 @@ namespace ae
  geometrical shapes such as rectangles, circles and general convex shapes.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.6.0
+ \date 2020.08.17
  \copyright MIT License
 */

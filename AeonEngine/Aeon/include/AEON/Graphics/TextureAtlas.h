@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -55,41 +55,47 @@ namespace ae
 
 		 \param[in] format The ae::Texture2D::InternalFormat of the buffer's image data, ae::Texture2D::InternalFormat::RGBA8 by default
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		explicit TextureAtlas(Texture2D::InternalFormat format = Texture2D::InternalFormat::RGBA8);
 		/*!
 		 \brief Deleted copy constructor.
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		TextureAtlas(const TextureAtlas&) = default;
+		TextureAtlas(const TextureAtlas&) = delete;
 		/*!
 		 \brief Move constructor.
 
-		 \since v0.5.0
+		 \param[in] rvalue The ae::TextureAtlas that will be moved
+
+		 \since v0.6.0
 		*/
-		TextureAtlas(TextureAtlas&&) noexcept = default;
+		TextureAtlas(TextureAtlas&& rvalue) noexcept;
 	public:
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		TextureAtlas& operator=(const TextureAtlas&) = delete;
 		/*!
 		 \brief Move assignment operator.
 
-		 \since v0.5.0
+		 \param[in] rvalue The ae::TextureAtlas that will be moved
+
+		 \return The caller ae::TextureAtlas
+
+		 \since v0.6.0
 		*/
-		TextureAtlas& operator=(TextureAtlas&&) noexcept = default;
+		TextureAtlas& operator=(TextureAtlas&& rvalue) noexcept;
 	public:
 		// Public method(s)
 		/*!
 		 \brief Stores a pointer to an ae::Texture2D instance to be packed into the texture atlas.
 
-		 \param[in] texture The pointer to the texture to be added
+		 \param[in] texture The ae::Texture2D to be added
 
 		 \par Example:
 		 \code
@@ -100,25 +106,25 @@ namespace ae
 
 		 // Create the texture atlas and add in the textures (only update the atlas once all textures have been added)
 		 ae::TextureAtlas atlas;
-		 atlas.addTexture(texture1.get());
-		 atlas.addTexture(texture2.get());
-		 atlas.addTexture(texture3.get());
+		 atlas.add(*texture1);
+		 atlas.add(*texture2);
+		 atlas.add(*texture3);
 
 		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
-		 atlas.packTextures();
+		 atlas.pack();
 
 		 // Retrieve the texture containing all individual textures and their positions within it
-		 const ae::Texture2D* const finalTexture = atlas.getTexture();
+		 const ae::Texture2D& finalTexture = atlas.getTexture();
 
 		 // Retrieve the computed texture rectangle within the texture atlas of each texture added
-		 ae::Box2i texture2Rect = atlas.getTextureRect(texture2.get());
+		 ae::Box2i texture2Rect = atlas.getTextureRect(*texture2);
 		 \endcode
 
-		 \sa packTextures(), getTexture(), getTextureRect()
+		 \sa pack(), getTexture(), getTextureRect()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		void addTexture(const Texture2D* const texture);
+		void add(const Texture2D& texture);
 		/*!
 		 \brief Packs together the ae::Texture2D instances that have been added thus far into the texture atlas.
 
@@ -126,25 +132,25 @@ namespace ae
 		 \code
 		 // Create the texture atlas and add in the textures
 		 ae::TextureAtlas atlas;
-		 atlas.addTexture(texture1);
-		 atlas.addTexture(texture2);
-		 atlas.addTexture(texture3);
+		 atlas.add(*texture1);
+		 atlas.add(*texture2);
+		 atlas.add(*texture3);
 
 		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
-		 atlas.packTextures();
+		 atlas.pack();
 
 		 // Retrieve the texture containing all individual textures and their positions within it
-		 const ae::Texture2D* const finalTexture = atlas.getTexture();
+		 const ae::Texture2D& finalTexture = atlas.getTexture();
 
 		 // Retrieve the computed texture rectangle within the texture atlas of each texture added
-		 ae::Box2i texture2Rect = atlas.getTextureRect(texture2);
+		 ae::Box2i texture2Rect = atlas.getTextureRect(*texture2);
 		 \endcode
 
 		 \sa addTexture(), getTexture(), getTextureRect()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		void packTextures();
+		void pack();
 		/*!
 		 \brief Retrieves the texture atlas containing all packed textures that have been added thus far.
 		 \note The textures to be packed have to be added prior to calling this method.
@@ -155,24 +161,27 @@ namespace ae
 		 \code
 		 // Create the texture atlas and add in the textures (only update the atlas once all textures have been added)
 		 ae::TextureAtlas atlas;
-		 atlas.addTexture(texture1, false); // texture added, no computation was made
-		 atlas.addTexture(texture2, false); // texture added, no computation was made
-		 atlas.addTexture(texture3);        // texture added, computed packed texture positions and rendered into texture atlas
+		 atlas.add(*texture1);
+		 atlas.add(*texture2);
+		 atlas.add(*texture3);
+
+		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
+		 atlas.pack();
 
 		 // Retrieve the texture containing all individual textures
-		 const ae::Texture2D* const finalTexture = atlas.getTexture();
+		 const ae::Texture2D& finalTexture = atlas.getTexture();
 		 \endcode
 
-		 \sa addTexture(), getTextureRects()
+		 \sa add(), getTextureRects()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		_NODISCARD const Texture2D* const getTexture() const noexcept;
+		_NODISCARD const Texture2D& getTexture() const noexcept;
 		/*!
 		 \brief Retrieves the texture rect computed for the packed texture provided.
-		 \note The texture requested has to be added prior to calling this method.
+		 \note The texture requested has to be added and the texture atlas packed prior to calling this method.
 
-		 \param[in] texture The pointer to the texture added
+		 \param[in] texture A texture that was previously added
 
 		 \return The texture rect that was computed for the packed texture requested
 
@@ -180,22 +189,22 @@ namespace ae
 		 \code
 		 // Create the texture atlas and add in the textures
 		 ae::TextureAtlas atlas;
-		 atlas.addTexture(texture1);
-		 atlas.addTexture(texture2);
-		 atlas.addTexture(texture3);
+		 atlas.add(*texture1);
+		 atlas.add(*texture2);
+		 atlas.add(*texture3);
 
 		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
-		 atlas.packTextures();
+		 atlas.pack();
 
 		 // Retrieve the computed texture rectangle within the texture atlas of each texture added
-		 ae::Box2i texture2Rect = atlas.getTextureRect(texture2);
+		 ae::Box2i texture2Rect = atlas.getTextureRect(*texture2);
 		 \endcode
 
-		 \sa addTexture(), packTextures(), getTexture()
+		 \sa add(), pack(), getTexture()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
-		_NODISCARD Box2i getTextureRect(const Texture2D* const texture) const noexcept;
+		_NODISCARD Box2i getTextureRect(const Texture2D& texture) const noexcept;
 	private:
 		// Private method(s)
 		/*!
@@ -203,7 +212,7 @@ namespace ae
 
 		 \return The dimensions of the texture atlas required to fit all the individual textures
 
-		 \sa renderTextures(), packTextures()
+		 \sa pack()
 
 		 \since v0.5.0
 		*/
@@ -211,8 +220,8 @@ namespace ae
 
 	private:
 		// Private member(s)
-		std::shared_ptr<Texture2D>        mAtlas;    //!< The texture that will serve as the texture atlas
 		std::map<const Texture2D*, Box2i> mTextures; //!< The textures to be packed and associated rectangles to be computed
+		std::shared_ptr<Texture2D>        mAtlas;    //!< The texture that will serve as the texture atlas
 	};
 }
 #endif //Aeon_Graphics_TextureAtlas_H_
@@ -223,12 +232,12 @@ namespace ae
 
  The ae::TextureAtlas is used to create a dynamic texture atlas composed of
  several other textures. This class shouldn't be used to load in a premade
- texture atlas using a third-party software (the API user should opt for a
+ texture atlas using third-party software (the API user should opt for a
  normal texture in that case) as the functionalities that it provides are
- purely suited for runtime creation of a texture atlas.
+ purely suited for runtime-creation of a texture atlas.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.01
+ \version v0.6.0
+ \date 2020.09.07
  \copyright MIT License
 */

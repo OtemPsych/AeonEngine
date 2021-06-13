@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,9 +24,23 @@
 
 namespace ae
 {
-	// Virtual destructor
+	// Public constructor(s)
+	GLResource::GLResource(GLResource&& rvalue) noexcept
+		: mHandle(rvalue.mHandle)
+	{
+	}
+
 	GLResource::~GLResource()
 	{
+	}
+
+	// Public operator(s)
+	GLResource& GLResource::operator=(GLResource&& rvalue) noexcept
+	{
+		// Copy the rvalue's trivial data
+		mHandle = rvalue.mHandle;
+
+		return *this;
 	}
 
 	// Public method(s)

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -41,7 +41,7 @@ namespace ae
 		 \brief Default constructor.
 		 \details Creates an ae::Sprite without a texture and a white color.
 
-		 \since v0.4.0
+		 \since v0.6.0
 		*/
 		Sprite();
 		/*!
@@ -63,11 +63,13 @@ namespace ae
 		*/
 		explicit Sprite(const Texture2D& texture, const Box2f& rect = Box2f());
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 
-		 \since v0.5.0
+		 \param[in] copy The ae::Sprite that will be copied
+
+		 \since v0.6.0
 		*/
-		Sprite(const Sprite&) = delete;
+		Sprite(const Sprite& copy) = default;
 		/*!
 		 \brief Move constructor.
 
@@ -79,11 +81,15 @@ namespace ae
 	public:
 		// Public operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
-		 \since v0.5.0
+		 \param[in] other The ae::Sprite that will be copied
+
+		 \return The caller ae::Sprite
+
+		 \since v0.6.0
 		*/
-		Sprite& operator=(const Sprite&) = delete;
+		Sprite& operator=(const Sprite& other) = default;
 		/*!
 		 \brief Move assignment operator.
 
@@ -245,15 +251,6 @@ namespace ae
 		 \since v0.4.0
 		*/
 		void updateColor();
-		/*!
-		 \brief Updates the ae::Sprite's stored vertices.
-		 \details Calls the specified update methods.
-
-		 \sa updatePosUV(), updateColor(), updateIndices()
-
-		 \since v0.4.0
-		*/
-		bool updateVertices();
 
 		// Private virtual method(s)
 		/*!
@@ -261,9 +258,9 @@ namespace ae
 
 		 \param[in] dt The time difference between the previous frame and the current frame
 
-		 \sa renderSelf()
+		 \sa updatePosUV(), updateColor(), renderSelf()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		virtual void updateSelf(const Time& dt) override final;
 		/*!
@@ -274,7 +271,7 @@ namespace ae
 
 		 \sa updateSelf()
 
-		 \since v0.5.0
+		 \since v0.6.0
 		*/
 		virtual void renderSelf(RenderStates states) const override final;
 
@@ -304,7 +301,7 @@ namespace ae
  never appears stretched or in any way deformed.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.6.0
+ \date 2020.08.29
  \copyright MIT License
 */

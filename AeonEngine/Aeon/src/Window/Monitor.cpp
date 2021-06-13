@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2020 Filippos Gleglakos
+// Copyright(c) 2019-2021 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -119,41 +119,6 @@ namespace ae
 		glfwGetMonitorPos(mHandle, &mVirtualPos.x, &mVirtualPos.y);
 	}
 
-	const std::vector<VideoMode>& Monitor::getFullscreenModes() const noexcept
-	{
-		return mVModes;
-	}
-
-	const VideoMode& Monitor::getDesktopMode() const
-	{
-		return *mOriginalVMode;
-	}
-
-	const std::string& Monitor::getName() const noexcept
-	{
-		return mName;
-	}
-
-	const Box2i& Monitor::getWorkarea() const noexcept
-	{
-		return mWorkarea;
-	}
-
-	const Vector2i& Monitor::getVirtualPosition() const noexcept
-	{
-		return mVirtualPos;
-	}
-
-	const Vector2i& Monitor::getPhysicalSize() const noexcept
-	{
-		return mPhysicalSize;
-	}
-
-	const Vector2f& Monitor::getContentScale() const noexcept
-	{
-		return mContentScale;
-	}
-
 	void Monitor::setGamma(float gamma)
 	{
 		// Check if the gamma provided is valid (ignored in Release mode)
@@ -166,15 +131,5 @@ namespace ae
 
 		mGamma = gamma;
 		glfwSetGamma(mHandle, gamma);
-	}
-
-	float Monitor::getGamma() const noexcept
-	{
-		return mGamma;
-	}
-
-	GLFWmonitor* const Monitor::getHandle() const noexcept
-	{
-		return mHandle;
 	}
 }
