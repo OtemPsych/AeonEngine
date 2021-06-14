@@ -20,50 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_GUI_Textbox_H_
-#define Aeon_Graphics_GUI_Textbox_H_
+#include <AEON/System/Clipboard.h>
 
-#include <AEON/Graphics/GUI/internal/Widget.h>
-#include <AEON/Graphics/RectangleShape.h>
+#include <GLFW/glfw3.h>
 
 namespace ae
 {
-	// Forward declaration(s)
-	class Text;
-	class Sprite;
-
-	/*!
-	 \brief Class representing a GUI textbox.
-	 \details The Idle, Hover and Click states need to be configured.
-	*/
-	class _NODISCARD AEON_API Textbox : public Widget<RectangleShape>
+	namespace Clipboard
 	{
-	public:
-		Textbox();
-	public:
-		Text& getText() noexcept;
-		Text& getPlaceholder() noexcept;
-	private:
-		virtual void enableState(State state) override final;
-		virtual void updateSelf(const Time& dt) override final;
-		virtual void handleEventSelf(Event* const event) override final;
-		
-	private:
-		Text* mText;
-		Text* mPlaceholder;
-	};
+		// Function(s)
+		void setString(const std::string& string)
+		{
+			glfwSetClipboardString(nullptr, string.c_str());
+		}
+
+		std::string getString()
+		{
+			return glfwGetClipboardString(nullptr);
+		}
+	}
 }
-#endif // Aeon_Graphics_GUI_Textbox_H_
-
-/*!
- \class ae::Textbox
- \ingroup graphics
-
- The ae::Textbox class provided typical functionality of a GUI textbox, such as
- typing text
-
- \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.17
- \copyright MIT License
-*/

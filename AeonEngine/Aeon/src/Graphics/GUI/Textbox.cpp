@@ -21,13 +21,15 @@
 // SOFTWARE.
 
 #include <AEON/Graphics/GUI/Textbox.h>
+
+#include <AEON/System/Clipboard.h>
+
 #include <AEON/Graphics/Text.h>
 
 namespace ae
 {
 	Textbox::Textbox()
 		: Widget()
-		, mCharacterCount(30)
 		, mText(nullptr)
 		, mPlaceholder(nullptr)
 	{		
@@ -92,7 +94,7 @@ namespace ae
 			return;
 		}
 
-		// Check if the toggle button is being hovered over
+		// Check if the textbox is being hovered over
 		if (event->type == Event::Type::MouseMoved && (ACTIVE_STATE == State::Idle || ACTIVE_STATE == State::Hover)) {
 			auto mouseMoveEvent = event->as<MouseMoveEvent>();
 
@@ -105,7 +107,7 @@ namespace ae
 				enableState(State::Idle);
 			}
 		}
-		// Check if the button is being clicked
+		// Check if the textbox is being clicked
 		else if (event->type == Event::Type::MouseButtonPressed) {
 			auto mouseButtonEvent = event->as<MouseButtonEvent>();
 			if (mouseButtonEvent->button == Mouse::Button::Left) {
@@ -142,6 +144,11 @@ namespace ae
 					}
 					event->handled = true;
 				}
+			}
+			else if (keyEvent->key == Keyboard::Key::V && keyEvent->control) {
+				const std::string& currentText = mText->getText();
+				mText->setText(currentText + Clipboard::getString());
+				event->handled = true;
 			}
 		}
 	}

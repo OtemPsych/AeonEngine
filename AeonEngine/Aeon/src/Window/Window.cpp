@@ -23,7 +23,6 @@
 #include <AEON/Window/Window.h>
 
 #include <string>
-#include <iostream>
 
 #include <GLFW/glfw3.h>
 
@@ -98,10 +97,8 @@ namespace ae
 		glfwWindowHint(GLFW_BLUE_BITS, BLUE_BITS);
 		glfwWindowHint(GLFW_ALPHA_BITS, ALPHA_BITS);
 
-		// Create the GLFW window based on the selected style
+		// Create the GLFW window based on the selected style and check if it was successfully created
 		mHandle = glfwCreateWindow(mVideoMode.getWidth(), mVideoMode.getHeight(), mTitle.c_str(), monitorHandle, nullptr);
-
-		// Check that the GLFW window was successfully created
 		if (!mHandle) {
 			AEON_LOG_ERROR("Window creation failed", "Failed to create the GLFW window.\nThe OpenGL context wasn't made current.");
 			return;
@@ -149,10 +146,7 @@ namespace ae
 
 	void Window::display()
 	{
-		// Replace the backbuffer with the frontbuffer to display it to the screen
 		glfwSwapBuffers(mHandle);
-
-		// Retrieve the generated events for the next frame
 		glfwPollEvents();
 	}
 

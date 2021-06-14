@@ -128,7 +128,7 @@ namespace ae
 		*/
 		void create();
 		/*!
-		 \brief Immediately releases all allocated resources and destroys the window.
+		 \brief Indicates to the window to release all allocated resources and destroy it.
 
 		 \par Example:
 		 \code
@@ -138,15 +138,15 @@ namespace ae
 
 		 \sa isOpen()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		void close() const;
 		/*!
 		 \brief Displays onto the screen what has been rendered to the window thus far.
-		 \details This method swaps the backbuffer with the frontbuffer currently displayed on the screen.\n
-		 This method is primarily used internally.
+		 \details This method swaps the backbuffer with the frontbuffer currently displayed on the screen.
+		 \note This method should primarily be used internally.
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		void display();
 		/*!
@@ -666,7 +666,7 @@ namespace ae
  All configuration concerning the window are done by using this class's methods.
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.20
+ \version v0.7.0
+ \date 2021.06.13
  \copyright MIT License
 */
