@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -76,21 +76,7 @@ namespace ae
 	State* const StateStack::getState(uint32_t stateID) const
 	{
 		auto stateItr = mStates.find(stateID);
-
-		// Log an error message if the state wasn't found (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (stateItr == mStates.end()) {
-				AEON_LOG_ERROR("Failed to find specified state", "No match found for the state ID provided.\nAborting operation.");
-				return nullptr;
-			}
-		}
-
-		return stateItr->second.get();
-	}
-
-	bool StateStack::isEmpty() const noexcept
-	{
-		return mStates.empty();
+		return (stateItr == mStates.end()) ? nullptr : stateItr->second.get();
 	}
 
 	// Public static method(s)
@@ -114,14 +100,13 @@ namespace ae
 		auto found = mStateFactories.find(stateID);
 
 		// Log an error message if the state hasn't been registered (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
+		if constexpr (AEON_DEBUG) {
 			if (found == mStateFactories.end()) {
 				AEON_LOG_ERROR("Attempt to create unregistered state", "No match found for the state ID provided.\nAborting operation.");
 				return nullptr;
 			}
 		}
 
-		// Execute the constructor stored and return its result
 		return found->second();
 	}
 
@@ -142,7 +127,6 @@ namespace ae
 				Application::getInstance().getWindow().close();
 			};
 
-			// Remove the action that was just handled
 			mPendingQueue.pop();
 		}
 	}

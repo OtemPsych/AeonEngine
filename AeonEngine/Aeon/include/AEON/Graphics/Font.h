@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,18 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Font_H_
-#define Aeon_Graphics_Font_H_
+#pragma once
 
-#include <memory>
-
-#include <AEON/Config.h>
 #include <AEON/Graphics/TextureAtlas.h>
 
 namespace ae
 {
 	// Forward declaration(s)
 	struct Glyph;
+	class Text;
 
 	/*!
 	 \brief The class representing a text font.
@@ -57,25 +54,21 @@ namespace ae
 			 \param[in] filename The string containing the location of the font
 			 \param[in] success Whether or not the font was successfully loaded in
 
-			 \since v0.5.0
+			 \since v0.7.0
 			*/
 			Page(const std::string& filename, bool& success);
 			/*!
 			 \brief Copy constructor.
 
-			 \param[in] copy The ae::Font::Page that will be copied
-
-			 \since v0.6.0
+			 \since v0.7.0
 			*/
-			Page(const Page& copy) = default;
+			Page(const Page&) = default;
 			/*!
 			 \brief Move constructor.
 
-			 \param[in] rvalue The ae::Font::Page that will be moved
-
-			 \since v0.5.0
+			 \since v0.7.0
 			*/
-			Page(Page&& rvalue) noexcept;
+			Page(Page&&) noexcept = default;
 			/*!
 			 \brief Destructor.
 			 \details Releases all FreeType resources that were allocated.
@@ -88,35 +81,27 @@ namespace ae
 			/*!
 			 \brief Assignment operator.
 
-			 \param[in] other The ae::Font::Page that will be copied
-
 			 \return The caller ae::Font::Page
 
-			 \since v0.6.0
+			 \since v0.7.0
 			*/
-			Page& operator=(const Page& other) = default;
+			Page& operator=(const Page&) = default;
 			/*!
 			 \brief Move assignment operator.
 
-			 \param[in] rvalue The ae::Font::Page that will be moved
-
 			 \return The caller ae::Font::Page
 
-			 \since v0.5.0
+			 \since v0.7.0
 			*/
-			Page& operator=(Page&& rvalue) noexcept;
+			Page& operator=(Page&&) noexcept = default;
 		};
-	private:
-		// Private typedef(s)
-		using PageItr = std::map<unsigned int, Page>::iterator;
-		using GlyphItr = std::map<uint32_t, Glyph>::iterator;
 
 	public:
 		// Public constructor(s)
 		/*!
 		 \brief Default constructor.
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		Font() noexcept;
 		/*!
@@ -128,12 +113,10 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::Font that will be moved
-
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Font(Font&& rvalue) noexcept = default;
-	public:
+		Font(Font&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -144,18 +127,16 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Font that will be moved
-
 		 \return The caller ae:::Font
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Font& operator=(Font&& rvalue) noexcept = default;
-	public:
+		Font& operator=(Font&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Prepares to load in the font stored at the location provided.
-		 \details Supported file formats: .TTF, .TTC, .CFF, .WOFF, .OTF, .OTC, .PFA, .PFB, .PCF, .FNT, .BDF, .PFR
+		 \details Supported file formats: .TTF, .TTC, .CFF, .WOFF, .OTF, .OTC, .PFA, .PFB, .PCF, .FNT, .BDF and .PFR.
 		 \note Reinitialises the glyph pages in case a different font was previously chosen.
 		 
 		 \param[in] filename The string containing the filepath of the font (with its extension)
@@ -168,9 +149,31 @@ namespace ae
 
 		 \sa getGlyph()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		void loadFromFile(const std::string& filename);
+		/*!
+		 \brief Creates a font-text association.
+		 \details This method is considered internal, the API user should have no need of this.
+
+		 \param[in] text The text associated to the ae::Font
+
+		 \sa removeText()
+
+		 \since v0.7.0
+		*/
+		void addText(Text& text);
+		/*!
+		 \brief Removes the font-text association previously created.
+		 \details This method is considered internal, the API user should have no need of this.
+
+		 \param[in] text The text associated to the ae::Font
+
+		 \sa addText()
+
+		 \since v0.7.0
+		*/
+		void removeText(const Text& text);
 		/*!
 		 \brief Retrieves the glyph corresponding to the parameters provided.
 		 \details If the glyph requested hasn't been loaded in, it will be created.
@@ -191,10 +194,14 @@ namespace ae
 
 		 \sa loadFromFile()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Glyph& getGlyph(uint32_t codepoint, unsigned int characterSize);
+		[[nodiscard]] const Glyph& getGlyph(uint32_t codepoint, uint32_t characterSize);
 	private:
+		// Private typedef(s)
+		using PageItr = std::map<uint32_t, Page>::iterator;
+		using GlyphItr = std::map<uint32_t, Glyph>::iterator;
+
 		// Private method(s)
 		/*!
 		 \brief Creates a new glyph page with the font size provided.
@@ -205,9 +212,9 @@ namespace ae
 
 		 \sa loadGlyph(), getGlyph()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD PageItr createPage(unsigned int characterSize);
+		[[nodiscard]] PageItr createPage(uint32_t characterSize);
 		/*!
 		 \brief Loads in the requested glyph to the appropriate page.
 		 \details Creates the ae::Glyph, assigns the metadata extracted, creates the individual texture and loads it into the texture atlas.
@@ -219,26 +226,26 @@ namespace ae
 
 		 \sa createPage(), getGlyph()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD GlyphItr loadGlyph(PageItr& page, uint32_t codepoint);
+		[[nodiscard]] GlyphItr loadGlyph(PageItr& page, uint32_t codepoint);
 		/*!
 		 \brief Packs all individual textures and assigns the packed positions to the glyphs' texture rects.
 
 		 \sa loadGlyph()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		void updateAtlasTexture();
 
 	private:
 		// Private member(s)
-		std::map<unsigned int, Page> mPages;    //!< The hashmap of the glyph pages and their character size
-		TextureAtlas                 mAtlas;    //!< The texture atlas containing all individual glyph textures
-		std::string                  mFilename; //!< The filepath of the font
+		TextureAtlas             mAtlas;           //!< The texture atlas containing all individual glyph textures
+		std::map<uint32_t, Page> mPages;           //!< The hashmap of the glyph pages and their character size
+		std::vector<Text*>       mAssociatedTexts; //!< The text objects using this font
+		std::string              mFilename;        //!< The filepath of the font
 	};
 }
-#endif // Aeon_Graphics_Font_H_
 
 /*!
  \class ae::Font
@@ -265,7 +272,7 @@ namespace ae
  therefore improving performance.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.07
+ \version v0.7.0
+ \date 2022.02.22
  \copyright MIT License
 */

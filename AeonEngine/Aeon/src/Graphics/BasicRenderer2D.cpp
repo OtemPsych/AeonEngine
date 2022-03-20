@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,6 +22,8 @@
 
 #include <AEON/Graphics/BasicRenderer2D.h>
 
+#include <iostream>
+
 #include <GL/glew.h>
 
 #include <AEON/Graphics/internal/GLCommon.h>
@@ -32,7 +34,6 @@
 #include <AEON/Graphics/RenderStates.h>
 #include <AEON/Graphics/Shader.h>
 #include <AEON/Graphics/Texture2D.h>
-#include <AEON/Graphics/Renderable2D.h>
 
 namespace ae
 {
@@ -42,20 +43,15 @@ namespace ae
 		// Assign the new render target and uploads its camera's properties
 		Renderer2D::beginScene(target);
 
-		// Enable depth-testing, activate the render target and bind the VAO used for the drawcalls
-		GLCall(glEnable(GL_DEPTH_TEST));
+		// Activate the render target and bind the VAO used for the drawcalls
 		mRenderTarget->activate();
 		mVAO->bind();
 	}
 
-	void BasicRenderer2D::submit(const std::vector<Vertex2D>& vertices, const std::vector<unsigned int>& indices, const RenderStates& states)
+	void BasicRenderer2D::submit(const std::vector<Vertex2D>& vertices, const std::vector<uint32_t>& indices, const RenderStates& states)
 	{
-		// Check if the shader provided is valid (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (!states.shader) {
-				AEON_LOG_WARNING("Null shader", "The shader provided is null.\nAborting rendering.");
-				return;
-			}
+		if (vertices.empty() || indices.empty()) {
+			return;
 		}
 
 		// Bind the shader provided
@@ -82,7 +78,7 @@ namespace ae
 		for (const Vertex2D& vertex : vertices) {
 			transformVertices.emplace_back(
 				Vertex2D {
-					Vector3f((states.transform * Vector3f(vertex.position.xy)).xy, vertex.position.z),
+					Vector3f((states.transform * Vector4f(vertex.position, 1.f)).xy, vertex.position.z),
 					vertex.color,
 					vertex.uv
 				}
@@ -91,14 +87,14 @@ namespace ae
 
 		// Upload the vertices
 		VertexBuffer* const vbo = mVAO->getVBO(0);
-		vbo->setData(static_cast<int>(sizeof(Vertex2D) * transformVertices.size()), transformVertices.data());
+		vbo->setData(static_cast<int64_t>(sizeof(Vertex2D) * transformVertices.size()), transformVertices.data());
 
 		// Upload the indices
 		IndexBuffer* const ibo = mVAO->getIBO();
-		ibo->setData(sizeof(GLuint) * indices.size(), indices.data());
+		ibo->setData(static_cast<int64_t>(sizeof(GLuint) * indices.size()), indices.data());
 
 		// Render the geometry
-		GLCall(glDrawElements(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, nullptr));
+		GLCall(glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(ibo->getCount()), GL_UNSIGNED_INT, nullptr));
 
 		// Unbind the texture
 		texture->unbind();
@@ -112,11 +108,5 @@ namespace ae
 	{
 		static BasicRenderer2D instance;
 		return instance;
-	}
-
-	// Private constructor(s)
-	BasicRenderer2D::BasicRenderer2D()
-		: Renderer2D()
-	{
 	}
 }

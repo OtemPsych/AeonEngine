@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -32,7 +32,7 @@
 namespace ae
 {
 	// Global variable(s) (inaccessible from outside the source file)
-	int bindingPointCounter = 0; //!< Used to assign an incrementing binding point to each UBO created
+	uint32_t bindingPointCounter = 0; //!< Used to assign an incrementing binding point to each UBO created
 
 	// UniformBuffer
 		// Public constructor(s)
@@ -47,28 +47,6 @@ namespace ae
 		GLCall(glBindBufferBase(GL_UNIFORM_BUFFER, mBindingPoint, mHandle));
 	}
 
-	UniformBuffer::UniformBuffer(UniformBuffer&& rvalue) noexcept
-		: Buffer(std::move(rvalue))
-		, mUniforms(std::move(rvalue.mUniforms))
-		, mUploadQueue(std::move(rvalue.mUploadQueue))
-		, mBlockName(std::move(rvalue.mBlockName))
-		, mBindingPoint(rvalue.mBindingPoint)
-	{
-	}
-
-		// Public operator(s)
-	UniformBuffer& UniformBuffer::operator=(UniformBuffer&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		Buffer::operator=(std::move(rvalue));
-		mUniforms = std::move(rvalue.mUniforms);
-		mUploadQueue = std::move(rvalue.mUploadQueue);
-		mBlockName = std::move(rvalue.mBlockName);
-		mBindingPoint = rvalue.mBindingPoint;
-
-		return *this;
-	}
-
 		// Public method(s)
 	void UniformBuffer::queryLayout(const Shader& shader, const std::string& blockName, std::initializer_list<std::string> uniformNames)
 	{
@@ -76,7 +54,7 @@ namespace ae
 		mBlockName = blockName;
 
 		// Query the shader's uniform block's layout
-		const unsigned int SHADER_ID = shader.getHandle();
+		const uint32_t SHADER_ID = shader.getHandle();
 		initUniforms(uniformNames, blockName + '.', SHADER_ID);
 		initUniformBlock(SHADER_ID);
 	}
@@ -94,30 +72,20 @@ namespace ae
 	{
 		// Check if any uniform uploads have been enqueued
 		if (!mUploadQueue.empty()) {
-			void* mapped = map(GL_WRITE_ONLY);
+			char* mapped = static_cast<char*>(map(GL_WRITE_ONLY));
 			do {
 				const UniformUpload& upload = mUploadQueue.front();
-				const int OFFSET = upload.uniform->second.metadata[GL_UNIFORM_OFFSET];
-				std::memcpy(static_cast<void*>(static_cast<char*>(mapped) + OFFSET), upload.data, upload.size);
+				const int32_t OFFSET = upload.uniform->second.metadata[GL_UNIFORM_OFFSET];
+				std::memcpy(static_cast<void*>(mapped + OFFSET), upload.data, upload.size);
 				mUploadQueue.pop();
 			} while (!mUploadQueue.empty());
 			unmap();
 		}
 	}
 
-	const std::string& UniformBuffer::getBlockName() const noexcept
-	{
-		return mBlockName;
-	}
-
-	int UniformBuffer::getBindingPoint() const noexcept
-	{
-		return mBindingPoint;
-	}
-
 		// Private method(s)
 	void UniformBuffer::initUniforms(const std::initializer_list<std::string>& uniformNames,
-	                                 const std::string& blockName, unsigned int shaderID)
+	                                 const std::string& blockName, uint32_t shaderID)
 	{
 		const GLsizei UNIFORM_COUNT = static_cast<GLsizei>(uniformNames.size());
 
@@ -158,7 +126,7 @@ namespace ae
 		}
 	}
 
-	void UniformBuffer::initUniformBlock(unsigned int shaderID)
+	void UniformBuffer::initUniformBlock(uint32_t shaderID)
 	{
 		const GLuint BLOCK_INDEX = mUniforms.begin()->second.metadata[GL_UNIFORM_BLOCK_INDEX];
 

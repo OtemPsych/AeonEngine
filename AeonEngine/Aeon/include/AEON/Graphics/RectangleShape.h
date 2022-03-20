@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_RectangleShape_H_
-#define Aeon_Graphics_RectangleShape_H_
+#pragma once
 
 #include <AEON/Graphics/internal/Shape.h>
 
@@ -30,12 +29,12 @@ namespace ae
 	/*!
 	 \brief Class representing a 2D rectangle.
 	*/
-	class _NODISCARD AEON_API RectangleShape : public Shape
+	class AEON_API RectangleShape : public Shape
 	{
 	public:
 		// Public constructor(s)
 		/*!
-		 \brief Constructs the ae::RectangleShape by providing an optional size, an optional corner radius and an optional corner point count.
+		 \brief Constructs the ae::RectangleShape by providing the optional size, corner radius and corner point count.
 		 \details Creates a rectangle with no texture and a white fill color.
 
 		 \param[in] size The size of the rectangle, 0x0 by default
@@ -51,42 +50,45 @@ namespace ae
 		 auto roundedRectangle = std::make_unique<ae::RectangleShape>(ae::Vector2f(50.f, 25.f), 20.f, 15);
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		explicit RectangleShape(const Vector2f& size = Vector2f(), float cornerRadius = 0.f, size_t cornerPointCount = 1);
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 
 		 \since v0.5.0
 		*/
-		RectangleShape(const RectangleShape&) = delete;
+		RectangleShape(const RectangleShape&) = default;
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::RectangleShape that will be moved
-
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		RectangleShape(RectangleShape&& rvalue) noexcept;
-	public:
+		RectangleShape(RectangleShape&&) noexcept = default;
+		/*!
+		 \brief Virtual destructor.
+		 \details This is needed as the API user may derive from this class.
+
+		 \since v0.7.0
+		*/
+		virtual ~RectangleShape() = default;
+
 		// Public operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
 		 \since v0.5.0
 		*/
-		RectangleShape& operator=(const RectangleShape&) = delete;
+		RectangleShape& operator=(const RectangleShape&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::RectangleShape that will be moved
-
 		 \return The caller ae::RectangleShape
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		RectangleShape& operator=(RectangleShape&& rvalue) noexcept;
-	public:
+		RectangleShape& operator=(RectangleShape&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Sets the size of the ae::RectangleShape.
@@ -101,7 +103,7 @@ namespace ae
 
 		 \sa getSize()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setSize(const Vector2f& size) noexcept;
 		/*!
@@ -118,11 +120,11 @@ namespace ae
 
 		 \sa getSize()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setSize(float sizeX, float sizeY) noexcept;
 		/*!
-		 \brief Sets the corner radius of the rounded corners of the ae::RectangleShape.
+		 \brief Sets the corner radius of the rounded corners.
 		 \note Must also modify the corner point count.
 
 		 \param[in] radius The corner radius in degrees
@@ -139,11 +141,11 @@ namespace ae
 
 		 \sa setCornerPointCount(), getCornerRadius()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setCornerRadius(float radius) noexcept;
 		/*!
-		 \brief Sets the number of points for each corner of the rounded ae::RectangleShape.
+		 \brief Sets the number of points for each corner.
 		 \note Must also modify the corner radius.
 
 		 \param[in] count The number of points for each corner
@@ -160,7 +162,7 @@ namespace ae
 
 		 \sa setCornerRadius(), getCornerPointCount()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setCornerPointCount(size_t count) noexcept;
 		/*!
@@ -177,11 +179,11 @@ namespace ae
 
 		 \sa setSize()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Vector2f& getSize() const noexcept;
+		[[nodiscard]] inline const Vector2f& getSize() const noexcept { return mSize; }
 		/*!
-		 \brief Retrieves the corner radius of the rounded corners of the ae::RectangleShape.
+		 \brief Retrieves the corner radius of the rounded corners.
 
 		 \return The corner radius in degrees
 
@@ -196,9 +198,9 @@ namespace ae
 
 		 \sa setCornerRadius(), setCornerPointCount()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD float getCornerRadius() const noexcept;
+		[[nodiscard]] inline float getCornerRadius() const noexcept { return mCornerRadius; }
 
 		// Public virtual method(s)
 		/*!
@@ -231,7 +233,6 @@ namespace ae
 		size_t   mCornerPointCount; //!< The number of corner points
 	};
 }
-#endif // Aeon_Graphics_RectangleShape_H_
 
 /*!
  \class ae::RectangleShape
@@ -248,7 +249,7 @@ namespace ae
  which remains static even when the texture or the texture rect are modified.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.05
+ \version v0.7.0
+ \date 2021.12.28
  \copyright MIT License
 */

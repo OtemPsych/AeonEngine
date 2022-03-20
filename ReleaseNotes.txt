@@ -1,3 +1,32 @@
+v0.7.0 | 2021.12.31
+    Features
+      * Added a Clipboard namespace providing access to the system clipboard
+      * Added possibility to paste clipboard content onto Textbox instances using Ctrl+V
+      * Added a Component abstract base class as the first step to moving to a component-based design
+      * Added a Transform2DComponent class to which transformations can be applied
+      * Added a Render2DComponent class indicating that the entity can be drawn to a framebuffer
+      * Added a Collider2DComponent class that describe an entity's minimum and maximum coordinates
+      * Added a Dropdown class representing a GUI dropdown menu/list
+      * Expanded on the Textbox class by adding a caret that can be moved with the typical text-editor keys (arrow keys, home, end, clicking on the text)
+      * Added a Cursor class used to change the appearance of the cursor into one of the standard OS cursors or a custom one
+      * Added the most common easing functions to the Math namespace
+    Updates
+      - The Actor2D class has been replaced by the component-based Actor class
+      - The Transformable2D and Renderable2D classes have been removed
+      - The Shape abstract base class, its derived classes, the Sprite class, the Text class and the Camera class and its derived classes now derive from the Actor class
+      - Font instances no longer enqueue an event so that text instances update their uv coordinates as disabled event handling often led to text artefacts. Instead, fonts and the text instances that depend on them are stored in the FontManager that indicates when to update.
+      - Significant improvements to the TextureAtlas class where it no longer requires all added textures to remain alive after packing them together
+      - Glyph instances no longer store their individual textures (the texture containing their respective glyph)
+      - The Sprite class can now be inherited by user-created classes
+	  - Sprite instances now longer check every frame whether their vertices need to be updated, the effects are instead applied immediately
+      - The Transform2DComponent's origin flags are now set per origin type (translation, rotation and scale) instead of one origin for all types
+      - The Matrix struct is now a class. The previously public members are now private and some constructors taking in specific elements and columns were removed
+      - The minimum C++ version available is C++17 but takes advantage of C++20 when appropriate
+    Bug Fixes
+      ~ Fixed a bug which caused projection matrices to not be updated when the window was resized
+      ~ Fixed a bug causing two or more State instances to be unable to render simultaneously
+      ~ Fixed a bug which caused the transform to be recomputed every frame instead of whenever necessary
+
 v0.6.0 | 2021.06.13
   Features
     * Added a ConvexShape class used to represent a 2D convex polygon with an arbitrary number of points
@@ -6,6 +35,7 @@ v0.6.0 | 2021.06.13
     * Added a constructor allowing a VideoMode to be created by passing an optional pointer to a Monitor or the primary monitor will be associated by default
     * Added static methods to retrieve pre-formatted current system date and time from the Time class
     * Added a PathDropEvent class allowing users to drop files onto the window
+    * Added a bare-bones Textbox class representing a GUI textbox that can be written into
   Updates
     - GLResource instances are now movable and move-assignable
     - Texture2D instances are now movable and move-assignable

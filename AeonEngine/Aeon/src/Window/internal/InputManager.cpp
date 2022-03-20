@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -32,122 +32,104 @@ namespace ae
 {
 	namespace InputManager
 	{
-		EventQueue& eventQueue = EventQueue::getInstance(); //!< The single instance of the ae::EventQueue
-
-		// Callback function(s)
 		void monitor_callback(GLFWmonitor* glfwMonitor, int connected)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<MonitorEvent>(glfwMonitor, connected == GLFW_CONNECTED);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_close_callback(GLFWwindow* glfwWindow)
 		{
-			// Erase the close flag
+			// Erase the GLFW close flag so that the user can perform program termination tasks
 			glfwSetWindowShouldClose(glfwWindow, GLFW_FALSE);
 
 			// Create and enqueue the event
 			auto event = std::make_unique<Event>(Event::Type::WindowClosed);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_size_callback(GLFWwindow* glfwWindow, int width, int height)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<WindowResizeEvent>(width, height);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void framebuffer_size_callback(GLFWwindow* glfwWindow, int width, int height)
 		{
-			// Create and enqueue the event
-			auto event = std::make_unique<FramebufferResizeEvent>(width, height);
-			eventQueue.enqueueEvent(std::move(event));
+			auto event = std::make_unique<FramebufferResizeEvent>(width, height, 0);
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_content_scale_callback(GLFWwindow* glfwWindow, float xscale, float yscale)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<WindowContentScaleEvent>(xscale, yscale);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_pos_callback(GLFWwindow* glfwWindow, int xpos, int ypos)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<WindowMoveEvent>(xpos, ypos);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_iconify_callback(GLFWwindow* glfwWindow, int iconified)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<Event>((iconified) ? Event::Type::WindowMinimized : Event::Type::WindowRestored);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_maximize_callback(GLFWwindow* glfwWindow, int maximized)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<Event>((maximized) ? Event::Type::WindowMaximized : Event::Type::WindowRestored);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_focus_callback(GLFWwindow* glfwWindow, int focused)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<Event>((focused) ? Event::Type::WindowFocusGained : Event::Type::WindowFocusLost);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void window_refresh_callback(GLFWwindow* glfwWindow)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<Event>(Event::Type::WindowDamaged);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void path_drop_callback(GLFWwindow* glfwWindow, int count, const char** paths)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<PathDropEvent>(count, paths);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void key_callback(GLFWwindow* glfwWindow, int key, int scancode, int action, int mods)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<KeyEvent>(static_cast<Keyboard::Key>(key), action != GLFW_RELEASE, mods);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void character_callback(GLFWwindow* glfwWindow, unsigned int codepoint)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<TextEvent>(codepoint);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void cursor_position_callback(GLFWwindow* glfwWindow, double xpos, double ypos)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<MouseMoveEvent>(xpos, ypos);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void cursor_enter_callback(GLFWwindow* glfwWindow, int entered)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<Event>((entered) ? Event::Type::MouseEntered : Event::Type::MouseLeft);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void mouse_button_callback(GLFWwindow* glfwWindow, int button, int action, int mods)
 		{
-			// Create and enqueue the event
 			auto event = std::make_unique<MouseButtonEvent>(static_cast<Mouse::Button>(button), action != GLFW_RELEASE, mods);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 
 		void scroll_callback(GLFWwindow* glfwWindow, double xoffset, double yoffset)
@@ -162,7 +144,7 @@ namespace ae
 
 			// Create and enqueue the event
 			auto event = std::make_unique<MouseWheelEvent>(wheel, offset);
-			eventQueue.enqueueEvent(std::move(event));
+			EventQueue::getInstance().enqueueEvent(std::move(event));
 		}
 	}
 }

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -51,7 +51,7 @@ namespace ae
 	void ConvexShape::addPoint(const Vector2f& point)
 	{
 		mPoints.emplace_back(point);
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	void ConvexShape::setPoint(size_t index, const Vector2f& point)
@@ -66,7 +66,7 @@ namespace ae
 
 		// Modify the point's position
 		mPoints[index] = point;
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	// Public virtual method(s)

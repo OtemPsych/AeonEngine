@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,12 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Window_Mouse_H_
-#define Aeon_Window_Mouse_H_
+#pragma once
 
-#include <yvals_core.h>
-
-#include <AEON/Config.h>
 #include <AEON/Math/Vector.h>
 
 namespace ae
@@ -59,7 +55,6 @@ namespace ae
 			Horizontal //!< The horizontal mouse wheel
 		};
 
-		// Function(s)
 		/*!
 		 \brief Checks if the indicated \a button is currently pressed down.
 		 \details This function retrieves the last reported state of the \a button.
@@ -75,9 +70,9 @@ namespace ae
 		 }
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD AEON_API bool isButtonPressed(Button button);
+		[[nodiscard]] AEON_API bool isButtonPressed(Button button);
 		/*!
 		 \brief Retrieves the mouse cursor's current position from the top-left corner of the window.
 		 \details The mouse cursor's position is measured in screen coordinates and goes from left to right and top to bottom.
@@ -89,9 +84,9 @@ namespace ae
 		 ae::Vector2d mousePos = ae::Mouse::getPosition();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD AEON_API Vector2d getPosition();
+		[[nodiscard]] AEON_API Vector2d getPosition();
 		/*!
 		 \brief Hides and locks the mouse cursor to the center of the active window.
 		 \details This function is particularly useful when one wishes to implement camera rotation based on the movement of the mouse or other similar input schemes requiring unlimited mouse movement.
@@ -105,7 +100,7 @@ namespace ae
 
 		 \sa isMouseGrabbed()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		AEON_API void grabMouse(bool flag);
 		/*!
@@ -122,12 +117,11 @@ namespace ae
 
 		 \sa grabMouse()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD AEON_API bool isMouseGrabbed();
+		[[nodiscard]] AEON_API bool isMouseGrabbed();
 	}
 }
-#endif // Aeon_Window_Mouse_H_
 
 /*!
  \namespace ae::Mouse
@@ -161,7 +155,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.20
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

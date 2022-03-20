@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -29,53 +29,34 @@ namespace ae
 {
 	// Public constructor(s)
 	Sprite::Sprite()
-		: Actor2D()
-		, mModelBounds()
+		: Actor()
 		, mTextureRect(0.f, 0.f, 0.f, 0.f)
 		, mTexture(nullptr)
 		, mColor(Color::White)
-		, mUpdatePosUV(true)
-		, mUpdateColor(true)
 	{
+		init();
 	}
 
 	Sprite::Sprite(const Texture2D& texture, const Box2f& rect)
-		: Actor2D()
-		, mModelBounds()
+		: Actor()
 		, mTextureRect()
 		, mTexture(&texture)
 		, mColor(Color::White)
-		, mUpdatePosUV(true)
-		, mUpdateColor(true)
 	{
+		init();
+
 		// Setup the appropriate texture rect
 		setTextureRect((rect == Box2f()) ? Box2f(Vector2f(0.f, 0.f), Vector2f(mTexture->getSize())) : rect);
 	}
 
-	Sprite::Sprite(Sprite&& rvalue) noexcept
-		: Actor2D(std::move(rvalue))
-		, mModelBounds(std::move(rvalue.mModelBounds))
-		, mTextureRect(std::move(rvalue.mTextureRect))
-		, mTexture(rvalue.mTexture)
-		, mColor(std::move(rvalue.mColor))
-		, mUpdatePosUV(rvalue.mUpdatePosUV)
-		, mUpdateColor(rvalue.mUpdateColor)
+	Sprite::Sprite(const Sprite& copy)
+		: Actor(copy)
+		, mTextureRect(copy.mTextureRect)
+		, mTexture(copy.mTexture)
+		, mColor(copy.mColor)
 	{
-	}
-
-	// Public operator(s)
-	Sprite& Sprite::operator=(Sprite&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		Actor2D::operator=(std::move(rvalue));
-		mModelBounds = std::move(rvalue.mModelBounds);
-		mTextureRect = std::move(rvalue.mTextureRect);
-		mTexture = rvalue.mTexture;
-		mColor = std::move(rvalue.mColor);
-		mUpdatePosUV = rvalue.mUpdatePosUV;
-		mUpdateColor = rvalue.mUpdateColor;
-
-		return *this;
+		init();
+		updatePosUV();
 	}
 
 	// Public method(s)
@@ -86,7 +67,7 @@ namespace ae
 			setTextureRect(Box2f(Vector2f(0.f, 0.f), Vector2f(mTexture->getSize())));
 		}
 		else {
-			mUpdatePosUV = true;
+			updatePosUV();
 		}
 	}
 
@@ -103,116 +84,84 @@ namespace ae
 
 		// Set the new texture and indicate that the uv coordinates need to be updated
 		mTextureRect = rect;
-		mUpdatePosUV = true;
+		updatePosUV();
 	}
 
 	void Sprite::setColor(const Color& color) noexcept
 	{
 		mColor = color;
-		mUpdateColor = true;
+		updateColor();
 	}
 
-	const Texture2D* const Sprite::getTexture() const noexcept
+	// Protected virtual method(s)
+	void Sprite::renderSelf(RenderStates states) const
 	{
-		return mTexture;
-	}
+		// Only render the sprite if a texture has been assigned
+		if (mTexture) {
+			const Render2DComponent* const renderComponent = getComponent<Render2DComponent>();
+			const std::vector<Vertex2D>& vertices = renderComponent->getVertices();
 
-	const Box2f& Sprite::getTextureRect() const noexcept
-	{
-		return mTextureRect;
-	}
+			if (!vertices.empty()) {
+				// Setup the appropriate render states
+				if (!states.shader) {
+					states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
+				}
+				states.blendMode = BlendMode::BlendAlpha;
+				states.texture = mTexture;
 
-	const Color& Sprite::getColor() const noexcept
-	{
-		return mColor;
-	}
-
-	// Public virtual method(s)
-	Box2f Sprite::getModelBounds() const
-	{
-		return mModelBounds;
+				// Send the sprite to the renderer
+				Renderer2D::getActiveInstance()->submit(*renderComponent, states);
+			}
+		}
 	}
 
 	// Private method(s)
 	void Sprite::updatePosUV()
 	{
-		std::vector<Vertex2D>& vertices = getVertices();
-		if (vertices.empty()) {
-			vertices.resize(4);
-		}
-
-			// Update the positions
-		const float POS_Z = getPosition().z;
+		// Update the positions
+		const float POS_Z = getComponent<Transform2DComponent>()->getPosition().z;
+		std::vector<Vertex2D>& vertices = getComponent<Render2DComponent>()->getVertices();
 		vertices[0].position = Vector3f(Vector2f(0.f,                0.f)               , POS_Z);
 		vertices[1].position = Vector3f(Vector2f(0.f,                mTextureRect.max.y), POS_Z);
 		vertices[2].position = Vector3f(Vector2f(mTextureRect.max.x, mTextureRect.max.y), POS_Z);
 		vertices[3].position = Vector3f(Vector2f(mTextureRect.max.x, 0.f)               , POS_Z);
 
-			// Update the model bounding box's position and size based on the minimum and maximum vertex positions
-		mModelBounds = Box2f(vertices[0].position.xy, vertices[2].position.xy - vertices[0].position.xy);
+		// Update the model bounding box's position and size based on the minimum and maximum vertex positions
+		getComponent<Collider2DComponent>()->setModelBounds(Box2f(vertices[0].position.xy, vertices[2].position.xy - vertices[0].position.xy));
 
-			// Update the UV coordinates
+		// Update the UV coordinates
 		const Vector2f TEXTURE_SIZE = (mTexture) ? Vector2f(mTexture->getSize()) : Vector2f(1.f, 1.f);
 		vertices[0].uv = Vector2f(mTextureRect.min.x,                      mTextureRect.min.y)                      / TEXTURE_SIZE;
 		vertices[1].uv = Vector2f(mTextureRect.min.x,                      mTextureRect.min.y + mTextureRect.max.y) / TEXTURE_SIZE;
 		vertices[2].uv = Vector2f(mTextureRect.min.x + mTextureRect.max.x, mTextureRect.min.y + mTextureRect.max.y) / TEXTURE_SIZE;
 		vertices[3].uv = Vector2f(mTextureRect.min.x + mTextureRect.max.x, mTextureRect.min.y)                      / TEXTURE_SIZE;
-
-		// Update indices (if necessary)
-		std::vector<unsigned int>& indices = getIndices();
-		if (indices.size() != 6) {
-			indices = {
-				0, 1, 2,
-				0, 2, 3
-			};
-		}
 	}
 
 	void Sprite::updateColor()
 	{
-		// Normalize the color so that it may be passed on to the shader
 		const Vector4f COLOR = mColor.normalize();
-
-		// Assign the normalized color to all the vertices
-		std::vector<Vertex2D>& vertices = getVertices();
+		std::vector<Vertex2D>& vertices = getComponent<Render2DComponent>()->getVertices();
 		for (Vertex2D& vertex : vertices) {
 			vertex.color = COLOR;
 		}
 	}
 
-	// Private virtual method(s)
-	void Sprite::updateSelf(const Time& dt)
+	void Sprite::init()
 	{
-		// Update the sprite's properties which may raise the dirty render flag
-		if (mUpdatePosUV) {
-			updatePosUV();
-			correctProperties();
-			setDirty(std::exchange(mUpdatePosUV, false));
-		}
-		if (mUpdateColor) {
-			updateColor();
-			setDirty(std::exchange(mUpdateColor, false));
-		}
-	}
+		// Add components
+		addComponent<Transform2DComponent>();
+		addComponent<Collider2DComponent>();
+		addComponent<Render2DComponent>();
 
-	void Sprite::renderSelf(RenderStates states) const
-	{
-		// Only render the sprite if a texture has been assigned
-		if (mTexture)
-		{
-			// Setup the appropriate render states
-			if (!states.shader) {
-				states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
-			}
-			states.blendMode = BlendMode::BlendAlpha;
-			states.texture = mTexture;
-			states.dirty = isDirty();
+		// Add the vertices and indices
+		Render2DComponent* const renderComponent = getComponent<Render2DComponent>();
+		renderComponent->getVertices().resize(4);
+		renderComponent->getIndices() = {
+			0, 1, 2,
+			0, 2, 3
+		};
 
-			// Send the sprite to the renderer
-			Renderer2D::getActiveInstance()->submit(getVertices(), getIndices(), states);
-
-			// Drop the dirty render flag
-			setDirty(false);
-		}
+		// Update the color in case the color isn't changed by the user
+		updateColor();
 	}
 }

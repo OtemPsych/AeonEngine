@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Window_ContextSettings_H_
-#define Aeon_Window_ContextSettings_H_
+#pragma once
 
-#include <yvals_core.h>
+#include <cstdint>
 
 #include <AEON/Config.h>
 
@@ -32,7 +31,7 @@ namespace ae
 	/*!
 	 \brief The class that represents the OpenGL context settings of a window.
 	*/
-	class _NODISCARD AEON_API ContextSettings
+	class AEON_API ContextSettings
 	{
 	public:
 		// Public constructor(s)
@@ -54,14 +53,15 @@ namespace ae
 		 ae::ContextSettings settings(4, 4, 6);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		explicit ContextSettings(int msaa = 0, int major = 4, int minor = 5, int depth = 24, int stencil = 8, bool sRgb = false);
-	public:
+		explicit ContextSettings(int32_t msaa = 0, int32_t major = 4, int32_t minor = 5, int32_t depth = 24, int32_t stencil = 8, bool sRgb = false);
+
 		// Public method(s)
 		/*!
 		 \brief Applies the window hints of the ae::ContextSettings that will take effect at the creation of the next window.
 		 \details This method is called automatically once an ae::ContextSettings object is passed to the ae::Window constructor.
+		 \note This method will fail if GLFW hasn't been initialized by calling ae::Application::getInstance().
 
 		 \par Example:
 		 \code
@@ -70,7 +70,7 @@ namespace ae
 		 settings.apply();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		void apply() const;
 		/*!
@@ -87,33 +87,14 @@ namespace ae
 		 settings.setAntialiasingLevel(0); // disable anti-aliasing
 		 settings.setAntialiasingLevel(2); // x2
 		 settings.setAntialiasingLevel(16); // x16
-		 settings.setAntialiasingLevel(15); // error: no effect
+		 settings.setAntialiasingLevel(15); // error
 		 \endcode
 
 		 \sa getAntialiasingLevel()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		 */
-		void setAntialiasingLevel(int msaa);
-		/*!
-		 \brief Retrieves the anti-aliasing level that is to be used.
-		 \details The anti-aliasing level is the number of multisampling samples to use.
-
-		 \return The anti-aliasing level that is to be used by the next window or the current window
-
-		 \par Example:
-		 \code
-		 // Anti-aliasing level: x4
-		 ae::ContextSettings settings(4);
-		 ...
-		 int antialiasing = settings.getAntialiasingLevel();
-		 \endcode
-
-		 \sa setAntialiasingLevel()
-
-		 \since v0.3.0
-		*/
-		_NODISCARD int getAntialiasingLevel() const noexcept;
+		void setAntialiasingLevel(int32_t msaa);
 		/*!
 		 \brief Sets the OpenGL version with which the OpenGL context must be compatible.
 		 \note The OpenGL version must be equal or greater than 4.5.
@@ -131,9 +112,9 @@ namespace ae
 
 		 \sa getContextVersion()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		void setContextVersion(int major, int minor);
+		void setContextVersion(int32_t major, int32_t minor);
 		/*!
 		 \brief Modifies the references' values by assigning to them the context's major and minor numbers.
 
@@ -151,9 +132,9 @@ namespace ae
 
 		 \sa setContextVersion()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		void getContextVersion(int& major, int& minor) const noexcept;
+		void getContextVersion(int32_t& major, int32_t& minor) const noexcept;
 		/*!
 		 \brief Sets the number of bits to use for the depth buffer.
 		 \details The standard number of bits for the depth buffer is 24-bit or 32-bit for a high-precision depth buffer.
@@ -171,27 +152,9 @@ namespace ae
 
 		 \sa getDepthBits()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		void setDepthBits(int depth);
-		/*!
-		 \brief Retrieves the number of bits used for the depth buffer.
-
-		 \return The number of bits for the depth buffer
-
-		 \par Example:
-		 \code
-		 // Depth buffer bits: 24
-		 ae::ContextSettings settings;
-		 ...
-		 int depthBits = settings.getDepthBits();
-		 \endcode
-
-		 \sa setDepthBits()
-
-		 \since v0.3.0
-		*/
-		_NODISCARD int getDepthBits() const noexcept;
+		void setDepthBits(int32_t depth);
 		/*!
 		 \brief Sets the number of bits to use for the stencil buffer.
 		 \details The usual number of bits for the stencil buffer is 8-bit.
@@ -209,27 +172,9 @@ namespace ae
 
 		 \sa getStencilBits()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		void setStencilBits(int stencil);
-		/*!
-		 \brief Retrieves the number of bits used for the stencil buffer.
-
-		 \return The number of bits for the stencil buffer
-
-		 \par Example:
-		 \code
-		 // Stencil buffer bits: 8
-		 ae::ContextSetings settings;
-		 ...
-		 int stencilBits = settings.getStencilBits();
-		 \endcode
-
-		 \sa setStencilBits()
-
-		 \since v0.3.0
-		*/
-		_NODISCARD int getStencilBits() const noexcept;
+		void setStencilBits(int32_t stencil);
 		/*!
 		 \brief Enables or disables sRGB compatibility for the framebuffer.
 
@@ -245,9 +190,64 @@ namespace ae
 
 		 \sa isSrgbEnabled()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		void setSrgbEnabled(bool flag) noexcept;
+		inline void setSrgbEnabled(bool flag) noexcept { mSrgbCapable = flag; }
+		/*!
+		 \brief Retrieves the anti-aliasing level that is to be used.
+		 \details The anti-aliasing level is the number of multisampling samples to use.
+
+		 \return The anti-aliasing level that is to be used by the next window or the current window
+
+		 \par Example:
+		 \code
+		 // Anti-aliasing level: x4
+		 ae::ContextSettings settings(4);
+		 ...
+		 int antialiasing = settings.getAntialiasingLevel();
+		 \endcode
+
+		 \sa setAntialiasingLevel()
+
+		 \since v0.7.0
+		*/
+		[[nodiscard]] inline int32_t getAntialiasingLevel() const noexcept { return mAntialiasingLevel; }
+		/*!
+		 \brief Retrieves the number of bits used for the depth buffer.
+
+		 \return The number of bits for the depth buffer
+
+		 \par Example:
+		 \code
+		 // Depth buffer bits: 24
+		 ae::ContextSettings settings;
+		 ...
+		 int depthBits = settings.getDepthBits();
+		 \endcode
+
+		 \sa setDepthBits()
+
+		 \since v0.7.0
+		*/
+		[[nodiscard]] inline int32_t getDepthBits() const noexcept { return mDepthBits; }
+		/*!
+		 \brief Retrieves the number of bits used for the stencil buffer.
+
+		 \return The number of bits for the stencil buffer
+
+		 \par Example:
+		 \code
+		 // Stencil buffer bits: 8
+		 ae::ContextSetings settings;
+		 ...
+		 int stencilBits = settings.getStencilBits();
+		 \endcode
+
+		 \sa setStencilBits()
+
+		 \since v0.7.0
+		*/
+		[[nodiscard]] inline int32_t getStencilBits() const noexcept { return mStencilBits; }
 		/*!
 		 \brief Checks whether sRGB compatibility for the framebuffer is enabled.
 
@@ -263,21 +263,20 @@ namespace ae
 
 		 \sa setSrgbEnabled()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool isSrgbEnabled() const noexcept;
+		[[nodiscard]] inline bool isSrgbEnabled() const noexcept { return mSrgbCapable; }
 
 	private:
 		// Private member(s)
-		int  mAntialiasingLevel; //!< The anti-aliasing samples to use
-		int  mMajorVersion;      //!< The major number of the context version
-		int  mMinorVersion;      //!< The minor version of the context version
-		int  mDepthBits;         //!< The number of bits of the depth buffer
-		int  mStencilBits;       //!< The number of bits of the stencil buffer
-		bool mSrgbCapable;       //!< If the the framebuffer is sRGB-compatible
+		int32_t mAntialiasingLevel; //!< The anti-aliasing samples to use
+		int32_t mMajorVersion;      //!< The major number of the context version
+		int32_t mMinorVersion;      //!< The minor version of the context version
+		int32_t mDepthBits;         //!< The number of bits of the depth buffer
+		int32_t mStencilBits;       //!< The number of bits of the stencil buffer
+		bool    mSrgbCapable;       //!< If the the framebuffer is sRGB-compatible
 	};
 }
-#endif // Aeon_Window_ContextSettings_H_
 
 /*!
  \class ae::ContextSettings
@@ -308,7 +307,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.04
+ \version v0.7.0
+ \date 2021.12.26
  \copyright MIT License
 */

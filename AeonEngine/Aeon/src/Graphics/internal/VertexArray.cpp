@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,7 +22,7 @@
 
 #include <AEON/Graphics/internal/VertexArray.h>
 
-#include <string>
+#include <cassert>
 
 #include <GL/glew.h>
 
@@ -43,31 +43,11 @@ namespace ae
 		GLCall(glCreateVertexArrays(1, &mHandle));
 	}
 
-	VertexArray::VertexArray(VertexArray&& rvalue) noexcept
-		: GLResource(std::move(rvalue))
-		, mVBOs(std::move(rvalue.mVBOs))
-		, mIBO(std::move(rvalue.mIBO))
-		, mAttributeIndex(rvalue.mAttributeIndex)
-	{
-	}
-
-	// Public operator(s)
-	VertexArray& VertexArray::operator=(VertexArray&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		GLResource::operator=(std::move(rvalue));
-		mVBOs = std::move(rvalue.mVBOs);
-		mIBO = std::move(rvalue.mIBO);
-		mAttributeIndex = rvalue.mAttributeIndex;
-
-		return *this;
-	}
-
 	// Public method(s)
-	void VertexArray::addVBO(std::unique_ptr<VertexBuffer> vbo, unsigned int divisor)
+	void VertexArray::addVBO(std::unique_ptr<VertexBuffer> vbo, uint32_t divisor)
 	{
 		// Retrieve the VBO's data layout
-		const unsigned int BINDING_INDEX = static_cast<unsigned int>(mVBOs.size());
+		const uint32_t BINDING_INDEX = static_cast<uint32_t>(mVBOs.size());
 		const VertexBuffer::Layout& layout = vbo->getLayout();
 		const std::vector<VertexBuffer::Layout::Element>& layoutElements = layout.getElements();
 
@@ -91,70 +71,43 @@ namespace ae
 
 	void VertexArray::addIBO(std::unique_ptr<IndexBuffer> ibo)
 	{
-		// Destroy the previous ibo (if there was one)
-		if (mIBO) mIBO->destroy();
-
-		// Move the new ibo
+		if (mIBO) {
+			mIBO->destroy();
+		}
 		mIBO = std::move(ibo);
 	}
 
 	VertexBuffer* const VertexArray::getVBO(size_t index) const noexcept
 	{
-		// Check if the index is valid
-		if (mVBOs.size() <= index) {
-			AEON_LOG_ERROR("Invalid index", "The index \"" + std::to_string(index) + "\" isn't associated with any VBOs.");
-			return nullptr;
-		}
-
+		assert(index < mVBOs.size());
 		return mVBOs[index].get();
-	}
-
-	IndexBuffer* const VertexArray::getIBO() const noexcept
-	{
-		// Check if an IBO was added
-		if (!mIBO) {
-			AEON_LOG_ERROR("Null IBO", "No IBO was associated to the caller VAO.");
-			return nullptr;
-		}
-
-		return mIBO.get();
-	}
-
-	size_t VertexArray::getVBOCount() const noexcept
-	{
-		return mVBOs.size();
 	}
 
 	// Public virtual method(s)
 	void VertexArray::destroy() const
 	{
-		// Destroy the list of VBOs
 		for (const auto& vbo : mVBOs) {
 			vbo->destroy();
 		}
-
-		// Destroy the IBO (if one was added)
-		if (mIBO) mIBO->destroy();
-
-		// Destroy the VAO's identifier
+		if (mIBO) {
+			mIBO->destroy();
+		}
 		GLCall(glDeleteVertexArrays(1, &mHandle));
 	}
 
 	void VertexArray::bind() const
 	{
-		// Bind the VAO to the context
 		GLCall(glBindVertexArray(mHandle));
-
-		// Bind the IBO (if one was added) to the context
-		if (mIBO) mIBO->bind();
+		if (mIBO) {
+			mIBO->bind();
+		}
 	}
 
 	void VertexArray::unbind() const
 	{
-		// Unbind the IBO (if one was added) from the context
-		if (mIBO) mIBO->unbind();
-
-		// Unbind the VAO from the context
+		if (mIBO) {
+			mIBO->unbind();
+		}
 		GLCall(glBindVertexArray(0));
 	}
 }

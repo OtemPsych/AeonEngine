@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -42,11 +42,11 @@ namespace ae
 		*/
 		ConvexShape();
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 		 
 		 \since v0.6.0
 		*/
-		ConvexShape(const ConvexShape&) = delete;
+		ConvexShape(const ConvexShape&) = default;
 		/*!
 		 \brief Move constructor.
 
@@ -58,11 +58,11 @@ namespace ae
 	public:
 		// Public operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
 		 \since v0.6.0
 		*/
-		ConvexShape& operator=(const ConvexShape&) = delete;
+		ConvexShape& operator=(const ConvexShape&) = default;
 		/*!
 		 \brief Move assignment operator.
 

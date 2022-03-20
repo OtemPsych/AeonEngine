@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -33,6 +33,7 @@
 #include <AEON/Graphics/internal/FontManager.h>
 #include <AEON/Graphics/internal/Glyph.h>
 #include <AEON/Graphics/GLResourceFactory.h>
+#include <AEON/Graphics/Text.h>
 
 namespace ae
 {
@@ -51,23 +52,15 @@ namespace ae
 		if (ftError == FT_Err_Unknown_File_Format) {
 			AEON_LOG_ERROR("Failed to load font from file", "The font file was read, but its format is unsupported.");
 			success = false;
-			return;
 		}
 		else if (ftError) {
 			AEON_LOG_ERROR("Failed to load font from file", "The filepath \"" + filename + "\" may be incorrect.\nError code: " + std::to_string(ftError) + '.');
 			success = false;
-			return;
 		}
-
-		// Store the pointer to the font face
-		face = static_cast<void*>(ftFace);
-		success = true;
-	}
-
-	Font::Page::Page(Page&& rvalue) noexcept
-		: glyphs(std::move(rvalue.glyphs))
-		, face(rvalue.face)
-	{
+		else {
+			face = static_cast<void*>(ftFace);
+			success = true;
+		}
 	}
 
 	Font::Page::~Page()
@@ -82,21 +75,12 @@ namespace ae
 		}
 	}
 
-		// Public operator(s)
-	Font::Page& Font::Page::operator=(Page&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		glyphs = std::move(rvalue.glyphs);
-		face = rvalue.face;
-
-		return *this;
-	}
-
 	// Font
 		// Public constructor(s)
 	Font::Font() noexcept
-		: mPages()
-		, mAtlas(Texture2D::InternalFormat::R8)
+		: mAtlas(Texture2D::InternalFormat::R8)
+		, mPages()
+		, mAssociatedTexts()
 		, mFilename("")
 	{
 	}
@@ -104,23 +88,36 @@ namespace ae
 		// Public method(s)
 	void Font::loadFromFile(const std::string& filename)
 	{
-		// Check if the same filename is being requested
-		if (mFilename == filename || filename.empty()) {
-			return;
-		}
+		assert(mFilename != filename && !filename.empty());
 
 		// Reinitialize the glyph pages and the atlas if necessary
 		if (!mFilename.empty()) {
-			std::map<unsigned int, Page>().swap(mPages);
 			mAtlas = TextureAtlas(Texture2D::InternalFormat::R8);
+			std::map<uint32_t, Page>().swap(mPages);
+			mAssociatedTexts.clear();
 		}
 
 		// Set the new filename
 		mFilename = filename;
 	}
 
-	const Glyph& Font::getGlyph(uint32_t codepoint, unsigned int characterSize)
+	void Font::addText(Text& text)
 	{
+		mAssociatedTexts.push_back(&text);
+	}
+
+	void Font::removeText(const Text& text)
+	{
+		auto textItr = std::find(mAssociatedTexts.begin(), mAssociatedTexts.end(), &text);
+		if (textItr != mAssociatedTexts.end()) {
+			mAssociatedTexts.erase(textItr);
+		}
+	}
+
+	const Glyph& Font::getGlyph(uint32_t codepoint, uint32_t characterSize)
+	{
+		assert(!mFilename.empty());
+
 		// Check if the corresponding glyph page exists, create it otherwise
 		PageItr pageItr = mPages.find(characterSize);
 		if (pageItr == mPages.end()) {
@@ -138,7 +135,7 @@ namespace ae
 	}
 
 		// Private method(s)
-	Font::PageItr Font::createPage(unsigned int characterSize)
+	Font::PageItr Font::createPage(uint32_t characterSize)
 	{
 		// Create the glyph page
 		bool success;
@@ -177,11 +174,10 @@ namespace ae
 		// Create the glyph
 			// Create and store the glyph's texture within the texture atlas
 		FT_GlyphSlot ftGlyph = ftFace->glyph;
-		std::shared_ptr<Texture2D> glyphTexture = nullptr;
+		Texture2D glyphTexture(Texture2D::Filter::Linear, Texture2D::Wrap::ClampToEdge, Texture2D::InternalFormat::R8);
 		if (ftGlyph->bitmap.buffer) {
-			glyphTexture = GLResourceFactory::getInstance().create<Texture2D>("", Texture2D::Filter::Linear, Texture2D::Wrap::ClampToEdge, Texture2D::InternalFormat::R8);
-			if (glyphTexture->create(ftGlyph->bitmap.width, ftGlyph->bitmap.rows, ftGlyph->bitmap.buffer)) {
-				mAtlas.add(*glyphTexture);
+			if (glyphTexture.create(ftGlyph->bitmap.width, ftGlyph->bitmap.rows, ftGlyph->bitmap.buffer)) {
+				mAtlas.add(static_cast<uint32_t>(std::stoull(std::to_string(page->first) + std::to_string(codepoint))), glyphTexture);
 			}
 		}
 
@@ -192,11 +188,13 @@ namespace ae
 		glyph.textureRect.size.y = ftGlyph->bitmap.rows;
 		glyph.bearing.x = ftGlyph->bitmap_left;
 		glyph.bearing.y = ftGlyph->bitmap_top;
-		glyph.individualTexture = (ftGlyph->bitmap.buffer) ? glyphTexture : nullptr;
 		glyph.advance = ftGlyph->advance.x;
 
-		// Pack together all individual textures and assign the packed positions to the glyphs
-		updateAtlasTexture();
+		// Pack together all individual textures and assign the packed positions to the glyphs, and destroy the glyph texture created as it's no longer needed
+		if (ftGlyph->bitmap.buffer) {
+			updateAtlasTexture();
+		}
+		glyphTexture.destroy();
 
 		// Return the loaded glyph's iterator
 		return glyphItr;
@@ -204,25 +202,20 @@ namespace ae
 
 	void Font::updateAtlasTexture()
 	{
-		// Pack together all individual textures amassed thus far
-		mAtlas.pack();
-
 		// Assign the packed position and texture atlas to all glyphs inside the page
+		mAtlas.pack();
 		const Texture2D& atlasTexture = mAtlas.getTexture();
-		for (auto& pageItr : mPages)
-		{
-			for (auto& glyphItr : pageItr.second.glyphs)
-			{
-				Glyph& glyph = glyphItr.second;
-				if (glyph.individualTexture) {
-					glyph.textureRect.position = mAtlas.getTextureRect(*glyph.individualTexture).position;
-				}
+		for (auto& [characterSize, page] : mPages) {
+			const std::string CHARACTER_SIZE_STR = std::to_string(characterSize);
+			for (auto& [unicode, glyph] : page.glyphs) {
+				glyph.textureRect.position = mAtlas.getTextureRect(static_cast<uint32_t>(std::stoull(CHARACTER_SIZE_STR + std::to_string(unicode)))).position;
 				glyph.texture = &atlasTexture;
 			}
 		}
 
-		// Enqueue an event indicating that corresponding texts should update their uv coordinates
-		auto event = std::make_unique<FontEvent>(this);
-		EventQueue::getInstance().enqueueEvent(std::move(event));
+		// Update the associated texts' uv coordinates as the texture atlas may have changed the glyph positions
+		for (Text* text : mAssociatedTexts) {
+			text->updateUV();
+		}
 	}
 }

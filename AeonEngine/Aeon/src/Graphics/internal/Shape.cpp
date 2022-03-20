@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,96 +28,50 @@
 
 namespace ae
 {
-	// Public constructor(s)
-	Shape::~Shape()
-	{
-	}
-
 	// Public method(s)
 	void Shape::setTexture(const Texture2D* const texture, bool resetRect)
 	{
-		// Assign the new texture
 		mTexture = texture;
-
-		// Set the new texture rect if requested or if there was no texture rect before
 		if (mTexture) {
 			if (resetRect || mTextureRect == Box2f()) {
-				setTextureRect(Box2f(Vector2f(), Vector2f(mTexture->getSize())));
+				setTextureRect(Box2f(Vector2f(0.f, 0.f), Vector2f(mTexture->getSize())));
 			}
 			else {
-				mUpdateUVs = true;
+				updateUVs();
 			}
 		}
 	}
 
 	void Shape::setTextureRect(const Box2f& rect)
 	{
-		// Check if rect provided has valid values (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (rect.min.x < 0.f || rect.min.y < 0.f || rect.max.x < 0.f || rect.max.y < 0.f) {
-				AEON_LOG_ERROR("Texture rect invalid", "The texture rect provided possesses negative values.");
-			}
-		}
+		assert(rect.min.x >= 0.f && rect.min.y >= 0.f && rect.max.x >= 0.f && rect.max.y >= 0.f);
 
-		// Set the new texture and indicate that the uv coordinates need to be updated
+		// Set the new texture rect and update the uv coordinates
 		mTextureRect = rect;
-		mUpdateUVs = true;
+		updateUVs();
 	}
 
 	void Shape::setFillColor(const Color& color) noexcept
 	{
 		mFillColor = color;
-		mUpdateFillColors = true;
+		updateFillColors();
 	}
 
 	void Shape::setOutlineColor(const Color& color) noexcept
 	{
 		mOutlineColor = color;
-		mUpdateOutlineColors = true;
+		updateOutlineColors();
 	}
 
 	void Shape::setOutlineThickness(float thickness) noexcept
 	{
 		mOutlineThickness = thickness;
-		mUpdateOutlinePositions = true;
-	}
-
-	const Texture2D* const Shape::getTexture() const noexcept
-	{
-		return mTexture;
-	}
-
-	const Box2f& Shape::getTextureRect() const noexcept
-	{
-		return mTextureRect;
-	}
-
-	const Color& Shape::getFillColor() const noexcept
-	{
-		return mFillColor;
-	}
-
-	const Color& Shape::getOutlineColor() const noexcept
-	{
-		return mOutlineColor;
-	}
-
-	float Shape::getOutlineThickness() const noexcept
-	{
-		return mOutlineThickness;
-	}
-
-	// Public virtual method(s)
-	Box2f Shape::getModelBounds() const
-	{
-		return mModelBounds;
+		updateOutlinePositions();
 	}
 
 	// Protected constructor(s)
 	Shape::Shape()
-		: Actor2D()
-		, mModelBounds(0.f, 0.f, 0.f, 0.f)
-		, mUpdatePositions(true)
+		: Actor()
 		, mOutlineVertices()
 		, mOutlineIndices()
 		, mInnerBounds(0.f, 0.f, 0.f, 0.f)
@@ -126,92 +80,72 @@ namespace ae
 		, mOutlineColor(Color::White)
 		, mTexture(nullptr)
 		, mOutlineThickness(0.f)
-		, mUpdateUVs(true)
-		, mUpdateFillColors(true)
-		, mUpdateOutlinePositions(true)
-		, mUpdateOutlineColors(true)
 	{
+		// Add components
+		addComponent<Transform2DComponent>();
+		addComponent<Collider2DComponent>();
+		addComponent<Render2DComponent>();
 	}
 
-	Shape::Shape(Shape&& rvalue) noexcept
-		: Actor2D(std::move(rvalue))
-		, mModelBounds(std::move(rvalue.mModelBounds))
-		, mUpdatePositions(rvalue.mUpdatePositions)
-		, mOutlineVertices(std::move(rvalue.mOutlineVertices))
-		, mOutlineIndices(std::move(rvalue.mOutlineIndices))
-		, mInnerBounds(std::move(rvalue.mInnerBounds))
-		, mTextureRect(std::move(rvalue.mTextureRect))
-		, mFillColor(std::move(rvalue.mFillColor))
-		, mOutlineColor(std::move(rvalue.mOutlineColor))
-		, mTexture(rvalue.mTexture)
-		, mOutlineThickness(rvalue.mOutlineThickness)
-		, mUpdateUVs(rvalue.mUpdateUVs)
-		, mUpdateFillColors(rvalue.mUpdateFillColors)
-		, mUpdateOutlinePositions(rvalue.mUpdateOutlinePositions)
-		, mUpdateOutlineColors(rvalue.mUpdateOutlineColors)
+	Shape::Shape(const Shape& copy)
+		: Actor(copy)
+		, mOutlineVertices(copy.mOutlineVertices)
+		, mOutlineIndices(copy.mOutlineIndices)
+		, mInnerBounds(copy.mInnerBounds)
+		, mTextureRect(copy.mTextureRect)
+		, mFillColor(copy.mFillColor)
+		, mOutlineColor(copy.mOutlineColor)
+		, mTexture(copy.mTexture)
+		, mOutlineThickness(copy.mOutlineThickness)
 	{
+		// Add components
+		addComponent<Transform2DComponent>();
+		addComponent<Collider2DComponent>();
+		addComponent<Render2DComponent>();
 	}
 
-	// Protected operator(s)
-	Shape& Shape::operator=(Shape&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		Actor2D::operator=(std::move(rvalue));
-		mModelBounds = std::move(rvalue.mModelBounds);
-		mUpdatePositions = rvalue.mUpdatePositions;
-		mOutlineVertices = std::move(rvalue.mOutlineVertices);
-		mOutlineIndices = std::move(rvalue.mOutlineIndices);
-		mInnerBounds = std::move(rvalue.mInnerBounds);
-		mTextureRect = std::move(rvalue.mTextureRect);
-		mFillColor = std::move(rvalue.mFillColor);
-		mOutlineColor = std::move(rvalue.mOutlineColor);
-		mTexture = rvalue.mTexture;
-		mOutlineThickness = rvalue.mOutlineThickness;
-		mUpdateUVs = rvalue.mUpdateUVs;
-		mUpdateFillColors = rvalue.mUpdateFillColors;
-		mUpdateOutlinePositions = rvalue.mUpdateOutlinePositions;
-		mUpdateOutlineColors = rvalue.mUpdateOutlineColors;
-
-		return *this;
-	}
-
-	// Private method(s)
+	// Protected method(s)
 	void Shape::updatePositions()
 	{
-		// Retrieve the total number of points and raise the flags indicating that uv coordinates and colors need to
-		const size_t COUNT = getPointCount();
+		Transform2DComponent* const transform2DComponent = getComponent<Transform2DComponent>();
+		Collider2DComponent* const collider2DComponent = getComponent<Collider2DComponent>();
+		Render2DComponent* const render2DComponent = getComponent<Render2DComponent>();
 
-		// Raise the flags indicating that uv coordinates and colors will need to be updated if the point count is different
-		std::vector<Vertex2D>& vertices = getVertices();
-		if (COUNT != vertices.size() + 1) {
-			mUpdateUVs = true;
-			mUpdateFillColors = true;
-		}
+		std::vector<Vertex2D>& vertices = render2DComponent->getVertices();
+		const size_t COUNT = getPointCount();
+		const bool MUST_UPDATE_FILLCOLORS = COUNT != vertices.size() + 1;
 
 		// Update vertices
 			// Resize list to the total number of points
 		vertices.resize(COUNT + 1); // + 1 for the center point
 
-			// Update the vertex positions
+			// Update the vertex positions and the inner bounding box
+		const float Z_POS = transform2DComponent->getPosition().z;
+		Vector2f minPos(std::numeric_limits<float>().max()), maxPos(std::numeric_limits<float>().min());
 		for (size_t i = 0; i < COUNT; ++i) {
-			vertices[i + 1].position = Vector3f(getPoint(i), getPosition().z);
-		}
-
-			// Update the inner bounding box
-		Vector2f minPos = vertices[1].position.xy, maxPos = vertices[1].position.xy;
-		for (const Vertex2D& vertex : vertices) {
-			minPos = min(minPos, vertex.position.xy);
-			maxPos = max(maxPos, vertex.position.xy);
+			vertices[i + 1].position = Vector3f(getPoint(i), Z_POS);
+			if (minPos.x > vertices[i + 1].position.x) {
+				minPos.x = vertices[i + 1].position.x;
+			}
+			if (minPos.y > vertices[i + 1].position.y) {
+				minPos.y = vertices[i + 1].position.y;
+			}
+			if (maxPos.x < vertices[i + 1].position.x) {
+				maxPos.x = vertices[i + 1].position.x;
+			}
+			if (maxPos.y < vertices[i + 1].position.y) {
+				maxPos.y = vertices[i + 1].position.y;
+			}
 		}
 		mInnerBounds = Box2f(minPos, maxPos - minPos);
-		mModelBounds = mInnerBounds;
+		collider2DComponent->setModelBounds(mInnerBounds);
 
 			// Compute the center for the first vertex
-		vertices[0].position = Vector3f(mInnerBounds.min + mInnerBounds.max / 2.f, getPosition().z);
+		vertices[0].position = Vector3f(mInnerBounds.position + mInnerBounds.size / 2.f, Z_POS);
 
 		// Update indices (if necessary)
 		const size_t INDEX_COUNT = vertices.size() * 2 + 2;
-		std::vector<unsigned int>& indices = getIndices();
+		std::vector<uint32_t>& indices = render2DComponent->getIndices();
 		if (indices.size() != INDEX_COUNT) {
 			indices.clear();
 			indices.reserve(INDEX_COUNT);
@@ -226,15 +160,55 @@ namespace ae
 				indices.emplace_back(next);
 			}
 		}
+
+		// Update the UV coordinates, the outline, and the colors if the point count changed
+		updateUVs();
+		updateOutlinePositions();
+		if (MUST_UPDATE_FILLCOLORS) {
+			updateFillColors();
+		}
 	}
 
+	// Protected virtual method(s)
+	void Shape::renderSelf(RenderStates states) const
+	{
+		const Render2DComponent* const render2DComponent = getComponent<Render2DComponent>();
+		const std::vector<Vertex2D>& vertices = render2DComponent->getVertices();
+
+		if (!vertices.empty())
+		{
+			// Setup the render states used by both the outline and the shape
+			if (!states.shader) {
+				states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
+			}
+
+			// Render the outline (if there is one)
+			if (mOutlineThickness != 0.f) {
+				// Setup the appropriate render states
+				states.blendMode = BlendMode::BlendNone;
+				states.texture = nullptr;
+
+				// Send the outline to the renderer
+				Renderer2D::getActiveInstance()->submit(mOutlineVertices, mOutlineIndices, states);
+			}
+
+			// Setup the shape's render states
+			states.blendMode = BlendMode::BlendAlpha;
+			states.texture = mTexture;
+
+			// Send the shape to the renderer
+			Renderer2D::getActiveInstance()->submit(*render2DComponent, states);
+		}
+	}
+
+	// Private method(s)
 	void Shape::updateUVs()
 	{
 		const bool DIVISIBLEX = mInnerBounds.max.x > 0.f;
 		const bool DIVISIBLEY = mInnerBounds.max.y > 0.f;
 		const Vector2f TEXTURE_SIZE = (mTexture) ? Vector2f(mTexture->getSize()) : Vector2f(1.f, 1.f);
 
-		std::vector<Vertex2D>& vertices = getVertices();
+		std::vector<Vertex2D>& vertices = getComponent<Render2DComponent>()->getVertices();
 		for (Vertex2D& vertex : vertices) {
 			Vector2f ratio((DIVISIBLEX) ? (vertex.position.x - mInnerBounds.min.x) / mInnerBounds.max.x : 0.f,
 			               (DIVISIBLEY) ? (vertex.position.y - mInnerBounds.min.y) / mInnerBounds.max.y : 0.f);
@@ -245,41 +219,28 @@ namespace ae
 	void Shape::updateFillColors()
 	{
 		const Vector4f FILL_COLOR = mFillColor.normalize();
-		std::vector<Vertex2D>& vertices = getVertices();
+		std::vector<Vertex2D>& vertices = getComponent<Render2DComponent>()->getVertices();
 		for (Vertex2D& vertex : vertices) {
 			vertex.color = FILL_COLOR;
 		}
 	}
 
-	void Shape::updateShape()
-	{
-		// Updates the vertices' properties
-		if (mUpdatePositions) {
-			updatePositions();
-			mUpdateOutlinePositions = true;
-			correctProperties();
-			setDirty(std::exchange(mUpdatePositions, false));
-		}
-		if (mUpdateUVs) {
-			updateUVs();
-			setDirty(std::exchange(mUpdateUVs, false));
-		}
-		if (mUpdateFillColors) {
-			updateFillColors();
-			setDirty(std::exchange(mUpdateFillColors, false));
-		}
-	}
-
 	void Shape::updateOutlinePositions()
 	{
-		// Update the outline vertices
-		const std::vector<Vertex2D>& vertices = getVertices();
+		const std::vector<Vertex2D>& vertices = getComponent<Render2DComponent>()->getVertices();
+		if (vertices.empty()) {
+			return;
+		}
+
 		const size_t VERTEX_COUNT = vertices.size() - 1;
+		const bool MUST_UPDATE_OUTLINECOLORS = VERTEX_COUNT != mOutlineVertices.size() * 2;
+
+		// Update the outline vertices
 		mOutlineVertices.resize(VERTEX_COUNT * 2);
 		for (size_t i = 0; i < VERTEX_COUNT; ++i) {
 			size_t index = i + 1;
-			size_t prev = (i == 0) ? VERTEX_COUNT : index - 1;
-			size_t next = (i + 1 == VERTEX_COUNT) ? 1 : index + 1;
+			size_t prev = (i == 0) ? VERTEX_COUNT : i;
+			size_t next = (index == VERTEX_COUNT) ? 1 : index + 1;
 
 			// Get the two segments shared by the current point
 			Vector2f p0 = vertices[prev].position.xy;
@@ -287,8 +248,7 @@ namespace ae
 			Vector2f p2 = vertices[next].position.xy;
 
 			// Compute the segments' normals
-			Vector2f n1 = normal(p0, p1);
-			Vector2f n2 = normal(p1, p2);
+			Vector2f n1 = normal(p0, p1), n2 = normal(p1, p2);
 
 			// Make sure that the normals point outwards of the shape
 			if (dot(n1, vertices[0].position.xy - p1) > 0.f) {
@@ -303,8 +263,9 @@ namespace ae
 			Vector2f normal = (n1 + n2) / factor;
 
 			// Update the outline vertices
-			mOutlineVertices[i * 2 + 0].position = Vector3f(p1, getPosition().z);
-			mOutlineVertices[i * 2 + 1].position = Vector3f(p1 + normal * mOutlineThickness, getPosition().z);
+			const float Z_POS = getComponent<Transform2DComponent>()->getPosition().z;
+			mOutlineVertices[i * 2 + 0].position = Vector3f(p1, Z_POS);
+			mOutlineVertices[i * 2 + 1].position = Vector3f(p1 + normal * mOutlineThickness, Z_POS);
 		}
 
 		// Update the model bounding box by taking into account the outline
@@ -313,7 +274,7 @@ namespace ae
 			minPos = min(minPos, vertex.position.xy);
 			maxPos = max(maxPos, vertex.position.xy);
 		}
-		mModelBounds = Box2f(minPos, maxPos - minPos);
+		getComponent<Collider2DComponent>()->setModelBounds(Box2f(minPos, maxPos - minPos));
 
 		// Update the indices (if necessary)
 		const size_t INDEX_COUNT = VERTEX_COUNT * 2;
@@ -338,7 +299,9 @@ namespace ae
 		}
 
 		// Indicate that the outline colors need to be updated as well
-		mUpdateOutlineColors = true;
+		if (MUST_UPDATE_OUTLINECOLORS) {
+			updateOutlineColors();
+		}
 	}
 
 	void Shape::updateOutlineColors()
@@ -346,64 +309,6 @@ namespace ae
 		const Vector4f OUTLINE_COLOR = mOutlineColor.normalize();
 		for (Vertex2D& vertex : mOutlineVertices) {
 			vertex.color = OUTLINE_COLOR;
-		}
-	}
-
-	void Shape::updateOutline()
-	{
-		// Update the outline's vertices' properties
-		if (mUpdateOutlinePositions) {
-			updateOutlinePositions();
-			correctProperties();
-			setDirty(std::exchange(mUpdateOutlinePositions, false));
-		}
-		if (mUpdateOutlineColors) {
-			updateOutlineColors();
-			setDirty(std::exchange(mUpdateOutlineColors, false));
-		}
-	}
-
-	// Private virtual method(s)
-	void Shape::updateSelf(const Time& dt)
-	{
-		// Update the shape's properties which may raise the dirty render flag
-		updateShape();
-
-		// Update the outline's (if there is one) properties which may raise the dirty render flag
-		if (mOutlineThickness != 0.f) {
-			updateOutline();
-		}
-	}
-
-	void Shape::renderSelf(RenderStates states) const
-	{
-		if (!getVertices().empty())
-		{
-			// Setup the render states used by both the outline and the shape
-			if (!states.shader) {
-				states.shader = GLResourceFactory::getInstance().get<Shader>("_AEON_Basic2D").get();
-			}
-			states.dirty = isDirty();
-
-			// Render the outline (if there is one)
-			if (mOutlineThickness != 0.f) {
-				// Setup the appropriate render states
-				states.blendMode = BlendMode::BlendNone;
-				states.texture = nullptr;
-
-				// Send the outline to the renderer
-				Renderer2D::getActiveInstance()->submit(mOutlineVertices, mOutlineIndices, states);
-			}
-
-			// Setup the shape's render states
-			states.blendMode = BlendMode::BlendAlpha;
-			states.texture = mTexture;
-
-			// Send the shape to the renderer
-			Renderer2D::getActiveInstance()->submit(getVertices(), getIndices(), states);
-
-			// Drop the dirty render flag
-			setDirty(false);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_GLResource_H_
-#define Aeon_Graphics_GLResource_H_
+#pragma once
 
-#include <yvals_core.h>
+#include <cstdint>
 
 #include <AEON/Config.h>
 
@@ -46,19 +45,17 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::GLResource that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		GLResource(GLResource&& rvalue) noexcept;
+		GLResource(GLResource&&) noexcept = default;
 		/*!
 		 \brief Virtual destructor.
 		 \details It's needed as this class will be inherited by others.
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		virtual ~GLResource();
-	public:
+		virtual ~GLResource() = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -69,14 +66,12 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::GLResource that will be moved
-
 		 \return The caller ae::GLResource
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		GLResource& operator=(GLResource&& rvalue) noexcept;
-	public:
+		GLResource& operator=(GLResource&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the OpenGL identifier of the ae::GLResource.
@@ -84,9 +79,10 @@ namespace ae
 
 		 \return The ae::GLResource's OpenGL identifier
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD unsigned int getHandle() const noexcept;
+		[[nodiscard]] inline uint32_t getHandle() const noexcept { return mHandle; }
+
 		// Public virtual method(s)
 		/*!
 		 \brief Deletes the OpenGL identifier that was created.
@@ -124,12 +120,10 @@ namespace ae
 		*/
 		GLResource();
 
-	protected:
 		// Protected member(s)
-		unsigned int mHandle; //!< The OpenGL identifier to the resource
+		uint32_t mHandle; //!< The OpenGL identifier to the resource
 	};
 }
-#endif // Aeon_Graphics_GLResource_H_
 
 /*!
  \class ae::GLResource
@@ -146,7 +140,7 @@ namespace ae
  of allocated resources on the GPU.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

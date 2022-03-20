@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -36,33 +36,10 @@ namespace ae
 	{
 	}
 
-	IndexBuffer::IndexBuffer(IndexBuffer&& rvalue) noexcept
-		: Buffer(std::move(rvalue))
-		, mCount(rvalue.mCount)
-		, mUsage(rvalue.mUsage)
-	{
-	}
-
-	// Public operator(s)
-	IndexBuffer& IndexBuffer::operator=(IndexBuffer&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		Buffer::operator=(std::move(rvalue));
-		mCount = rvalue.mCount;
-		mUsage = rvalue.mUsage;
-
-		return *this;
-	}
-
 	// Public method(s)
-	void IndexBuffer::setData(unsigned int size, const unsigned int* data)
+	void IndexBuffer::setData(int64_t size, const uint32_t* data)
 	{
-		mCount = size / sizeof(unsigned int);
+		mCount = size / sizeof(uint32_t);
 		GLCall(glNamedBufferData(mHandle, size, data, mUsage));
-	}
-
-	unsigned int IndexBuffer::getCount() const noexcept
-	{
-		return mCount;
 	}
 }

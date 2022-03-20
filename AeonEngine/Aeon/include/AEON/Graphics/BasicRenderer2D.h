@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_BasicRenderer2D_H_
-#define Aeon_Graphics_BasicRenderer2D_H_
+#pragma once
 
 #include <AEON/Graphics/internal/Renderer2D.h>
+#include <AEON/Graphics/RenderStates.h>
 
 namespace ae
 {
@@ -47,7 +47,7 @@ namespace ae
 		 \since v0.6.0
 		*/
 		BasicRenderer2D(BasicRenderer2D&&) = delete;
-	public:
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -61,42 +61,12 @@ namespace ae
 		 \since v0.6.0
 		*/
 		BasicRenderer2D& operator=(BasicRenderer2D&&) = delete;
-	public:
+
 		// Public virtual method(s)
-		/*!
-		 \brief Setups the ae::BasicRenderer2D for rendering to the \a target provided.
-		 \details Activates the \a target provided and uploads its camera's properties to the global transform UBO.
-
-		 \param[in] target The ae::RenderTarget which will act as the scene's framebuffer
-
-		 \par Example:
-		 \code
-		 // Retrieve the ae::BasicRenderer2D's single instance
-		 ae::BasicRenderer2D& renderer = ae::BasicRenderer2D::getInstance();
-
-		 // Create the scene graph (the root node) and attach children nodes
-		 auto sceneGraph = std::make_unique<ae::Actor2D>();
-		 ...
-
-		 // Indicate to the renderer to begin a new scene and to use the window as the render target
-		 renderer.beginScene(mWindow);
-
-		 // Start submitting the children nodes to the active renderer (they will be immediately rendered to the window)
-		 sceneGraph->render();
-
-		 // Indicate to the renderer to end the active scene which will allow a new scene to be commenced
-		 renderer.endScene();
-		 \endcode
-
-		 \sa submit(), endScene()
-
-		 \since v0.6.0
-		*/
 		virtual void beginScene(RenderTarget& target) override final;
 		/*!
 		 \brief Adds a submission to the ae::BasicRenderer2D which will be instantly rendered.
-		 \note This method is automatically called by Aeon's derived classes of ae::Renderable2D.\n
-		 The beginScene() method must be called prior to calling this method for correct results.
+		 \note The beginScene() method must be called prior to calling this method for correct results.
 
 		 \param[in] vertices The list of vertices to be rendered
 		 \param[in] indices The list of associated indices to be rendered
@@ -123,9 +93,9 @@ namespace ae
 
 		 \sa beginScene(), endScene()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		virtual void submit(const std::vector<Vertex2D>& vertices, const std::vector<unsigned int>& indices, const RenderStates& states) override final;
+		virtual void submit(const std::vector<Vertex2D>& vertices, const std::vector<uint32_t>& indices, const RenderStates& states) override final;
 
 		// Public static method(s)
 		/*!
@@ -146,12 +116,11 @@ namespace ae
 		/*!
 		 \brief Default constructor.
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		BasicRenderer2D();
+		BasicRenderer2D() = default;
 	};
 }
-#endif // Aeon_Graphics_BasicRenderer2D_H_
 
 /*!
  \class ae::BasicRenderer2D
@@ -169,7 +138,7 @@ namespace ae
  continual rendering.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.01
+ \version v0.7.0
+ \date 2022.01.26
  \copyright MIT License
 */

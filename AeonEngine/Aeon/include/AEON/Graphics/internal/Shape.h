@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Shape_H_
-#define Aeon_Graphics_Shape_H_
+#pragma once
 
-#include <AEON/Graphics/Actor2D.h>
+#include <AEON/Graphics/Actor.h>
+#include <AEON/Graphics/Color.h>
 
 namespace ae
 {
@@ -34,7 +34,7 @@ namespace ae
 	 \brief Abstract base class representing 2D shapes.
 	 \note No direct instance of this class can be created.
 	*/
-	class AEON_API Shape : public Actor2D
+	class AEON_API Shape : public Actor
 	{
 	public:
 		// Public constructor(s)
@@ -42,17 +42,17 @@ namespace ae
 		 \brief Virtual destructor.
 		 \details A virtual destructor is needed as this class will be inherited.
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		virtual ~Shape();
-	public:
+		virtual ~Shape() = default;
+
 		// Public method(s)
 		/*!
 		 \brief Sets the texture to be applied to the ae::Shape.
 		 \details The texture will be made to fit within the size constraints assigned to the ae::Shape.
 		 \note If no texture rect was assigned beforehand, the entire texture will be used.
 
-		 \param[in] texture The texture to apply to the rectangle
+		 \param[in] texture The texture to apply to the rectangle, nullptr to remove the current texture
 		 \param[in] resetRect True to use the entire texture, false to keep the current texture rect
 
 		 \par Example:
@@ -66,7 +66,7 @@ namespace ae
 
 		 ...
 
-		 // Assign a 500x500 texture whilst keeping the previous texture rect, texture shrinked to fit
+		 // Assign a 500x500 texture whilst keeping the previous texture rect, part of the texture shown
 		 // Size: 50x50 ; Texture Rect: (0, 0, 250, 250)
 		 rectangle->setTexture(&otherTexture);
 
@@ -79,7 +79,7 @@ namespace ae
 
 		 \sa setTextureRect()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setTexture(const Texture2D* const texture, bool resetRect = false);
 		/*!
@@ -104,7 +104,7 @@ namespace ae
 
 		 \sa setTexture()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setTextureRect(const Box2f& rect);
 		/*!
@@ -121,7 +121,7 @@ namespace ae
 
 		 \sa getFillColor()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setFillColor(const Color& color) noexcept;
 		/*!
@@ -140,7 +140,7 @@ namespace ae
 
 		 \sa getOutlineColor(), setOutlineThickness()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setOutlineColor(const Color& color) noexcept;
 		/*!
@@ -158,11 +158,11 @@ namespace ae
 
 		 \sa getOutlineThickness()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setOutlineThickness(float thickness) noexcept;
 		/*!
-		 \brief Retrieves the ae::Shape's assigned texture.
+		 \brief Retrieves the assigned texture.
 		 \note If no texture was assigned, nullptr will be returned.
 
 		 \return Pointer to the assigned texture or nullptr if no texture was assigned
@@ -179,11 +179,11 @@ namespace ae
 
 		 \sa setTexture(), getTextureRect()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Texture2D* const getTexture() const noexcept;
+		[[nodiscard]] inline const Texture2D* const getTexture() const noexcept { return mTexture; }
 		/*!
-		 \brief Retrieves the ae::Shape's texture rect.
+		 \brief Retrieves the texture rect.
 		 \details The texture rect represents the area of the assigned texture to display.
 		 \note A texture has to be assigned for the texture rect to have any effect.
 
@@ -199,11 +199,11 @@ namespace ae
 
 		 \sa setTextureRect(), getTexture()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Box2f& getTextureRect() const noexcept;
+		[[nodiscard]] inline const Box2f& getTextureRect() const noexcept { return mTextureRect; }
 		/*!
-		 \brief Retrieves the fill color of the ae::Shape.
+		 \brief Retrieves the fill color.
 		 \details The fill colors refers to the color used to fill the interior of the shape.
 
 		 \return The ae::Color used for the shape's fill color
@@ -218,11 +218,11 @@ namespace ae
 
 		 \sa setFillColor()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Color& getFillColor() const noexcept;
+		[[nodiscard]] inline const Color& getFillColor() const noexcept { return mFillColor; }
 		/*!
-		 \brief Retrieves the outline color of the ae::Shape.
+		 \brief Retrieves the outline color.
 		 \details The outline color refers to the color used by the shape's border.
 
 		 \return The ae::Color used for the the shape's outline color
@@ -238,11 +238,11 @@ namespace ae
 
 		 \sa setOutlineColor(), setOutlineThickness()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Color& getOutlineColor() const noexcept;
+		[[nodiscard]] inline const Color& getOutlineColor() const noexcept { return mOutlineColor; }
 		/*!
-		 \brief Retrieves the ae::Shape's outline thickness.
+		 \brief Retrieves the outline thickness.
 		 \details The outline thickness is used to determine the size of the border surrounding the shape.
 
 		 \return The outline thickness of the ae::Shape
@@ -257,19 +257,11 @@ namespace ae
 
 		 \sa setOutlineThickness()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD float getOutlineThickness() const noexcept;
+		[[nodiscard]] inline float getOutlineThickness() const noexcept { return mOutlineThickness; }
 
 		// Public virtual method(s)
-		/*!
-		 \brief Retrieves the ae::Shape's model bounding box.
-
-		 \return An ae::Box2f containing the model bounding box.
-
-		 \since v0.4.0
-		*/
-		_NODISCARD virtual Box2f getModelBounds() const override final;
 		/*!
 		 \brief Retrieves the total number of points of the shape.
 		 \note Must be defined by derived classes.
@@ -300,7 +292,7 @@ namespace ae
 		 \brief Default constructor.
 		 \note No direct instance of this class can be created.
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		Shape();
 		/*!
@@ -308,50 +300,59 @@ namespace ae
 
 		 \param[in] copy The ae::Shape that will be copied
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Shape(const Shape& copy) = default;
+		Shape(const Shape& copy);
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::Shape that will be moved
-
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		Shape(Shape&& rvalue) noexcept;
-	protected:
+		Shape(Shape&&) noexcept = default;
+
 		// Protected operator(s)
 		/*!
 		 \brief Assignment operator.
 
-		 \param[in] other The ae::Shape that will be copied
-
 		 \return The caller ae::Shape
 
 		 \since v0.6.0
 		*/
-		Shape& operator=(const Shape& other) = default;
+		Shape& operator=(const Shape&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Shape that will be moved
-
 		 \return The caller ae::Shape
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Shape& operator=(Shape&& rvalue) noexcept;
-	private:
-		// Private method(s)
+		Shape& operator=(Shape&&) noexcept = default;
+
+		// Protected method(s)
 		/*!
 		 \brief Updates the stored vertices' positions and the stored indices.
 		 \details Called when the size/radius has changed.
 
 		 \sa updateUVs(), updateFillColors(), updateShape()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void updatePositions();
+
+		// Protected virtual method(s)
+		/*!
+		 \brief Sends the vertex data and render states to the renderer.
+		 \details Sets the appropriate shader, blend mode and texture.
+
+		 \param[in] states The ae::RenderStates defining the OpenGL state
+
+		 \sa updateSelf()
+
+		 \since v0.7.0
+		*/
+		virtual void renderSelf(RenderStates states) const override;
+	private:
+		// Private method(s)
 		/*!
 		 \brief Updates the stored vertices' uv coordinates.
 		 \details Called when the texture or the texture rect has changed.
@@ -371,22 +372,13 @@ namespace ae
 		*/
 		void updateFillColors();
 		/*!
-		 \brief Updates the stored vertices' properties.
-		 \details Called prior to sending the vertices to the renderer to make sure they've been updated.
-
-		 \sa updatePositions(), updateUVs(), updateFillColors()
-
-		 \since v0.6.0
-		*/
-		void updateShape();
-		/*!
 		 \brief Updates the stored outline vertices' positions and the stored outline indices.
 		 \details Called when the size/radius has changed.
 		 \note Only called when the outline thickness is not equal to 0.
 
 		 \sa updateOutlineColors(), updateOutline()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void updateOutlinePositions();
 		/*!
@@ -399,61 +391,19 @@ namespace ae
 		 \since v0.5.0
 		*/
 		void updateOutlineColors();
-		/*!
-		 \brief Updates the stored outline vertices' properties.
-		 \details Called prior to sending the outline vertices to the renderer to make sure they've been updated.
-		 \note Only updates the properties if the outline thickness is not equal to 0.
 
-		 \sa updateOutlinePositions(), updateOutlineColors()
-
-		 \since v0.6.0
-		*/
-		void updateOutline();
-
-		// Private virtual method(s)
-		/*!
-		 \brief Updates the ae::Shape's vertex data and its outline (if it has one).
-
-		 \param[in] dt The time difference between the previous frame and the current frame
-
-		 \sa renderSelf()
-
-		 \since v0.6.0
-		*/
-		virtual void updateSelf(const Time& dt) override;
-		/*!
-		 \brief Sends the vertex data and render states to the renderer.
-		 \details Sets the appropriate shader, blend mode and texture.
-
-		 \param[in] states The ae::RenderStates defining the OpenGL state
-
-		 \sa updateSelf()
-
-		 \since v0.6.0
-		*/
-		virtual void renderSelf(RenderStates states) const override final;
-
-	protected:
-		// Protected member(s)
-		Box2f                     mModelBounds;            //!< The local model bounds of the shape
-		bool                      mUpdatePositions;        //!< Whether the vertices' positions need to be updated
 	private:
 		// Private member(s)
-		std::vector<Vertex2D>     mOutlineVertices;        //!< The list of outline vertices
-		std::vector<unsigned int> mOutlineIndices;         //!< The list of outline indices
-		Box2f                     mInnerBounds;            //!< The inner model bounding box (without the outline)
-		Box2f                     mTextureRect;            //!< The texture rectangle containing the texture coordinates
-		Color                     mFillColor;              //!< The fill color of the shape
-		Color                     mOutlineColor;           //!< The outline color of the shape
-		const Texture2D*          mTexture;                //!< The optional texture to assign to the shape
-		float                     mOutlineThickness;       //!< The outline's thickness
-		bool                      mUpdateUVs;              //!< Whether the vertices' texture coordinates need to be updated
-		bool                      mUpdateFillColors;       //!< Whether the vertices' fill color needs to be updated
-		bool                      mUpdateOutlinePositions; //!< Whether the outline's vertices need to be updated
-		bool                      mUpdateOutlineColors;    //!< Whether the outline's vertices' color needs to be updated
+		std::vector<Vertex2D> mOutlineVertices;  //!< The list of outline vertices
+		std::vector<uint32_t> mOutlineIndices;   //!< The list of outline indices
+		Box2f                 mInnerBounds;      //!< The inner model bounding box (without the outline)
+		Box2f                 mTextureRect;      //!< The texture rectangle containing the texture coordinates
+		Color                 mFillColor;        //!< The fill color of the shape
+		Color                 mOutlineColor;     //!< The outline color of the shape
+		const Texture2D*      mTexture;          //!< The optional texture to assign to the shape
+		float                 mOutlineThickness; //!< The outline's thickness
 	};
 }
-#endif // Aeon_Graphics_Shape_H_
 
 /*!
  \class ae::Shape
@@ -465,7 +415,7 @@ namespace ae
  geometrical shapes such as rectangles, circles and general convex shapes.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.17
+ \version v0.7.0
+ \date 2021.12.31
  \copyright MIT License
 */

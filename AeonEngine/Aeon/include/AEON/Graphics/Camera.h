@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,10 +23,10 @@
 #ifndef Aeon_Graphics_Camera_H_
 #define Aeon_Graphics_Camera_H_
 
-#include <AEON/Math/Vector.h>
 #include <AEON/Math/Matrix.h>
-#include <AEON/Math/AABoxCollider.h>
 #include <AEON/Math/internal/Quaternion.h>
+
+#include <AEON/Graphics/Actor.h>
 
 namespace ae
 {
@@ -37,7 +37,7 @@ namespace ae
 	 \brief The abstract base class representing a camera/view of a scene.
 	 \note No direct instances of this class may be created.
 	*/
-	class AEON_API Camera
+	class AEON_API Camera : public Actor
 	{
 	public:
 		// Public constructor(s)
@@ -121,7 +121,7 @@ namespace ae
 
 		 \sa getFrustum()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setFrustum(float nearPlane, float farPlane) noexcept;
 		/*!
@@ -141,7 +141,7 @@ namespace ae
 
 		 \sa getViewport()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void setViewport(const Box2f& viewport) noexcept;
 
@@ -290,23 +290,6 @@ namespace ae
 		*/
 		_NODISCARD Vector3f getLocalForward();
 		/*!
-		 \brief Retrieves the ae::Camera's position.
-
-		 \return An ae::Vector3f containing the current position
-
-		 \par Example:
-		 \code
-		 ae::Camera3D camera;
-		 ...
-		 const ae::Vector3f& cameraPosition = camera.getPosition();
-		 \endcode
-
-		 \sa setPosition()
-
-		 \since v0.4.0
-		*/
-		_NODISCARD const Vector3f& getPosition() const noexcept;
-		/*!
 		 \brief Retrieves the ae::Camera's distances to the near and the far planes.
 		 \details The references to the parameters provided will be overwritten with the near and far plane distance values.
 
@@ -326,28 +309,6 @@ namespace ae
 		 \since v0.4.0
 		*/
 		void getFrustum(float& nearPlane, float& farPlane) const noexcept;
-		/*!
-		 \brief Retrieves the target viewport.
-		 \details The viewport is the rectangle into which the contents of the view are displayed.
-		 The viewport coordinates are expressed as factors between 0 and 1.
-
-		 \return The ae::Box2f containing the the factors of the size of the associated ae::RenderTarget
-
-		 \par Example:
-		 \code
-		 ae::Camera2D camera;
-		 ...
-		 // Set the viewport as the left half of the render target
-		 camera.setViewport(ae::Box2f(0.f, 0.f, 0.5f, 1.f));
-		 ...
-		 const ae::Box2f& viewport = camera.getViewport();
-		 \endcode
-
-		 \sa setViewport()
-
-		 \since v0.4.0
-		*/
-		_NODISCARD const Box2f& getViewport() const noexcept;
 		/*!
 		 \brief Retrieves the ae::Camera's inverse view matrix.
 		 \details The inverse view matrix will be updated (if necessary) before being retrieved.
@@ -384,6 +345,45 @@ namespace ae
 		 \since v0.5.0
 		*/
 		_NODISCARD const Matrix4f& getInverseProjectionMatrix();
+		/*!
+		 \brief Retrieves the ae::Camera's position.
+
+		 \return An ae::Vector3f containing the current position
+
+		 \par Example:
+		 \code
+		 ae::Camera3D camera;
+		 ...
+		 const ae::Vector3f& cameraPosition = camera.getPosition();
+		 \endcode
+
+		 \sa setPosition()
+
+		 \since v0.7.0
+		*/
+		_NODISCARD inline const Vector3f& getPosition() const noexcept { return mPosition; }
+		/*!
+		 \brief Retrieves the target viewport.
+		 \details The viewport is the rectangle into which the contents of the view are displayed.
+		 The viewport coordinates are expressed as factors between 0 and 1.
+
+		 \return The ae::Box2f containing the the factors of the size of the associated ae::RenderTarget
+
+		 \par Example:
+		 \code
+		 ae::Camera2D camera;
+		 ...
+		 // Set the viewport as the left half of the render target
+		 camera.setViewport(ae::Box2f(0.f, 0.f, 0.5f, 1.f));
+		 ...
+		 const ae::Box2f& viewport = camera.getViewport();
+		 \endcode
+
+		 \sa setViewport()
+
+		 \since v0.7.0
+		*/
+		_NODISCARD inline const Box2f& getViewport() const noexcept { return mViewport; }
 
 		// Public virtual method(s)
 		/*!
@@ -416,7 +416,7 @@ namespace ae
 
 		 \sa getInverseViewMatrix(), getProjectionMatrix()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		_NODISCARD virtual const Matrix4f& getViewMatrix();
 		/*!
@@ -437,6 +437,14 @@ namespace ae
 		 \since v0.4.0
 		*/
 		_NODISCARD virtual const Matrix4f& getProjectionMatrix() = 0;
+		/*!
+		 \brief Retrieves the view matrix.
+
+		 \return The camera's transform
+
+		 \since v0.7.0
+		*/
+		virtual Matrix4f getTransform() override final;
 	protected:
 		// Protected constructor(s)
 		/*!
@@ -452,31 +460,27 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \param[in] copy The ae::Camera that will be copied
-
 		 \since v0.6.0
 		*/
-		Camera(const Camera& copy) = default;
+		Camera(const Camera&) = default;
 		/*!
 		 \brief Move constructor.
 
 		 \param[in] rvalue The ae::Camera rvalue that will be moved
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Camera(Camera&& rvalue) noexcept;
+		Camera(Camera&& rvalue) noexcept = default;
 	protected:
 		// Protected operator(s)
 		/*!
 		 \brief Assignment operator.
 
-		 \param[in] other The ae::Camera that will be copied
-
 		 \return The caller ae::Camera
 
 		 \since v0.6.0
 		*/
-		Camera& operator=(const Camera& other) = default;
+		Camera& operator=(const Camera&) = default;
 		/*!
 		 \brief Move assignment operator.
 
@@ -484,9 +488,19 @@ namespace ae
 
 		 \return The caller ae::Camera
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Camera& operator=(Camera&& rvalue) noexcept;
+		Camera& operator=(Camera&& rvalue) noexcept = default;
+	protected:
+		// Protected virtual method(s)
+		/*!
+		 \brief Updates the inverse projection matrix if the framebuffer was resized.
+
+		 \param[in] event The polled input event
+
+		 \since v0.7.0
+		*/
+		virtual void handleEventSelf(Event* const event) override;
 
 	protected:
 		// Protected member(s)
@@ -520,7 +534,7 @@ namespace ae
  scene objects are rendered.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.07.25
  \copyright MIT License
 */

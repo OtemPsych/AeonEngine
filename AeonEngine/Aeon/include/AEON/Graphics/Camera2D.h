@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,6 +22,8 @@
 
 #ifndef Aeon_Graphics_Camera2D_H_
 #define Aeon_Graphics_Camera2D_H_
+
+#include <limits>
 
 #include <AEON/Math/Vector.h>
 #include <AEON/Graphics/Camera.h>
@@ -49,7 +51,7 @@ namespace ae
 		 ae::Camera2D camera(false, -1.f, 2000.f);
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		explicit Camera2D(bool flipY = false, float nearPlane = -12000.f, float farPlane = 1.f);
 		/*!
@@ -174,7 +176,7 @@ namespace ae
  functionality.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.03
+ \version v0.7.0
+ \date 2021.07.21
  \copyright MIT License
 */

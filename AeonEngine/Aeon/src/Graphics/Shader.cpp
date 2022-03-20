@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -40,28 +40,6 @@ namespace ae
 	{
 		// Create the shader program object
 		mHandle = GLCall(glCreateProgram());
-	}
-
-	Shader::Shader(Shader&& rvalue) noexcept
-		: GLResource(std::move(rvalue))
-		, mStages(std::move(rvalue.mStages))
-		, mUniforms(std::move(rvalue.mUniforms))
-		, mDataLayout(std::move(rvalue.mDataLayout))
-		, mLinkType(rvalue.mLinkType)
-	{
-	}
-
-	// Public operator(s)
-	Shader& Shader::operator=(Shader&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		GLResource::operator=(std::move(rvalue));
-		mStages = std::move(rvalue.mStages);
-		mUniforms = std::move(rvalue.mUniforms);
-		mDataLayout = std::move(rvalue.mDataLayout);
-		mLinkType = rvalue.mLinkType;
-
-		return *this;
 	}
 
 	// Public method(s)
@@ -126,7 +104,7 @@ namespace ae
 		GLCall(glValidateProgram(mHandle));
 		checkProgramStatus(GL_VALIDATE_STATUS);
 
-		// Raise the shader stages' deletion flag and detach all shader stages
+		// Raise the shader stages' deletion flag and detach all shader stages as they're no longer needed
 		for (const auto& stage : mStages) {
 			GLCall(glDeleteShader(stage.second.handle));
 			checkShaderStatus(stage.second.handle, GL_DELETE_STATUS);
@@ -156,7 +134,7 @@ namespace ae
 		GLint boundProgram;
 		GLCall(glGetIntegerv(GL_CURRENT_PROGRAM, &boundProgram));
 
-		return (boundProgram == mHandle);
+		return boundProgram == mHandle;
 	}
 
 	void Shader::addUniformBuffer(const UniformBuffer& ubo)
@@ -242,13 +220,8 @@ namespace ae
 	{
 		GLint location = cacheUniformLocation(name);
 		if (location != -1) {
-			GLCall(glProgramUniformMatrix4fv(mHandle, location, 1, GL_FALSE, mat.elements.data()));
+			GLCall(glProgramUniformMatrix4fv(mHandle, location, 1, GL_FALSE, mat.getElements().data()));
 		}
-	}
-
-	VertexBuffer::Layout& Shader::getDataLayout() noexcept
-	{
-		return mDataLayout;
 	}
 
 	// Public virtual method(s)

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -36,16 +36,14 @@
 
 namespace ae
 {
-	// Forward declaration(s)
-	class Font;
-
 	/*!
 	 \brief The base class representing a system event and its properties.
 	 \details This class is inherited by several dedicated classes based on the event generated.
 	*/
-	class _NODISCARD AEON_API Event
+	class AEON_API Event
 	{
 	public:
+		// Public enum(s)
 		/*!
 		 \brief The enumeration containing the different event types that can be processed.
 		*/
@@ -78,9 +76,7 @@ namespace ae
 			MouseWheelScrolled,        //!< A mouse wheel was scrolled (data in MouseWheelEvent)
 
 			JoystickConnected,         //!< A joystick/controller was connected (data in JoystickEvent)
-			JoystickDisconnected,      //!< A joystick/controller was disconnected (data in JoystickEvent)
-
-			FontUpdated                //!< A font's texture atlas was updated (data in FontEvent)
+			JoystickDisconnected       //!< A joystick/controller was disconnected (data in JoystickEvent)
 		};
 
 	public:
@@ -154,8 +150,8 @@ namespace ae
 
 		 \since v0.3.0
 		*/
-		template <class T, typename = std::enable_if_t<std::is_base_of_v<Event, T>>>
-		_NODISCARD T* const as()
+		template <class T>
+		_NODISCARD std::enable_if_t<std::is_base_of_v<Event, T>, T* const> as()
 		{
 			// Attempt to convert the base pointer to a pointer of type T
 			T* const Tptr = dynamic_cast<T* const>(this);
@@ -176,7 +172,7 @@ namespace ae
 	 \details An ae::MonitorEvent's associated types are: Type::MonitorConnected and Type::MonitorDisconnected.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API MonitorEvent : public Event
+	class AEON_API MonitorEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -227,7 +223,7 @@ namespace ae
 	 \details An ae::WindowResizeEvent's associated types are: Type::WindowResized.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API WindowResizeEvent : public Event
+	class AEON_API WindowResizeEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -277,23 +273,25 @@ namespace ae
 	 \details An ae::FramebufferResizeEvent's associated types are: Type::FramebufferResized.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API FramebufferResizeEvent : public Event
+	class AEON_API FramebufferResizeEvent : public Event
 	{
 	public:
 		// Public member(s)
-		const Vector2i size; //!< The framebuffer's new size in pixels
+		const Vector2i     size;   //!< The framebuffer's new size in pixels
+		const unsigned int handle; //!< The framebuffer's handle
 
 	public:
 		// Public constructor(s)
 		/*!
-		 \brief Constructs the ae::FramebufferResizeEvent by providing the new \a width and \a height of the framebuffer.
+		 \brief Constructs the ae::FramebufferResizeEvent by providing the new \a width, \a height and internal \a handle.
 
 		 \param[in] width The new width of the framebuffer in pixels
 		 \param[in] height The new height of the framebuffer in pixels
+		 \param[in] handle The handle of the framebuffer resized
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		FramebufferResizeEvent(int width, int height) noexcept;
+		FramebufferResizeEvent(int width, int height, unsigned int handle) noexcept;
 		/*!
 		 \brief Deleted copy constructor.
 
@@ -327,7 +325,7 @@ namespace ae
 	 \details An ae::WindowContentScaleEvent's associated types are: Type::WindowContentScaleChanged.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API WindowContentScaleEvent : public Event
+	class AEON_API WindowContentScaleEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -377,7 +375,7 @@ namespace ae
 	 \details An ae::WindowMoveEvent's associated types are: Type::WindowMoved.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API WindowMoveEvent : public Event
+	class AEON_API WindowMoveEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -427,7 +425,7 @@ namespace ae
 	 \details An ae::PathDropEvent's associated types are: Type::PathDrop.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API PathDropEvent : public Event
+	class AEON_API PathDropEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -477,7 +475,7 @@ namespace ae
 	 \details An ae::KeyEvent's associated types are: Type::KeyPressed and Type::KeyReleased.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API KeyEvent : public Event
+	class AEON_API KeyEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -534,7 +532,7 @@ namespace ae
 	 \details An ae::TextEvent's associated types are: Type::TextEntered.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API TextEvent : public Event
+	class AEON_API TextEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -583,7 +581,7 @@ namespace ae
 	 \details An ae::MouseMoveEvent's associated types are: Type::MouseMoveEvent.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API MouseMoveEvent : public Event
+	class AEON_API MouseMoveEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -633,7 +631,7 @@ namespace ae
 	 \details An ae::MouseButtonEvent's associated types are: Type::MouseButtonPressed and Type::MouseButtonReleased.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API MouseButtonEvent : public Event
+	class AEON_API MouseButtonEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -690,7 +688,7 @@ namespace ae
 	 \details An ae::MouseWheelEvent's associated types are: Type::MouseWheelScrolled.\n
 	 This class inherits the ae::Event base class.
 	*/
-	class _NODISCARD AEON_API MouseWheelEvent : public Event
+	class AEON_API MouseWheelEvent : public Event
 	{
 	public:
 		// Public member(s)
@@ -735,55 +733,6 @@ namespace ae
 		*/
 		MouseWheelEvent& operator=(MouseWheelEvent&&) = delete;
 	};
-
-	/*!
-	 \brief The derived class representing a font update event and the associated font's properties.
-	 \details An ae::FontEvent's associated types are: Type::FontUpdated.\n
-	 This class inherits the ae::Event base class.
-	*/
-	class _NODISCARD AEON_API FontEvent : public Event
-	{
-	public:
-		// Public member(s)
-		const Font* const font; //!< The pointer to the affected font
-
-	public:
-		// Public constructor(s)
-		/*!
-		 \brief Constructs the ae::FontEvent by providing the affected font.
-
-		 \param[in] font A pointer to the affected ae::Font
-
-		 \since v0.5.0
-		*/
-		FontEvent(const Font* const font) noexcept;
-		/*!
-		 \brief Deleted copy constructor.
-
-		 \since v0.5.0
-		*/
-		FontEvent(const FontEvent&) = delete;
-		/*!
-		 \brief Deleted move constructor.
-
-		 \since v0.5.0
-		*/
-		FontEvent(FontEvent&&) = delete;
-	public:
-		// Public operator(s)
-		/*!
-		 \brief Deleted assignment operator.
-
-		 \since v0.5.0
-		*/
-		FontEvent& operator=(const FontEvent&) = delete;
-		/*!
-		 \brief Deleted move assignment operator.
-
-		 \since v0.5.0
-		*/
-		FontEvent& operator=(FontEvent&&) = delete;
-	};
 }
 #endif // Aeon_Window_Event_H_
 
@@ -819,8 +768,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.07.23
  \copyright MIT License
 */
 
@@ -848,8 +797,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.29
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -876,8 +825,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -904,8 +853,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.07.23
  \copyright MIT License
 */
 
@@ -933,8 +882,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -961,8 +910,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -984,8 +933,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.06.13
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -1017,8 +966,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -1043,8 +992,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.22
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -1070,8 +1019,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.22
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -1103,8 +1052,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.23
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */
 
@@ -1132,35 +1081,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.22
- \copyright MIT License
-*/
-
-/*!
- \class ae::FontEvent
- \ingroup window
-
- The ae::FontEvent class is used to represent an API event that was generated
- concerning the update of the specified font's texture atlas. It contains a
- pointer to the affected font.
-
- This event is primarily used internally in order for all ae::Text instances to
- be informed when they should update their uv coordinates.
-
- Usage example:
- \code
- // The 'event' parameter is provided by the overloaded method 'handleEvent()' of the ae::State class
- if (event->type == ae::Event::Type::FontUpdated) {
-	auto fontEvent = event->as<ae::FontEvent>();
-	if (fontEvent->font == mFont) {
-		updateTextUVCoordinates();
-	}
- }
- \endcode
-
- \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.07
+ \version v0.7.0
+ \date 2021.07.16
  \copyright MIT License
 */

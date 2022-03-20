@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,13 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_VertexArray_H_
-#define Aeon_Graphics_VertexArray_H_
+#pragma once
 
 #include <memory>
 #include <vector>
-
-#include <AEON/Config.h>
 
 #include <AEON/Graphics/internal/GLResource.h>
 
@@ -41,7 +38,7 @@ namespace ae
 	 \details A vertex array object is commonly referred to as a VAO.
 	 \note This class is considered to be internal but may still be used by the API user.
 	*/
-	class _NODISCARD AEON_API VertexArray : public GLResource
+	class AEON_API VertexArray : public GLResource
 	{
 	public:
 		// Public constructor(s)
@@ -61,12 +58,10 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::VertexArray that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		VertexArray(VertexArray&& rvalue) noexcept;
-	public:
+		VertexArray(VertexArray&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -77,14 +72,12 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::VertexArray that will be moved
-
 		 \return The caller ae::VertexArray
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		VertexArray& operator=(VertexArray&& rvalue) noexcept;
-	public:
+		VertexArray& operator=(VertexArray&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Adds and associates an ae::VertexBuffer to the ae::VertexArray, and applies its data layout.
@@ -114,9 +107,9 @@ namespace ae
 
 		 \sa getVBOCount(), getVBO(), addIBO()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		void addVBO(std::unique_ptr<VertexBuffer> vbo, unsigned int divisor = 0);
+		void addVBO(std::unique_ptr<VertexBuffer> vbo, uint32_t divisor = 0);
 		/*!
 		 \brief Adds an ae::IndexBuffer to the ae::VertexArray.
 		 \details The attachment of an ae::IndexBuffer to the ae::VertexArray is mostly conceptual as it merely serves to better organize the different buffers and bind the IBO automatically when the VAO is bound.
@@ -141,7 +134,7 @@ namespace ae
 
 		 \sa getIBO()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void addIBO(std::unique_ptr<IndexBuffer> ibo);
 		/*!
@@ -170,9 +163,9 @@ namespace ae
 
 		 \sa addVBO()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD VertexBuffer* const getVBO(size_t index) const noexcept;
+		[[nodiscard]] VertexBuffer* const getVBO(size_t index) const noexcept;
 		/*!
 		 \brief Retrieves the ae::IndexBuffer associated to the ae::VertexArray.
 
@@ -196,9 +189,9 @@ namespace ae
 
 		 \sa addIBO()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD IndexBuffer* const getIBO() const noexcept;
+		[[nodiscard]] inline IndexBuffer* const getIBO() const noexcept { return mIBO ? mIBO.get() : nullptr; }
 		/*!
 		 \brief Retrieves the number of ae::VertexBuffer instances that have been added to the ae::VertexArray.
 
@@ -221,15 +214,15 @@ namespace ae
 
 		 \sa addVBO(), getVBO()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD size_t getVBOCount() const noexcept;
+		[[nodiscard]] inline size_t getVBOCount() const noexcept { return mVBOs.size(); }
 
 		// Public virtual method(s)
 		/*!
 		 \brief Destroys the VBOs that have been added, the IBO (if one was added) and the ae::VertexArray's OpenGL identifier.
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		virtual void destroy() const override final;
 		/*!
@@ -237,16 +230,16 @@ namespace ae
 
 		 \sa unbind()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		virtual void bind() const override final;
 		/*!
 		 \brief Unbinds the ae::VertexArray and the ae::IndexBuffer (if one was added) from the context indicating to OpenGL that we've finished using them.
-		 \note Make sure that the currently-bound ae::VertexArray is caller as this method will unbind any VAO.
+		 \note Make sure that the currently-bound ae::VertexArray is the caller as this method will unbind any VAO.
 
 		 \sa bind()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		virtual void unbind() const override final;
 
@@ -254,10 +247,9 @@ namespace ae
 		// Private member(s)
 		std::vector<std::unique_ptr<VertexBuffer>> mVBOs;           //!< The associated VBOs
 		std::unique_ptr<IndexBuffer>               mIBO;            //!< The associated IBO
-		unsigned int                               mAttributeIndex; //!< The current index of the last-added vertex attribute
+		uint32_t                                   mAttributeIndex; //!< The current index of the last-added vertex attribute
 	};
 }
-#endif // Aeon_Graphics_VertexArray_H_
 
 /*!
  \class ae::VertexArray
@@ -279,7 +271,7 @@ namespace ae
  longer needed.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

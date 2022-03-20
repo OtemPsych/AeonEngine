@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,16 +22,15 @@
 
 #include <AEON/Window/ContextSettings.h>
 
-#include <string>
+#include <cassert>
+#include <cmath>
 
 #include <GLFW/glfw3.h>
-
-#include <AEON/System/DebugLogger.h>
 
 namespace ae
 {
 	// Public constructor(s)
-	ContextSettings::ContextSettings(int msaa, int major, int minor, int depth, int stencil, bool sRgb)
+	ContextSettings::ContextSettings(int32_t msaa, int32_t major, int32_t minor, int32_t depth, int32_t stencil, bool sRgb)
 		: mAntialiasingLevel(0)
 		, mMajorVersion(4)
 		, mMinorVersion(5)
@@ -79,86 +78,35 @@ namespace ae
 		glfwWindowHint(GLFW_CONTEXT_NO_ERROR, !AEON_DEBUG);
 	}
 
-	void ContextSettings::setAntialiasingLevel(int msaa)
+	void ContextSettings::setAntialiasingLevel(int32_t msaa)
 	{
-		// Check if the msaa provided is a valid level (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (msaa != 0 && fmodf(log2f(static_cast<float>(msaa)) * 2.f, 2.f) != 0.f) {
-				AEON_LOG_ERROR("Invalid anti-aliasing level", "The antialiasing level of x" + std::to_string(msaa) + " provided isn't a valid level.\nAborting operation.");
-				return;
-			}
-		}
+		assert(msaa == 0.f || fmodf(log2f(static_cast<float>(msaa)) * 2.f, 2.f) == 0.f);
 		mAntialiasingLevel = msaa;
 	}
 
-	int ContextSettings::getAntialiasingLevel() const noexcept
+	void ContextSettings::setContextVersion(int32_t major, int32_t minor)
 	{
-		return mAntialiasingLevel;
-	}
-
-	void ContextSettings::setContextVersion(int major, int minor)
-	{
-		// Log an error message if the chosen version is inferior to 4.5 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if ((major == 4 && minor < 5) || major < 4) {
-				AEON_LOG_ERROR("Invalid OpenGL version", "The minimum OpenGL version supported is version 4.5.\nAborting operation.");
-				return;
-			}
-		}
+		assert((major == 4 && minor >= 5) || major > 4); // version >= 4.5
 
 		mMajorVersion = major;
 		mMinorVersion = minor;
 	}
 
-	void ContextSettings::getContextVersion(int& major, int& minor) const noexcept
+	void ContextSettings::getContextVersion(int32_t& major, int32_t& minor) const noexcept
 	{
 		major = mMajorVersion;
 		minor = mMinorVersion;
 	}
 
-	void ContextSettings::setDepthBits(int depth)
+	void ContextSettings::setDepthBits(int32_t depth)
 	{
-		// Log an error message if the chosen depth bits are inferior to 16 and not a multiple of 8 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (depth < 16 || depth % 8 != 0) {
-				AEON_LOG_ERROR("Invalid number of depth bits", "The depth bits \"" + std::to_string(depth) + "\" provided is invalid.\nAborting operation.");
-				return;
-			}
-		}
-
+		assert(depth >= 16 && depth % 8 == 0);
 		mDepthBits = depth;
 	}
 
-	int ContextSettings::getDepthBits() const noexcept
+	void ContextSettings::setStencilBits(int32_t stencil)
 	{
-		return mDepthBits;
-	}
-
-	void ContextSettings::setStencilBits(int stencil)
-	{
-		// Log an error message if the chosen stencil bits are inferior to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (stencil < 0) {
-				AEON_LOG_ERROR("Invalid number of stencil bits", "The stencil bits \"" + std::to_string(stencil) + "\" provided is invalid.\nAborting operation.");
-				return;
-			}
-		}
-
+		assert(stencil >= 0);
 		mStencilBits = stencil;
-	}
-
-	int ContextSettings::getStencilBits() const noexcept
-	{
-		return mStencilBits;
-	}
-
-	void ContextSettings::setSrgbEnabled(bool flag) noexcept
-	{
-		mSrgbCapable = flag;
-	}
-
-	bool ContextSettings::isSrgbEnabled() const noexcept
-	{
-		return mSrgbCapable;
 	}
 }

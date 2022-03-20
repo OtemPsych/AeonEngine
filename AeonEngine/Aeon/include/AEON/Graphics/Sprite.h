@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Sprite_H_
-#define Aeon_Graphics_Sprite_H_
+#pragma once
 
-#include <AEON/Graphics/Actor2D.h>
+#include <AEON/Graphics/Actor.h>
 #include <AEON/Graphics/Color.h>
 #include <AEON/Graphics/Texture2D.h>
 #include <AEON/Math/AABoxCollider.h>
@@ -31,9 +30,9 @@
 namespace ae
 {
 	/*!
-	 \brief The class representing a drawable and transformable 2D object.
+	 \brief The class representing the simplest form of a textured 2D object.
 	*/
-	class _NODISCARD AEON_API Sprite : public Actor2D
+	class AEON_API Sprite : public Actor
 	{
 	public:
 		// Public constructor(s)
@@ -69,16 +68,23 @@ namespace ae
 
 		 \since v0.6.0
 		*/
-		Sprite(const Sprite& copy) = default;
+		Sprite(const Sprite& copy);
 		/*!
 		 \brief Move constructor.
 
 		 \param[in] rvalue The ae::Sprite that will be moved
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Sprite(Sprite&& rvalue) noexcept;
-	public:
+		Sprite(Sprite&& rvalue) noexcept = default;
+		/*!
+		 \brief Virtual destructor.
+		 \details A virtual destructor is needed as this class may be inherited by user-created classes.
+
+		 \since v0.7.0
+		*/
+		virtual ~Sprite() = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Assignment operator.
@@ -97,14 +103,14 @@ namespace ae
 
 		 \return The caller ae::Sprite
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		Sprite& operator=(Sprite&& rvalue) noexcept;
-	public:
+		Sprite& operator=(Sprite&& rvalue) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Sets the ae::Sprite's \a texture and the option to reset the current texture rect to the provided \a texture's dimensions.
-		 \details The current texture rect will be replaced regardless if it's currently empty.
+		 \details The current texture rect will always be replaced if it's currently empty.
 
 		 \param[in] texture The ae::Texture2D to assign to the ae::Sprite
 		 \param[in] resetRect True to overwrite the current texture rect with the provided \a texture's dimensions, false by default
@@ -120,8 +126,10 @@ namespace ae
 		 ae::Texture2D texture2;
 		 texture2.loadFromFile("Textures/texture2.png");
 
-		 sprite->setTexture(texture2); // current texture rects keeps its previous coordinates
+		 sprite->setTexture(texture2); // current texture rect isn't replaced by the texture's coordinates
 		 \endcode
+
+		 \since v0.7.0
 		*/
 		void setTexture(const Texture2D& texture, bool resetRect = false);
 		/*!
@@ -180,9 +188,9 @@ namespace ae
 
 		 \sa setTexture(), getTextureRect()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Texture2D* const getTexture() const noexcept;
+		[[nodiscard]] inline const Texture2D* const getTexture() const noexcept { return mTexture; }
 		/*!
 		 \brief Retrieves the ae::Sprite's texture rect.
 		 \details The texture rect represents the area of the assigned texture to display.
@@ -199,9 +207,9 @@ namespace ae
 
 		 \sa setTextureRect(), getTexture()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Box2f& getTextureRect() const noexcept;
+		[[nodiscard]] inline const Box2f& getTextureRect() const noexcept { return mTextureRect; }
 		/*!
 		 \brief Retrieves the color of the ae::Sprite.
 		 \details The color refers to the color used to saturate the assigned texture or make it transparent.
@@ -218,51 +226,11 @@ namespace ae
 
 		 \sa setColor()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Color& getColor() const noexcept;
-
-		// Public virtual method(s)
-		/*!
-		 \brief Retrieves the ae::Sprite's model bounding box.
-
-		 \return An ae::Box2f containing the model bounding box.
-
-		 \since v0.4.0
-		*/
-		_NODISCARD virtual Box2f getModelBounds() const override final;
-	private:
-		// Private method(s)
-		/*!
-		 \brief Updates the stored vertices' positions and texture coordinates.
-		 \details Called when the vertices were attempted to be retrieved and the texture or the texture rect had changed.
-
-		 \sa updateColor(), updateVertices()
-
-		 \since v0.5.0
-		*/
-		void updatePosUV();
-		/*!
-		 \brief Updates the stored vertices' color.
-		 \details Called when the vertices were attempted to be retrieved and the color had changed.
-
-		 \sa updatePosUV(), updateVertices()
-
-		 \since v0.4.0
-		*/
-		void updateColor();
-
-		// Private virtual method(s)
-		/*!
-		 \brief Updates the ae::Sprite's vertex data.
-
-		 \param[in] dt The time difference between the previous frame and the current frame
-
-		 \sa updatePosUV(), updateColor(), renderSelf()
-
-		 \since v0.6.0
-		*/
-		virtual void updateSelf(const Time& dt) override final;
+		[[nodiscard]] inline const Color& getColor() const noexcept { return mColor; }
+	protected:
+		// Protected virtual method(s)
 		/*!
 		 \brief Sends the vertex data and render states to the renderer.
 		 \details Sets the appropriate shader, blend mode and texture.
@@ -271,37 +239,61 @@ namespace ae
 
 		 \sa updateSelf()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		virtual void renderSelf(RenderStates states) const override final;
-
+		virtual void renderSelf(RenderStates states) const override;
 	private:
+		// Private method(s)
+		/*!
+		 \brief Updates the stored vertices' positions and texture coordinates.
+		 \details Called when the texture or the texture rect changes.
+
+		 \sa updateColor()
+
+		 \since v0.7.0
+		*/
+		void updatePosUV();
+		/*!
+		 \brief Updates the stored vertices' color.
+		 \details Called when the color changes.
+
+		 \sa updatePosUV()
+
+		 \since v0.7.0
+		*/
+		void updateColor();
+		/*!
+		 \brief Adds the necessary components and creates the vertex data.
+
+		 \since v0.7.0
+		*/
+		void init();
+
 		// Private member(s)
-		Box2f            mModelBounds; //!< The local model bounds of the sprite
 		Box2f            mTextureRect; //!< The texture rectangle containing the texture coordinates
 		const Texture2D* mTexture;     //!< The texture to assign to the sprite
 		Color            mColor;       //!< The color of the sprite
-
-		bool             mUpdatePosUV; //!< Whether the vertices' positions and texture coordinates need to be updated
-		bool             mUpdateColor; //!< Whether the vertices' color needs to be updated
 	};
 }
-#endif // Aeon_Graphics_Sprite_H_
 
 /*!
  \class ae::Sprite
  \ingroup graphics
-
- The ae::Sprite class is used to represent a 2D object to the screen usually
- holding a texture (an image), but not necessarily.
 
  The ae::Sprite and ae::RectangleShape instances behave very similarly, but the
  main difference is that an ae::Sprite heavily depends on its texture as it
  also acts as the dimensions of the sprite. This results in a texture that
  never appears stretched or in any way deformed.
 
+ An ae::Sprite should be used when an entire texture (or part of that texture)
+ needs to be rendered in said texture's dimensions.
+
+ A textured ae::RectangleShape or ae::EllipseShape should be used when the
+ dimensions need to be a fixed size (or radius when using an ellipse)
+ regardless of the texture applied.
+
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.29
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

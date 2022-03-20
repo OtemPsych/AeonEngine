@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,6 +24,7 @@
 
 #include <GL/glew.h>
 
+#include <AEON/Window/internal/EventQueue.h>
 #include <AEON/Window/Application.h>
 #include <AEON/Graphics/internal/GLCommon.h>
 #include <AEON/Graphics/Color.h>
@@ -51,9 +52,8 @@ namespace ae
 
 		// Clear the color and depth buffers
 		unsigned int fboHandle = getFramebufferHandle();
-		//GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 		GLCall(glClearNamedFramebufferfv(fboHandle, GL_COLOR, 0, mClearColor.elements.data()));
-		GLCall(glClearNamedFramebufferfi(fboHandle, GL_DEPTH_STENCIL, 0, depthValue, 0));
+		GLCall(glClearNamedFramebufferfv(fboHandle, GL_DEPTH, 0, &depthValue));
 	}
 
 	void RenderTarget::activate()
@@ -63,13 +63,22 @@ namespace ae
 
 			GLCall(glBindFramebuffer(GL_FRAMEBUFFER, getFramebufferHandle()));
 			GLCall(glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y));
+
+			clear();
 		}
-		clear();
 	}
 
 	void RenderTarget::setClearColor(const Color& color)
 	{
 		mClearColor = color.normalize();
+	}
+
+	Color RenderTarget::getClearColor()
+	{
+		return Color(static_cast<uint8_t>(mClearColor[0] * 255.f),
+		             static_cast<uint8_t>(mClearColor[1] * 255.f),
+		             static_cast<uint8_t>(mClearColor[2] * 255.f),
+		             static_cast<uint8_t>(mClearColor[3] * 255.f));
 	}
 
 	Vector2f RenderTarget::mapPixelToCoords(const Vector2f& pixel) const
@@ -88,7 +97,7 @@ namespace ae
 		                    1.f - 2.f * (pixel.y - VIEWPORT.min.y) / VIEWPORT.max.y);
 
 		// Transform the homogeneous coordinates by the inverse of the view and the inverse of the projection matrices
-		return Vector2f(mCamera->getInverseViewMatrix() * mCamera->getInverseProjectionMatrix() * Vector3f(NDC));
+		return Vector2f(mCamera->getInverseViewMatrix() * mCamera->getInverseProjectionMatrix() * Vector4f(Vector3f(NDC), 1.f));
 	}
 
 	Vector2f RenderTarget::mapCoordsToPixel(const Vector2f& point) const
@@ -102,7 +111,7 @@ namespace ae
 		}
 
 		// Convert the point to target coordinates
-		const Vector2f TRANS_POINT(mCamera->getProjectionMatrix() * Vector3f(point));
+		const Vector2f TRANS_POINT(mCamera->getProjectionMatrix() * Vector4f(Vector3f(point), 1.f));
 		const Box2f VIEWPORT = getViewport();
 
 		return Vector2f((TRANS_POINT.x + 1.f) / 2.f * VIEWPORT.max.x + VIEWPORT.min.x,
@@ -156,23 +165,5 @@ namespace ae
 		, mClearColor(Color::Black.normalize())
 		, mCamera(nullptr)
 	{
-	}
-
-	RenderTarget::RenderTarget(RenderTarget&& rvalue) noexcept
-		: mFramebufferSize(std::move(rvalue.mFramebufferSize))
-		, mClearColor(std::move(rvalue.mClearColor))
-		, mCamera(std::move(rvalue.mCamera))
-	{
-	}
-
-	// Protected operator(s)
-	RenderTarget& RenderTarget::operator=(RenderTarget&& rvalue) noexcept
-	{
-		// Move the rvalue's data
-		mFramebufferSize = std::move(rvalue.mFramebufferSize);
-		mClearColor = std::move(rvalue.mClearColor);
-		mCamera = std::move(rvalue.mCamera);
-
-		return *this;
 	}
 }

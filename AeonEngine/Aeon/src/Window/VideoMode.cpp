@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -49,12 +49,12 @@ namespace ae
 		mBlueBits = desktopMode.getBlueBits();
 	}
 
-	VideoMode::VideoMode(const Vector2i& resolution, int refreshRate, int redBits, int greenBits, int blueBits, const Monitor* const monitor)
+	VideoMode::VideoMode(const Vector2i& resolution, int32_t refreshRate, int32_t redBits, int32_t greenBits, int32_t blueBits, const Monitor* const monitor)
 		: VideoMode(resolution.x, resolution.y, refreshRate, redBits, greenBits, blueBits, monitor)
 	{
 	}
 
-	VideoMode::VideoMode(int width, int height, int refreshRate, int redBits, int greenBits, int blueBits, const Monitor* const monitor)
+	VideoMode::VideoMode(int32_t width, int32_t height, int32_t refreshRate, int32_t redBits, int32_t greenBits, int32_t blueBits, const Monitor* const monitor)
 		: mResolution(width, height)
 		, mRefreshRate(refreshRate)
 		, mRedBits(redBits)
@@ -73,7 +73,7 @@ namespace ae
 	{
 	}
 
-	VideoMode::VideoMode(int width, int height, const Monitor* const monitor)
+	VideoMode::VideoMode(int32_t width, int32_t height, const Monitor* const monitor)
 		: mResolution(width, height)
 		, mRefreshRate()
 		, mRedBits()
@@ -87,6 +87,7 @@ namespace ae
 			return;
 		}
 
+		// Retrieve the associated monitor's properties
 		const VideoMode& desktopMode = mAssociatedMonitor->getDesktopMode();
 		mRefreshRate = desktopMode.getRefreshRate();
 		mRedBits = desktopMode.getRedBits();
@@ -95,16 +96,11 @@ namespace ae
 	}
 
 	VideoMode::VideoMode(const Vector2i& resolution, const VideoMode& vmode) noexcept
-		: mResolution(resolution)
-		, mRefreshRate(vmode.mRefreshRate)
-		, mRedBits(vmode.mRedBits)
-		, mGreenBits(vmode.mGreenBits)
-		, mBlueBits(vmode.mBlueBits)
-		, mAssociatedMonitor(vmode.mAssociatedMonitor)
+		: VideoMode(resolution.x, resolution.y, vmode)
 	{
 	}
 
-	VideoMode::VideoMode(int width, int height, const VideoMode& vmode) noexcept
+	VideoMode::VideoMode(int32_t width, int32_t height, const VideoMode& vmode) noexcept
 		: mResolution(width, height)
 		, mRefreshRate(vmode.mRefreshRate)
 		, mRedBits(vmode.mRedBits)
@@ -132,15 +128,12 @@ namespace ae
 	// Public method(s)
 	bool VideoMode::isValid(const Monitor* monitor) const
 	{
-		// Check the validity of the monitor provided or of the associated monitor if nullptr
 		if (!monitor) {
 			monitor = mAssociatedMonitor;
 		}
 
-		// Retrieve the monitor's fullscreen modes and compare them
+		// Attempt to find if the video mode is in the list of valid modes
 		const std::vector<VideoMode>& fullscreenModes = monitor->getFullscreenModes();
-		auto found = std::find(fullscreenModes.begin(), fullscreenModes.end(), *this);
-
-		return (found != fullscreenModes.end());
+		return std::find(fullscreenModes.begin(), fullscreenModes.end(), *this) != fullscreenModes.end();
 	}
 }

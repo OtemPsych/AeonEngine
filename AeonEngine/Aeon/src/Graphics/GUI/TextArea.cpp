@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -29,7 +29,7 @@ namespace ae
 {
 	TextArea::TextArea()
 		: Widget()
-		, mContent(Texture::InternalFormat::RGBA8)
+		, mContent()
 		, mText("")
 		, mLines()
 		, mMaxSize(0.f, 0.f)
@@ -69,7 +69,7 @@ namespace ae
 		// Separate the new text into several lines based on the properties set
 		separateLines();
 
-		setDirty(true);
+		getComponent<Render2DComponent>()->setDirty(true);
 	}
 
 	Text* const TextArea::getLine(size_t index) const noexcept
@@ -82,13 +82,14 @@ namespace ae
 	{
 		Widget::updateSelf(dt);
 
-		if (isDirty())
+		Render2DComponent* const renderComponent = getComponent<Render2DComponent>();
+		if (renderComponent->isDirty())
 		{
 			// Set the render texture's clear color to the active state's fill color
 			mContent.setClearColor(getState(getActiveState()).getFillColor());
 
 			mUpdateContent = true;
-			setDirty(false);
+			renderComponent->setDirty(false);
 		}
 
 		if (mUpdateContent) {
@@ -99,13 +100,6 @@ namespace ae
 
 	void TextArea::handleEventSelf(Event* const event)
 	{
-		if (event->type == Event::Type::FontUpdated) {
-			auto fontEvent = event->as<FontEvent>();
-			if (fontEvent->font == mLines.front()->getFont()) {
-				mUpdateContent = true;
-			}
-		}
-
 		// Check if the text area has been disabled
 		const State ACTIVE_STATE = getActiveState();
 		if (ACTIVE_STATE == State::Disabled) {
@@ -188,14 +182,14 @@ namespace ae
 			for (size_t i = 0; i < mLines.size(); )
 			{
 				mLines[i]->update(Time::Zero);
-				const float LENGTH = mLines[i]->getModelBounds().size.x;
+				const float LENGTH = mLines[i]->getComponent<Collider2DComponent>()->getModelBounds().size.x;
 				if (LENGTH >= size.x)
 				{
 					// Create a new line if this is the last one
 					if (i + 1 >= mLines.size()) {
 						auto newLine = std::make_unique<Text>(*mLines.front());
 						newLine->setText("");
-						newLine->move(0.f, mLines.front()->getCharacterSize() * mLines.front()->getScale().y * mLines.size());
+						newLine->getComponent<Transform2DComponent>()->move(0.f, mLines.front()->getCharacterSize() * mLines.front()->getComponent<Transform2DComponent>()->getScale().y * mLines.size());
 						mLines.emplace_back(newLine.get());
 						getState(getActiveState()).attachChild(std::move(newLine));
 					}
@@ -249,17 +243,17 @@ namespace ae
 
 				// Set the text found after the newline to the next line
 				mLines[lineIndex]->setText(mText.substr(characterOffset, std::string::npos));
-				mLines[lineIndex]->move(0.f, mLines.front()->getCharacterSize() * mLines.front()->getScale().y * (mLines.size() - 1));
+				mLines[lineIndex]->getComponent<Transform2DComponent>()->move(0.f, mLines.front()->getCharacterSize() * mLines.front()->getComponent<Transform2DComponent>()->getScale().y * (mLines.size() - 1));
 			}
 		}
 	}
 
 	// Private virtual method(s)
-	void TextArea::enableState(State state)
+	void TextArea::enableState(uint32_t state)
 	{
 		// Detach the lines from the currently-active state
 		ae::RectangleShape& previousState = getState(getActiveState());
-		std::vector<std::unique_ptr<Actor2D>> detachedLines;
+		std::vector<std::unique_ptr<Actor>> detachedLines;
 		detachedLines.reserve(mLines.size());
 		for (const Text* const line : mLines) {
 			detachedLines.push_back(previousState.detachChild(*line));
@@ -270,7 +264,7 @@ namespace ae
 
 		// Attach the previously-detached lines to the active state
 		ae::RectangleShape& currentState = getState(getActiveState());
-		for (std::unique_ptr<Actor2D>& line : detachedLines) {
+		for (std::unique_ptr<Actor>& line : detachedLines) {
 			currentState.attachChild(std::move(line));
 		}
 

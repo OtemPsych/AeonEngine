@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Window_VideoMode_H_
-#define Aeon_Window_VideoMode_H_
+#pragma once
 
 #include <AEON/Math/Vector.h>
 
@@ -57,7 +56,7 @@ namespace ae
 		*/
 		explicit VideoMode(const Monitor* const monitor = nullptr);
 		/*!
-		 \brief Constructs the ae::VideoMode by providing the resolution, the refresh rate, the bits per channel and the pointer to the associated monitor.
+		 \brief Constructs the ae::VideoMode by providing the resolution, the refresh rate, and the optional bits per channel and pointer to the associated monitor.
 		 \details The \a redBits, \a greenBits, \a blueBits and \a monitor parameters are optional.\n
 		 The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
 
@@ -73,11 +72,11 @@ namespace ae
 		 ae::VideoMode vmode(ae::Vector2i(1280, 720), 60);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		VideoMode(const Vector2i& resolution, int refreshRate, int redBits = 8, int greenBits = 8, int blueBits = 8, const Monitor* const monitor = nullptr);
+		VideoMode(const Vector2i& resolution, int32_t refreshRate, int32_t redBits = 8, int32_t greenBits = 8, int32_t blueBits = 8, const Monitor* const monitor = nullptr);
 		/*!
-		 \brief Constructs the ae::VideoMode by providing the width, the height, the refresh rate, the bits per channel and the pointer to the associated window.
+		 \brief Constructs the ae::VideoMode by providing the width, the height, the refresh rate, and the optional bits per channel and pointer to the associated window.
 		 \details The \a redBits, \a greenBits, \a blueBits and \a monitor parameters are optional.\n
 		 The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
 
@@ -94,15 +93,14 @@ namespace ae
 		 ae::VideoMode vmode(1280, 720, 60);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		VideoMode(int width, int height, int refreshRate, int redBits = 8, int greenBits = 8, int blueBits = 8, const Monitor* const monitor = nullptr);
+		VideoMode(int32_t width, int32_t height, int32_t refreshRate, int32_t redBits = 8, int32_t greenBits = 8, int32_t blueBits = 8, const Monitor* const monitor = nullptr);
 		/*!
 		 \brief Constructs the ae::VideoMode by providing the \a resolution and an optional pointer to a \a monitor that will retrieve the desktop mode of said \a monitor.
-		 \details This approach is the simplest way of creating a native video mode if the API user wishes to use the primary monitor of the application user by not providing a specific \a monitor or
-		 to use a specific \a monitor.
+		 \details This approach is the simplest way of creating a native video mode if the API user wishes to use the primary monitor of the application user by not providing a specific \a monitor.
 
-		 \param[in] resolution A 2-dimensional ae::Vector containing the resolution of the fullscreen window or the size of the windowed window
+		 \param[in] resolution An ae::Vector2 containing the resolution of the fullscreen window or the size of the windowed window
 		 \param[in] monitor The pointer to the ae::Monitor of which its desktop mode will be retrieved that will provide the remaining parameters, the primary monitor by default
 
 		 \par Example:
@@ -112,13 +110,12 @@ namespace ae
 		 ae::VideoMode vmode2(ae::Vector2i(1280, 720));                               // the desktop mode of the primary monitor will be chosen
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		explicit VideoMode(const Vector2i& resolution, const Monitor* const monitor = nullptr);
 		/*!
 		 \brief Constructs the ae::VideoMode by providing the \a width, the \a height and an optional pointer to a \a monitor that will retrieve the desktop mode of said \a monitor.
-		 \details This approach is the simplest way of creating a native video mode if the API user wishes to use the primary monitor of the application user by not providing a specific \a monitor or
-		 to use a specific \a monitor.
+		 \details This approach is the simplest way of creating a native video mode if the API user wishes to use the primary monitor of the application user by not providing a specific \a monitor.
 
 		 \param[in] width The width of a windowed window or the horizontal resolution of a fullscreen window
 		 \param[in] height The height of a windowed window or the vertical resolution of a fullscreen window
@@ -131,14 +128,14 @@ namespace ae
 		 ae::VideoMode vmode2(1280, 720);                               // the desktop mode of the primary monitor will be chosen
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		VideoMode(int width, int height, const Monitor* const monitor = nullptr);
+		VideoMode(int32_t width, int32_t height, const Monitor* const monitor = nullptr);
 		/*!
 		 \brief Constructs the ae::VideoMode by providing the \a resolution and a \a vmode that will provide the remaining parameters.
 		 \details This constructor can be used to create a specific native video mode of a specific monitor.
 
-		 \param[in] resolution A 2-dimensional ae::Vector containing the resolution of the fullscreen window or the size of a windowed window
+		 \param[in] resolution An ae::Vector2 containing the resolution of the fullscreen window or the size of a windowed window
 		 \param[in] vmode The ae::VideoMode that will provide the remaining parameters
 
 		 \par Example:
@@ -150,7 +147,7 @@ namespace ae
 		 ae::VideoMode vmode(ae::Vector2i(1280, 720), secondBestVideoMode);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		VideoMode(const Vector2i& resolution, const VideoMode& vmode) noexcept;
 		/*!
@@ -170,9 +167,9 @@ namespace ae
 		 ae::VideoMode vmode(1280, 720, secondBestVideoMode);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		VideoMode(int width, int height, const VideoMode& vmode) noexcept;
+		VideoMode(int32_t width, int32_t height, const VideoMode& vmode) noexcept;
 		/*!
 		 \brief Copy constructor.
 
@@ -185,18 +182,22 @@ namespace ae
 		 \since v0.6.0
 		*/
 		VideoMode(VideoMode&&) noexcept = default;
-	public:
+
 		// Public operator(s)
 		/*!
 		 \brief Assignment operator.
 
-		 \since v0.6.0
+		 \return The caller ae::VideoMode
+
+		 \since v0.7.0
 		*/
 		VideoMode& operator=(const VideoMode&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \since v0.6.0
+		 \return The caller ae::VideoMode
+
+		 \since v0.7.0
 		*/
 		VideoMode& operator=(VideoMode&&) noexcept = default;
 		/*!
@@ -220,9 +221,9 @@ namespace ae
 
 		 \sa operator!=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator==(const VideoMode& other) const noexcept;
+		[[nodiscard]] bool operator==(const VideoMode& other) const noexcept;
 		/*!
 		 \brief Inequality operator.
 		 \details Checks if the respective data of the caller and of the \a other are inequal.\n
@@ -236,7 +237,7 @@ namespace ae
 		 \code
 		 const ae::MonitorManager& monitorManager = ae::MonitorManager::getInstance();
 		 ae::VideoMode vmode1(1280, 720);
-		 ae::VideoMode vmode2(1280, 720, monitorManager.getMonitor(1));
+		 ae::VideoMode vmode2(1920, 1080, monitorManager.getMonitor(1));
 		 if (vmode1 != vmode2) {
 			...
 		 }
@@ -244,10 +245,10 @@ namespace ae
 
 		 \sa operator==()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator!=(const VideoMode& other) const noexcept;
-	public:
+		[[nodiscard]] bool operator!=(const VideoMode& other) const noexcept;
+
 		// Public method(s)
 		/*!
 		 \brief Checks if the ae::VideoMode is a valid video mode for the \a monitor provided or the associated monitor if one isn't provided.
@@ -273,9 +274,9 @@ namespace ae
 		 }
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool isValid(const Monitor* monitor = nullptr) const;
+		[[nodiscard]] bool isValid(const Monitor* monitor = nullptr) const;
 
 		/*!
 		 \brief Retrieves the ae::VideoMode's resolution / size.
@@ -292,9 +293,9 @@ namespace ae
 
 		 \sa getWidth(), getHeight()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline const Vector2i& getResolution() const noexcept { return mResolution; }
+		[[nodiscard]] inline const Vector2i& getResolution() const noexcept { return mResolution; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's width / horizontal resolution.
 		 \details This member is considered as the horizontal resolution if the associated window is in fullscreen and as the width if it's in windowed mode.
@@ -305,14 +306,14 @@ namespace ae
 		 \code
 		 ae::VideoMode vmode(1280, 720);
 		 ...
-		 int width = vmode.getWidth();
+		 int32_t width = vmode.getWidth();
 		 \endcode
 
 		 \sa getHeight(), getResolution()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline int getWidth() const noexcept { return mResolution.x; }
+		[[nodiscard]] inline int32_t getWidth() const noexcept { return mResolution.x; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's height / vertical resolution.
 		 \details This member is considered as the vertical resolution if the associated window is in fullscreen and as the height if it's in windowed mode.
@@ -323,14 +324,14 @@ namespace ae
 		 \code
 		 ae::VideoMode vmode(1280, 720);
 		 ...
-		 int height = vmode.getHeight();
+		 int32_t height = vmode.getHeight();
 		 \endcode
 
 		 \sa getWidth(), getResolution()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline int getHeight() const noexcept { return mResolution.y; }
+		[[nodiscard]] inline int32_t getHeight() const noexcept { return mResolution.y; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's refresh rate.
 
@@ -340,12 +341,12 @@ namespace ae
 		 \code
 		 ae::VideoMode vmode(1280, 720);
 		 ...
-		 int refreshRate = vmode.getRefreshRate();
+		 int32_t refreshRate = vmode.getRefreshRate();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline int getRefreshRate() const noexcept { return mRefreshRate; }
+		[[nodiscard]] inline int32_t getRefreshRate() const noexcept { return mRefreshRate; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's bit depth of the red channel.
 		 \details The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
@@ -356,14 +357,14 @@ namespace ae
 		 \code
 		 ae::VideoMode vmode(1280, 720, 60, 8, 6, 6);
 		 ...
-		 int redBits = vmode.getRedBits();
+		 int32_t redBits = vmode.getRedBits();
 		 \endcode
 
 		 \sa getGreenBits(), getBlueBits()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline int getRedBits() const noexcept { return mRedBits; }
+		[[nodiscard]] inline int32_t getRedBits() const noexcept { return mRedBits; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's bit depth of the green channel.
 		 \details The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
@@ -374,14 +375,14 @@ namespace ae
 		 \code
 		 ae::VideoMode vmode(1280, 720, 60, 6, 8, 6);
 		 ...
-		 int greenBits = vmode.getGreenBits();
+		 int32_t greenBits = vmode.getGreenBits();
 		 \endcode
 
 		 \sa getRedBits(), getBlueBits()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline int getGreenBits() const noexcept { return mGreenBits; }
+		[[nodiscard]] inline int32_t getGreenBits() const noexcept { return mGreenBits; }
 		/*!
 		 \brief Retrieves the ae::VideoMode's bit depth of the blue channel.
 		 \details The color bit depth is per channel, so a value of 8 bits per channel will be: (8 bits * 4 channels = 32 bits per pixel).
@@ -392,14 +393,14 @@ namespace ae
 		 \code
 		 ae::VideoMode vmode(1280, 720, 60, 6, 8, 6);
 		 ...
-		 int blueBits = vmode.getBlueBits();
+		 int32_t blueBits = vmode.getBlueBits();
 		 \endcode
 
 		 \sa getRedBits(), getGreenBits()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline int getBlueBits() const noexcept { return mBlueBits; }
+		[[nodiscard]] inline int32_t getBlueBits() const noexcept { return mBlueBits; }
 		/*!
 		 \brief Retrieves the pointer to the ae::VideoMode's associated monitor.
 		 
@@ -416,21 +417,20 @@ namespace ae
 		 ae::VideoMode vmode2(1280, 720, monitorManager.getMonitor(1));
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline const Monitor* const getAssociatedMonitor() const noexcept { return mAssociatedMonitor; }
+		[[nodiscard]] inline const Monitor* const getAssociatedMonitor() const noexcept { return mAssociatedMonitor; }
 
 	private:
-		// Private member data
+		// Private member(s)
 		Vector2i       mResolution;        //!< The video mode's resolution
-		int            mRefreshRate;       //!< The video mode's refresh rate
-		int            mRedBits;           //!< The bit depth of the red channel
-		int            mGreenBits;         //!< The bit depth of the green channel
-		int            mBlueBits;          //!< The bit depth of the blue channel
+		int32_t        mRefreshRate;       //!< The video mode's refresh rate
+		int32_t        mRedBits;           //!< The bit depth of the red channel
+		int32_t        mGreenBits;         //!< The bit depth of the green channel
+		int32_t        mBlueBits;          //!< The bit depth of the blue channel
 		const Monitor* mAssociatedMonitor; //!< The pointer to the video mode's associated monitor
 	};
 }
-#endif // Aeon_Window_VideoMode_H_
 
 /*!
  \class ae::VideoMode
@@ -446,7 +446,7 @@ namespace ae
  creation of the window may fail.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.01.23
+ \version v0.7.0
+ \date 2021.12.28
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,7 +28,7 @@
 #include <AEON/Graphics/internal/RenderTarget.h>
 #include <AEON/Graphics/Camera.h>
 #include <AEON/Graphics/GLResourceFactory.h>
-#include <AEON/Graphics/Renderable2D.h>
+#include <AEON/Graphics/Render2DComponent.h>
 
 namespace ae
 {
@@ -36,7 +36,7 @@ namespace ae
 	Renderer2D* Renderer2D::activeInstance = nullptr;
 
 	// Public method(s)
-	void Renderer2D::submit(const Renderable2D& renderable, const RenderStates& states)
+	void Renderer2D::submit(const Render2DComponent& renderComponent, const RenderStates& states)
 	{
 		// Check if an inactive renderer received a submission (ignored in Release mode)
 		if _CONSTEXPR_IF (AEON_DEBUG) {
@@ -46,7 +46,7 @@ namespace ae
 			}
 		}
 
-		submit(renderable.getVertices(), renderable.getIndices(), states);
+		submit(renderComponent.getVertices(), renderComponent.getIndices(), states);
 	}
 
 	// Public virtual method(s)
@@ -72,9 +72,9 @@ namespace ae
 		const Matrix4f& projMatrix = camera->getProjectionMatrix();
 
 		// Upload the camera's properties to the UBO
-		mTransformUBO->queueUniformUpload("view", viewMatrix.elements.data(), sizeof(viewMatrix));
-		mTransformUBO->queueUniformUpload("projection", projMatrix.elements.data(), sizeof(projMatrix));
-		mTransformUBO->queueUniformUpload("viewProjection", (projMatrix * viewMatrix).elements.data(), sizeof(Matrix4f));
+		mTransformUBO->queueUniformUpload("view", viewMatrix.getElements().data(), sizeof(viewMatrix));
+		mTransformUBO->queueUniformUpload("projection", projMatrix.getElements().data(), sizeof(projMatrix));
+		mTransformUBO->queueUniformUpload("viewProjection", (projMatrix * viewMatrix).getElements().data(), sizeof(Matrix4f));
 		mTransformUBO->uploadQueuedUniforms();
 	}
 

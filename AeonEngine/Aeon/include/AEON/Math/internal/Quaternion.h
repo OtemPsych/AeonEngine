@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_Quaternion_H_
-#define Aeon_Math_Quaternion_H_
+#pragma once
 
-#include <AEON/Config.h>
 #include <AEON/Math/Vector.h>
 
 namespace ae
@@ -33,61 +31,17 @@ namespace ae
 	 \details Gimbal lock occurs once two of the three axes of rotation are situated in a parallel configuration.
 	 \note This class is considered to be internal but may still be used by the API user.
 	*/
-	class _NODISCARD AEON_API Quaternion
+	class AEON_API Quaternion
 	{
 	public:
 		// Public constructor(s)
 		/*!
 		 \brief Default constructor.
-		 \details Sets the angle of rotation w to 1.f, and the axes of rotation x, y and z to 0.f.
+		 \details Sets the angle of rotation w to 1.f and the axes of rotation x, y and z to 0.f.
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion() noexcept;
-		/*!
-		 \brief Constructs the ae::Quaternion by providing an angle of rotation \a w and the axes of rotation \a x, \a y and \a z.
-
-		 \param[in] w The angle of rotation that will be assigned to the real number w
-		 \param[in] x The x axis of rotation that will be assigned to the imaginary number x
-		 \param[in] y The y axis of rotation that will be assigned to the imaginary number y
-		 \param[in] z The z axis of rotation that will be assigned to the imaginary number z
-
-		 \par Example:
-		 \code
-		 ae::Quaternion quat(0.45f, 0.f, 1.f, -1.f);
-		 \endcode
-
-		 \since v0.3.0
-		*/
-		Quaternion(float w, float x, float y, float z) noexcept;
-		/*!
-		 \brief Constructs the ae::Quaternion by providing an angle of rotation \a w and an ae::Vector containing the \a axes of rotation.
-
-		 \param[in] w The angle of rotation that will be assigned to the real number w
-		 \param[in] axes The ae::Vector containing the axes of rotation that will be assigned to the imaginary numbers x, y and z
-
-		 \par Example:
-		 \code
-		 ae::Quaternion quat(0.45f, ae::Vector3f(0.f, 1.f, -1.f));
-		 \endcode
-
-		 \since v0.3.0
-		*/
-		Quaternion(float w, const Vector3f& axes) noexcept;
-		/*!
-		 \brief Constructs the ae::Quaternion by providing an ae::Vector containing the 3 axes of rotation and the angle of rotation.
-		 \note The w coordinate of the ae::Vector contains the angle of rotation.
-
-		 \param[in] rotation The ae::Vector containing the axes of rotation and the angle of rotation
-
-		 \par Example:
-		 \code
-		 ae::Quaternion quat(ae::Vector4f(0.f, 1.f, -1.f, 0.45f));
-		 \endcode
-
-		 \since v0.3.0
-		*/
-		explicit Quaternion(const Vector4f& rotation) noexcept;
 		/*!
 		 \brief Copy constructor.
 		 \details Sets the ae::Quaternion's components to the \a copy's components.
@@ -96,13 +50,13 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotationY(1.13f);
 		 ae::Quaternion quat2(quat1);
 		 // or
 		 ae::Quaternion quat2 = quat1;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion(const Quaternion& copy) noexcept;
 		/*!
@@ -113,12 +67,12 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
-		 ae::Quaternion quat3 = quat1 + quat2;
+		 ae::Quaternion quat1 = ae::Quaternion::rotationY(1.13f);
+		 ae::Quaternion quat2 = ae::Quaternion::rotationY(1.20f);
+		 ae::Quaternion quat3 = quat1 * quat2;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion(Quaternion&& rvalue) noexcept;
 	public:
@@ -129,17 +83,17 @@ namespace ae
 
 		 \param[in] other The ae::Quaternion of which its elements will be copied over to the caller's ones
 
-		 \return The caller ae::Quaternion containing the new components, these calls can be chained together one after the other
+		 \return The caller ae::Quaternion containing the new components
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ...
 		 quat1 = quat2;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator=(const Quaternion& other) noexcept;
 		/*!
@@ -148,18 +102,18 @@ namespace ae
 
 		 \param[in] rvalue The rvalue ae::Quaternion of which its elements will be moved over to the caller's ones
 
-		 \return The caller ae::Quaternion containing the moved elements, these calls can be chained together one after the other
+		 \return The caller ae::Quaternion containing the moved elements
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
-		 ae::Quaternion quat3(0.25f, 0.f, 0.f, 1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
+		 ae::Quaternion quat3 = ae::Quaternion::rotationY(1.20f);
 		 ...
 		 quat3 = quat1 * quat2;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator=(Quaternion&& rvalue) noexcept;
 
@@ -173,16 +127,16 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ae::Quaternion quat3 = quat1 + quat2;
 		 \endcode
 
 		 \sa operator-(), operator*(const Quaternion&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion operator+(const Quaternion& other) const noexcept;
+		[[nodiscard]] Quaternion operator+(const Quaternion& other) const noexcept;
 		/*!
 		 \brief Subtraction operator.
 		 \details Performs a memberwise subtraction of the angle and the axes of rotation of the caller and of the \a other.
@@ -193,16 +147,16 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ae::Quaternion quat3 = quat1 - quat2;
 		 \endcode
 
 		 \sa operator+(), operator*(const Quaternion&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion operator-(const Quaternion& other) const noexcept;
+		[[nodiscard]] Quaternion operator-(const Quaternion& other) const noexcept;
 		/*!
 		 \brief Multiplication operator.
 		 \details Performs a non-commutative multiplication of the angle and the axes of rotation of the caller and of the \a other.
@@ -213,16 +167,16 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ae::Quaternion quat3 = quat1 * quat2;
 		 \endcode
 
 		 \sa operator+(), operator-()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion operator*(const Quaternion& other) const noexcept;
+		[[nodiscard]] Quaternion operator*(const Quaternion& other) const noexcept;
 
 		/*!
 		 \brief Multiplication operator.
@@ -234,15 +188,15 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ae::Quaternion quat2 = quat1 * 0.8f;
 		 \endcode
 
 		 \sa operator/()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion operator*(float scalar) const noexcept;
+		[[nodiscard]] Quaternion operator*(float scalar) const noexcept;
 		/*!
 		 \brief Division operator.
 		 \details Performs a memberwise division of the angle and the axes of rotation of the ae::Quaternion and of the \a scalar value.
@@ -254,15 +208,15 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ae::Quaternion quat2 = quat1 / 0.8f;
 		 \endcode
 
 		 \sa operator*(float)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion operator/(float scalar) const;
+		[[nodiscard]] Quaternion operator/(float scalar) const;
 
 		/*!
 		 \brief Vector transformation operator.
@@ -274,16 +228,16 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat(0.45f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
 		 ae::Vector3f vec3f(0.65f, 0.f, 0.3f);
 		 ae::Vector3f rotatedVec3f = quat * vec3f;
 		 \endcode
 
 		 \sa rotate()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Vector3f operator*(const Vector3f& vec) const noexcept;
+		[[nodiscard]] Vector3f operator*(const Vector3f& vec) const noexcept;
 
 		/*!
 		 \brief Addition and assignment operator.
@@ -295,15 +249,15 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotationY(1.20f);
 		 ...
 		 quat1 += quat2;
 		 \endcode
 
 		 \sa operator-=(), operator*=(const Quaternion&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator+=(const Quaternion& other) noexcept;
 		/*!
@@ -316,15 +270,15 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotationY(1.20f);
 		 ...
 		 quat1 -= quat2;
 		 \endcode
 
 		 \sa operator+=(), operator*=(const Quaternion&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator-=(const Quaternion& other) noexcept;
 		/*!
@@ -337,15 +291,15 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(2.f, 0.f, 1.f).normalize());
+		 ae::Quaternion quat2 = ae::Quaternion::rotationY(1.20f);
 		 ...
 		 quat1 *= quat2;
 		 \endcode
 
 		 \sa operator+=(), operator-=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator*=(const Quaternion& other) noexcept;
 
@@ -355,39 +309,38 @@ namespace ae
 
 		 \param[in] scalar The scalar value that will be multiplied with the ae::Quaternion's angle and axes of rotation
 
-		 \return The caller ae::Quaternion containing the product of the multiplication, these calls can be chained together one after the other
+		 \return The caller ae::Quaternion containing the product of the multiplication
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat(0.45f, 0.f, 1.f, -1.f);
+		 ae::Quaternion quat = ae::Quaternion::rotationY(1.20f);
 		 ...
 		 quat *= 0.8f;
 		 \endcode
 
-		 \sa operator*=(float)
+		 \sa operator/=(float)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator*=(float scalar) noexcept;
 		/*!
 		 \brief Division and assignment operator.
 		 \details Performs a memberwise division of the ae::Quaternion's angle and the axes of rotation and of the \a scalar value, and assigns the quotient to the ae::Quaternion.
-		 \note If the \a scalar value provided is equal to 0, an error message will be logged and the operation will be aborted.
 
 		 \param[in] scalar The scalar value that will be the divisor of the ae::Quaternion's angle and axes of rotation
 
-		 \return The caller ae::Quaternion containing the quotient of the division, these calls can be chained together one after the other
+		 \return The caller ae::Quaternion containing the quotient of the division
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat(0.45f, 0.f, 1.f, -1.f);
+		 ae::Quaternion quat = ae::Quaternion::rotationY(1.20f);
 		 ...
 		 quat /= 0.8f;
 		 \endcode
 
 		 \sa operator*=(float)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Quaternion& operator/=(float scalar);
 
@@ -401,8 +354,8 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(1.f, 0.f, 0.f));
+		 ae::Quaternion quat2 = ae::Quaternion::rotationX(ae::Math::radians(45.f));
 		 if (quat1 == quat2) {
 			...
 		 }
@@ -410,9 +363,9 @@ namespace ae
 
 		 \sa operator!=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator==(const Quaternion& other) const noexcept;
+		[[nodiscard]] bool operator==(const Quaternion& other) const noexcept;
 		/*!
 		 \brief Inequality operator.
 		 \details Checks if the respective components of the caller and of the \a other are inequal.
@@ -423,8 +376,8 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(0.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2(0.8f, 1.f, 0.f, -1.f);
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(0.f, 1.f, 0.f));
+		 ae::Quaternion quat2 = ae::Quaternion::rotationX(ae::Math::radians(45.f));
 		 if (quat1 != quat2) {
 			...
 		 }
@@ -432,9 +385,9 @@ namespace ae
 
 		 \sa operator==()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator!=(const Quaternion& other) const noexcept;
+		[[nodiscard]] bool operator!=(const Quaternion& other) const noexcept;
 
 		// Friend operator(s)
 		/*!
@@ -447,11 +400,11 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Quaternion quat1(1.45f, 0.f, 1.f, -1.f);
-		 ae::Quaternion quat2 = -quat1; // (-1.45f, 0.f, -1.f, 1.f)
+		 ae::Quaternion quat1 = ae::Quaternion::rotation(ae::Math::radians(45.f), ae::Vector3f(0.f, 1.f, 0.f));
+		 ae::Quaternion quat2 = -quat1;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		friend AEON_API Quaternion operator-(const Quaternion& quat) noexcept;
 
@@ -469,9 +422,9 @@ namespace ae
 
 		 \sa fromEulerAngles()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Vector3f toEulerAngles() const noexcept;
+		[[nodiscard]] Vector3f toEulerAngles() const noexcept;
 		/*!
 		 \brief Rotates the \a vec provided by the ae::Quaternion's current rotation.
 
@@ -488,9 +441,9 @@ namespace ae
 		 ae::Vector3f rotatedVec = quat * vec;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Vector3f rotate(const Vector3f& vec) const noexcept;
+		[[nodiscard]] Vector3f rotate(const Vector3f& vec) const noexcept;
 		/*!
 		 \brief Retrieves the conjugate of the ae::Quaternion.
 		 \details The conjugate of a quaternion has the same components but with inverted signs except for the 'w' component that remains the same.
@@ -503,9 +456,9 @@ namespace ae
 		 ae::Quaternion conjugateQuat = quat.conjugate();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion conjugate() const noexcept;
+		[[nodiscard]] Quaternion conjugate() const noexcept;
 		/*!
 		 \brief Calculates and retrieves the magnitude of the ae::Quaternion.
 
@@ -517,9 +470,9 @@ namespace ae
 		 float magnitude = quat.magnitude();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD float magnitude() const noexcept;
+		[[nodiscard]] float magnitude() const noexcept;
 		/*!
 		 \brief Calculates and retrieves the unit quaternion (normalized) of the ae::Quaternion.
 
@@ -531,9 +484,9 @@ namespace ae
 		 ae::Quaternion unitQuat = quat.normalize();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Quaternion normalize() const;
+		[[nodiscard]] Quaternion normalize() const;
 
 		/*!
 		 \brief Retrieves the angle of rotation of the ae::Quaternion.
@@ -548,9 +501,9 @@ namespace ae
 
 		 \sa getAxes()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD float getAngle() const noexcept;
+		[[nodiscard]] inline float getAngle() const noexcept { return w; }
 		/*!
 		 \brief Retrieves the axes of rotation of the ae::Quaternion.
 
@@ -564,9 +517,9 @@ namespace ae
 
 		 \sa getAngle()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Vector3f& getAxes() const noexcept;
+		[[nodiscard]] inline const Vector3f& getAxes() const noexcept { return v; }
 
 		// Public static method(s)
 		/*!
@@ -584,9 +537,9 @@ namespace ae
 		 ae::Quaternion rotation = ae::Quaternion::rotation(vec0.normalize(), vec1.normalize());
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Quaternion rotation(const Vector3f& unitVec0, const Vector3f& unitVec1);
+		[[nodiscard]] static Quaternion rotation(const Vector3f& unitVec0, const Vector3f& unitVec1);
 		/*!
 		 \brief Constructs an ae::Quaternion by providing an \a angle in radians and the \a axes of rotation.
 		 \note The 3-dimensional ae::Vector containing the \a axes of rotation must be a unit vector (normalized).
@@ -601,9 +554,9 @@ namespace ae
 		 ae::Quaternion rotation = ae::Quaternion::rotation(1.13f, ae::Vector3f(20.f, 12.f, -5.f).normalize());
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Quaternion rotation(float angle, const Vector3f& axes) noexcept;
+		[[nodiscard]] static Quaternion rotation(float angle, const Vector3f& axes) noexcept;
 		/*!
 		 \brief Constructs an ae::Quaternion by providing an \a angle in radians along the X axis.
 
@@ -618,9 +571,9 @@ namespace ae
 
 		 \sa rotationY(), rotationZ()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Quaternion rotationX(float angle) noexcept;
+		[[nodiscard]] static Quaternion rotationX(float angle) noexcept;
 		/*!
 		 \brief Constructs an ae::Quaternion by providing an \a angle in radians along the Y axis.
 
@@ -635,9 +588,9 @@ namespace ae
 
 		 \sa rotationX(), rotationZ()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Quaternion rotationY(float angle) noexcept;
+		[[nodiscard]] static Quaternion rotationY(float angle) noexcept;
 		/*!
 		 \brief Constructs an ae::Quaternion by providing an \a angle in radians along the Z axis.
 
@@ -652,9 +605,9 @@ namespace ae
 
 		 \sa rotationX(), rotationY()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Quaternion rotationZ(float angle) noexcept;
+		[[nodiscard]] static Quaternion rotationZ(float angle) noexcept;
 		/*!
 		 \brief Calculates and retrieves the dot product between the \a q0 and \a q1 ae::Quaternion objects.
 
@@ -670,12 +623,34 @@ namespace ae
 		 float dotProduct = ae::Quaternion::dot(quat0, quat1);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static float dot(const Quaternion& q0, const Quaternion& q1) noexcept;
+		[[nodiscard]] static float dot(const Quaternion& q0, const Quaternion& q1) noexcept;
 
 	private:
-		// Member data
+		// Private constructor(s)
+		/*!
+		 \brief Constructs the ae::Quaternion by providing an angle of rotation \a w in radians and the axes of rotation \a x, \a y and \a z.
+
+		 \param[in] w The angle of rotation in radians that will be assigned to the real number w
+		 \param[in] x The x axis of rotation that will be assigned to the imaginary number x
+		 \param[in] y The y axis of rotation that will be assigned to the imaginary number y
+		 \param[in] z The z axis of rotation that will be assigned to the imaginary number z
+
+		 \since v0.7.0
+		*/
+		Quaternion(float w, float x, float y, float z) noexcept;
+		/*!
+		 \brief Constructs the ae::Quaternion by providing an angle of rotation \a w in radians and an ae::Vector containing the \a axes of rotation.
+
+		 \param[in] w The angle of rotation in radians that will be assigned to the real number w
+		 \param[in] axes The ae::Vector containing the axes of rotation that will be assigned to the imaginary numbers x, y and z
+
+		 \since v0.7.0
+		*/
+		Quaternion(float w, const Vector3f& axes) noexcept;
+
+		// Private Member(s)
 		float         w; //!< The real number that stores the angle
 		union {
 			Vector3f  v; //!< The imaginary numbers that store the axes of rotation
@@ -687,7 +662,6 @@ namespace ae
 		};
 	};
 }
-#endif // Aeon_Math_Quaternion_H_
 
 /*!
  \class ae::Quaternion
@@ -709,7 +683,7 @@ namespace ae
  Layout of a quaternion: q = w(angle) + xi(x axis) + yj(y axis) + zk(z axis)
 
  \author Filippos Gleglakos
- \version v0.4.0
- \date 2020.05.04
+ \version v0.7.0
+ \date 2021.12.19
  \copyright MIT License
 */

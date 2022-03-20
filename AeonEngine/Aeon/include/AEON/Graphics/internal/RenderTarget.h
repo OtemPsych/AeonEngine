@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -95,6 +95,7 @@ namespace ae
 		 \since v0.4.0
 		*/
 		void setClearColor(const Color& color);
+		Color getClearColor();
 		/*!
 		 \brief Converts a point from target coordinates to world coordinates.
 		 \details This method calculates the 2D position that matches the given pixel of the ae::RenderTarget.
@@ -200,9 +201,9 @@ namespace ae
 
 		 \param[in] rvalue The ae::RenderTarget that will be moved
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		RenderTarget(RenderTarget&& rvalue) noexcept;
+		RenderTarget(RenderTarget&& rvalue) noexcept = default;
 	protected:
 		// Protected operator(s)
 		/*!
@@ -212,9 +213,9 @@ namespace ae
 
 		 \return The caller ae::RenderTarget
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		RenderTarget& operator=(RenderTarget&& rvalue) noexcept;
+		RenderTarget& operator=(RenderTarget&& rvalue) noexcept = default;
 
 	protected:
 		// Protected member(s)
@@ -236,7 +237,7 @@ namespace ae
  shown on the window / render texture.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.06.09
+ \version v0.7.0
+ \date 2021.07.25
  \copyright MIT License
 */

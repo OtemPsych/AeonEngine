@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -30,49 +30,27 @@ namespace ae
 		, mRadius(radius)
 		, mPointCount(pointCount)
 	{
-	}
-
-	EllipseShape::EllipseShape(EllipseShape&& rvalue) noexcept
-		: Shape(std::move(rvalue))
-		, mRadius(std::move(rvalue.mRadius))
-		, mPointCount(rvalue.mPointCount)
-	{
-	}
-
-	// Public operator(s)
-	EllipseShape& EllipseShape::operator=(EllipseShape&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		Shape::operator=(std::move(rvalue));
-		mRadius = std::move(rvalue.mRadius);
-		mPointCount = rvalue.mPointCount;
-
-		return *this;
+		updatePositions();
 	}
 
 	// Public method(s)
 	void EllipseShape::setRadius(const Vector2f& radius) noexcept
 	{
 		mRadius = radius;
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	void EllipseShape::setRadius(float radiusX, float radiusY) noexcept
 	{
 		mRadius.x = radiusX;
 		mRadius.y = radiusY;
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	void EllipseShape::setPointCount(size_t count) noexcept
 	{
 		mPointCount = count;
-		mUpdatePositions = true;
-	}
-
-	const Vector2f& EllipseShape::getRadius() const noexcept
-	{
-		return mRadius;
+		updatePositions();
 	}
 
 	// Public virtual method(s)
@@ -83,14 +61,9 @@ namespace ae
 
 	Vector2f EllipseShape::getPoint(size_t index) const
 	{
-		// Check if an invalid index was provided (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (index >= getPointCount()) {
-				return Vector2f();
-			}
-		}
+		assert(index < getPointCount());
 
-		const float ANGLE = index * 2.f * Math::PI / mPointCount - Math::PI / 2.f;
+		const float ANGLE = index * 2.f * Math::pi() / mPointCount - Math::pi() / 2.f;
 		return mRadius + Vector2f(Math::cos(ANGLE) * mRadius.x, Math::sin(ANGLE) * mRadius.y);
 	}
 }

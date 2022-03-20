@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,6 +23,15 @@
 #ifndef Aeon_Config_H_
 #define Aeon_Config_H_
 
+// Define way of checking if constexpr variables and "if constexpr" are supported
+#if _HAS_CXX17
+	#define _CONSTEXPR_VAR constexpr
+	#define _CONSTEXPR_IF constexpr
+#else
+	#define _CONSTEXPR_VAR const
+	#define _CONSTEXPR_IF
+#endif // _HAS_CXX17
+
 // Define Aeon's debug macro
 #ifdef _DEBUG
 	#define AEON_DEBUG 1
@@ -30,12 +39,12 @@
 	#define AEON_DEBUG 0
 #endif // _DEBUG
 
-// Remove the console window in Release mode
-#ifndef _DEBUG
-	#ifndef AEON_INTERNAL_LIB
-		#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
-	#endif // AEON_INTERNAL_LIB
-#endif // _DEBUG
+//// Remove the console window in Release mode
+//#ifndef _DEBUG
+//	#ifndef AEON_INTERNAL_LIB
+//		#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+//	#endif // AEON_INTERNAL_LIB
+//#endif // _DEBUG
 
 // Define macros to differentiate between static and dynamic linking (import / export macros)
 #ifndef AEON_STATIC

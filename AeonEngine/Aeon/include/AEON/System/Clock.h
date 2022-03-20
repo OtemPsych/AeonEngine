@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_System_Clock_H_
-#define Aeon_System_Clock_H_
+#pragma once
 
 #include <AEON/System/Time.h>
 
@@ -30,7 +29,7 @@ namespace ae
 	/*!
 	 \brief The utility class used to measure elapsed time.
 	*/
-	class _NODISCARD AEON_API Clock
+	class AEON_API Clock
 	{
 	public:
 		// Public constructor(s)
@@ -44,42 +43,34 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \param[in] copy The ae::Clock that will be copied
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Clock(const Clock& copy) = default;
+		Clock(const Clock&) = default;
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::Clock that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Clock(Clock&& rvalue) noexcept = default;
-	public:
+		Clock(Clock&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Assignment operator.
 
-		 \param[in] other The ae::Clock that will be copied
-
 		 \return The caller ae::Clock
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Clock& operator=(const Clock& other) = default;
+		Clock& operator=(const Clock&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Clock that will be moved
-
 		 \return The caller ae::Clock
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Clock& operator=(Clock&& rvalue) noexcept = default;
-	public:
+		Clock& operator=(Clock&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the ae::Clock's elapsed time since its last reinitiation or since its construction.
@@ -95,9 +86,9 @@ namespace ae
 
 		 \sa restart()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Time getElapsedTime() const;
+		[[nodiscard]] Time getElapsedTime() const;
 		/*!
 		 \brief Restarts the ae::Clock and retrieves the elapsed time since its last reinitiation or since its construction.
 
@@ -121,7 +112,6 @@ namespace ae
 		Time mStartTime; //!< The time value of clock's last reinitiation in seconds
 	};
 }
-#endif // Aeon_System_Clock_H_
 
 /*!
  \class ae::Clock
@@ -137,7 +127,7 @@ namespace ae
 
  Usage example:
  \code
- ae::Clock clock; // the timer was initiated
+ ae::Clock clock; // the clocks starts ticking
  ...
  // Retrieve the elapsed time without restarting the clock (it keeps ticking)
  ae::Time elapsedTime = clock.getElapsedTime();
@@ -147,7 +137,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.01
+ \version v0.7.0
+ \date 2021.12.23
  \copyright MIT License
 */

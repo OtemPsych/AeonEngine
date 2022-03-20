@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_System_Clipboard_H_
-#define Aeon_System_Clipboard_H_
+#pragma once
 
 #include <string>
 
@@ -34,7 +33,6 @@ namespace ae
 	*/
 	namespace Clipboard
 	{
-		// Function(s)
 		/*!
 		 \brief Places a string into the system clipboard.
 
@@ -47,7 +45,7 @@ namespace ae
 
 		 \sa getString()
 
-		 \since v0.6.1
+		 \since v0.7.0
 		*/
 		AEON_API void setString(const std::string& string);
 		/*!
@@ -62,12 +60,11 @@ namespace ae
 
 		 \sa setString()
 
-		 \since v0.6.1
+		 \since v0.7.0
 		*/
-		AEON_API std::string getString();
+		[[nodiscard]] AEON_API std::string getString();
 	}
 }
-#endif // Aeon_System_Clipboard_H_
 
 /*!
  \namespace ae::Clipboard
@@ -87,7 +84,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.1
- \date 2021.06.13
+ \version v0.7.0
+ \date 2021.12.19
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -21,8 +21,6 @@
 // SOFTWARE.
 
 #include <AEON/Graphics/BlendMode.h>
-
-#include <AEON/System/DebugLogger.h>
 
 namespace ae
 {

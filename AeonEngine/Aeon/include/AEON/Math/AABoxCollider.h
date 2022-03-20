@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_AABoxCollider_H_
-#define Aeon_Math_AABoxCollider_H_
+#pragma once
 
 #include <AEON/Math/Vector.h>
 
@@ -32,9 +31,9 @@ namespace ae
 	 \details This struct can be used for collision detection or simply as a container.
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>>
-	struct _NODISCARD AABoxCollider
+	struct AEON_API AABoxCollider
 	{
-		// Member data
+		// Member(s)
 		union {
 			struct {
 				Vector<T, n> min;      //!< The minimum coordinates of the box
@@ -51,13 +50,14 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the member data to their default values.
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_CONSTEXPR17 AABoxCollider() noexcept
+		constexpr AABoxCollider() noexcept
 			: min()
 			, max()
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::AABoxCollider by providing the minimum and maximum coordinates or the position and the size.
 		 
@@ -66,21 +66,19 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 constexpr ae::AABoxCollider2f boxCollider2f(ae::Vector2f(0.f, 0.f), ae::Vector2f(2.f, 2.f));
+		 ae::AABoxCollider2f boxCollider2f(ae::Vector2f(0.f, 0.f), ae::Vector2f(2.f, 2.f));
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		AABoxCollider(const Vector<T, n>& v0, const Vector<T, n>& v1) noexcept
+		constexpr AABoxCollider(const Vector<T, n>& v0, const Vector<T, n>& v1) noexcept
 			: min(v0)
 			, max(v1)
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::AABoxCollider by providing specific values.
-		 \details If four values are provided while the ae::AABoxCollider is 3-dimensional, the first two values will be assigned
-		 to the minimum coordinates or the position and the other two will be assigned to the maximum coordinates or the size.
-		 \note It's up to the user to provide the correct number of values and of the right type.
 
 		 \param[in] val0 The first value
 		 \param[in] val1 The second value
@@ -91,38 +89,32 @@ namespace ae
 		 \par Example:
 		 \code
 		 // 2-dimensional AABoxCollider
-			// correct number of values
-		 ae::AABoxCollider2f boxCollider2f_1(0.f, 1.f, 2.f, 3.f);      // min/position: (0.f, 1.f), max/size: (2.f, 3.f)
-			// greater number of values (error)
-		 ae::AABoxCollider2f boxCollider2f_2(0.f, 1.f, 2.f, 3.f, 4.f); // error
+		 ae::AABoxCollider2f boxCollider2f_1(0.f, 1.f, 2.f, 3.f);           // min/position: (0.f, 1.f), max/size: (2.f, 3.f)
 
 		 // 3-dimensional AABoxCollider
-			// correct number of values
-		 ae::AABoxCollider3f boxCollider3f_1(0.f, 1.f, 2.f, 3.f, 4.f, 5.f);      // min/position: (0.f, 1.f, 2.f), max/size: (3.f, 4.f, 5.f)
-			// greater number of values (error)
-		 ae::AABoxCollider3f boxCollider3f_2(0.f, 1.f, 2.f, 3.f, 4.f, 5.f, 6.f); // error
-			// fewer number of values (values are evenly distributed)
-		 ae::AABoxCollider3f boxCollider3f_3(0.f, 1.f, 2.f, 3.f);                // min/position: (0.f, 1.f, 0.f), max/size: (2.f, 3.f, 0.f)
+		 ae::AABoxCollider3f boxCollider3f_1(0.f, 1.f, 2.f, 3.f, 4.f, 5.f); // min/position: (0.f, 1.f, 2.f), max/size: (3.f, 4.f, 5.f)
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		template <typename... Values>
-		AABoxCollider(T val0, T val1, T val2, T val3, Values... values) noexcept
+		inline AABoxCollider(T val0, T val1, T val2, T val3, Values... values) noexcept
 			: min()
 			, max()
 		{
+			static_assert(std::conjunction_v<std::bool_constant<std::is_same_v<Values, T>>...>, "'AABoxCollider(T, T, T, T, Values...)' - Values... parameters provided were not of type T");
+			static_assert(sizeof...(Values) == n * 2 - 4, "'AABoxCollider(T, T, T, T, Coords...)' - more than n*2 parameters were provided");
+
 			// Add the parameters received into a C++11 array
-			_CONSTEXPR17 const size_t MIN_N_ALL = Math::min(n * 2, sizeof...(Values) + 4);
-			const std::array<T, MIN_N_ALL> VALUES_PACK = { val0, val1, val2, val3, values... };
+			const std::array<T, n * 2> VALUES_PACK = { val0, val1, val2, val3, values... };
 
 			// Copy the values from the C++11 array to the 'min' and 'max' members
-			_CONSTEXPR17 const size_t MIN_N = MIN_N_ALL / 2;
-			for (size_t i = 0; i < MIN_N; ++i) {
+			for (size_t i = 0; i < n; ++i) {
 				min[i] = VALUES_PACK[i];
-				max[i] = VALUES_PACK[MIN_N + i];
+				max[i] = VALUES_PACK[n + i];
 			}
 		}
+
 		/*!
 		 \brief Constructs the ae::AABoxCollider by providing an ae::AABoxCollider of another type and/or with a different number of values.
 		 \details Sets the ae::AABoxCollider's values to the \a aaboxUN's values, up to the maximum number of values that both objects hold.\n
@@ -141,19 +133,20 @@ namespace ae
 		 ae::AABoxCollider2f boxCollider2f_2(boxCollider3f); // min/position: (5.f, 3.f), max/size: (8.f, 10.f)
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		template <typename U, size_t n2>
-		AABoxCollider(const AABoxCollider<U, n2>& aaboxUN) noexcept
+		constexpr AABoxCollider(const AABoxCollider<U, n2>& aaboxUN) noexcept
 			: min(aaboxUN.min)
 			, max(aaboxUN.max)
 		{
 		}
+
 		/*!
 		 \brief Copy constructor.
-		 \details Sets the ae::AABoxCollider's values to the \a copy's values.
+		 \details Performs a memberwise copy from the \a other's values to the ae::AABoxCollider's.
 
-		 \param[in] copy The ae::AABoxCollider of which its values will be copied over to the caller ae::AABoxCollider
+		 \param[in] other The ae::AABoxCollider of which its values will be copied over to the caller ae::AABoxCollider
 
 		 \par Example:
 		 \code
@@ -161,13 +154,14 @@ namespace ae
 		 ae::AABoxCollider2i boxCollider2i_2(boxCollider2i_1);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		AABoxCollider(const AABoxCollider<T, n>& copy) noexcept
-			: min(copy.min)
-			, max(copy.max)
+		constexpr AABoxCollider(const AABoxCollider<T, n>& other) noexcept
+			: min(other.min)
+			, max(other.max)
 		{
 		}
+
 		/*!
 		 \brief Move constructor.
 		 \details Performs a memberwise move from the \a rvalue's values to the ae::AABoxCollider's.
@@ -181,9 +175,9 @@ namespace ae
 		 ae::AABoxCollider2i boxCollider2i_2(std::move(boxCollider2i_1));
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		AABoxCollider(AABoxCollider<T, n>&& rvalue) noexcept
+		constexpr AABoxCollider(AABoxCollider<T, n>&& rvalue) noexcept
 			: min(std::move(rvalue.min))
 			, max(std::move(rvalue.max))
 		{
@@ -206,23 +200,18 @@ namespace ae
 		 boxCollider2i_1 = boxCollider2i_2;
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		AABoxCollider<T, n>& operator=(const AABoxCollider<T, n>& other) noexcept
+		inline AABoxCollider<T, n>& operator=(const AABoxCollider<T, n>& other) noexcept
 		{
-			// Check that the object won't be assigned to itself (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (this == &other) {
-					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
-					return *this;
-				}
-			}
+			assert(this != &other);
 
 			min = other.min;
 			max = other.max;
 
 			return *this;
 		}
+
 		/*!
 		 \brief Move assignment operator.
 		 \details Performs a memberwise move from the \a rvalue's values to the ae::AABoxCollider's values.
@@ -239,15 +228,16 @@ namespace ae
 		 boxCollider2i_1 = std::move(boxCollider2i_2);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		AABoxCollider<T, n>& operator=(AABoxCollider<T, n>&& rvalue) noexcept
+		inline AABoxCollider<T, n>& operator=(AABoxCollider<T, n>&& rvalue) noexcept
 		{
 			min = std::move(rvalue.min);
 			max = std::move(rvalue.max);
 			
 			return *this;
 		}
+
 		/*!
 		 \brief Equality operator.
 		 \details Checks if the respective values of the caller and of the \a other are equal.
@@ -259,7 +249,7 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::AABoxCollider2f boxCollider2f_1(1.f, 0.f, 5.f, 3.f);
-		 ae::AABoxCollider2f boxCollider2f_2(3.f, -1.f, 10.f, 1.f);
+		 ae::AABoxCollider2f boxCollider2f_2(1.f, 0.f, 5.f, 3.f);
 		 if (boxCollider2f_1 == boxCollider2f_2) {
 			...
 		 }
@@ -267,12 +257,13 @@ namespace ae
 
 		 \sa operator!=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator==(const AABoxCollider<T, n>& other) const noexcept
+		[[nodiscard]] inline bool operator==(const AABoxCollider<T, n>& other) const noexcept
 		{
 			return (min == other.min) && (max == other.max);
 		}
+
 		/*!
 		 \brief Inequality operator.
 		 \details Checks if the respective values of the caller and of the \a other are inequal.
@@ -292,9 +283,9 @@ namespace ae
 
 		 \sa operator==()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator!=(const AABoxCollider<T, n>& other) const noexcept
+		[[nodiscard]] inline bool operator!=(const AABoxCollider<T, n>& other) const noexcept
 		{
 			return !(*this == other);
 		}
@@ -318,12 +309,13 @@ namespace ae
 
 		 \sa intersects()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool contains(const Vector<T, n>& point) const noexcept
+		[[nodiscard]] inline bool contains(const Vector<T, n>& point) const noexcept
 		{
 			return (point >= min && point <= max);
 		}
+
 		/*!
 		 \brief Checks if the two ae::AABoxCollider objects are intersecting.
 		 \details The ae::AABoxCollider containing the intersection in min and max coordinates will be assigned to the parameter \a intersection (if it was provided).
@@ -346,13 +338,12 @@ namespace ae
 
 		 \sa contains()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool intersects(const AABoxCollider<T, n>& other, AABoxCollider<T, n>* const intersection = nullptr) const noexcept
+		[[nodiscard]] inline bool intersects(const AABoxCollider<T, n>& other, AABoxCollider<T, n>* const intersection = nullptr) const noexcept
 		{
-			// Check if an intersection pointer was provided
+			// Calculate the intersection edges and check if they're intersecting
 			if (intersection) {
-				// Calculate the intersection edges and check if they're intersecting
 				intersection->min = ae::max(min, other.min);
 				intersection->max = ae::min(max, other.max);
 
@@ -365,36 +356,35 @@ namespace ae
 
 	// Typedef(s)
 	template <typename T>
-	using AABoxCollider2 = AABoxCollider<T, 2>;           //!< A 2-dimensional AABoxCollider of type T for collision detection
+	using AABoxCollider2 = AABoxCollider<T, 2>;       //!< A 2-dimensional AABoxCollider of type T for collision detection
 	template <typename T>
-	using AABoxCollider3 = AABoxCollider<T, 3>;           //!< A 3-dimensional AABoxCollider of type T for collision detection
+	using AABoxCollider3 = AABoxCollider<T, 3>;       //!< A 3-dimensional AABoxCollider of type T for collision detection
 
-	using AABoxCollider2f = AABoxCollider2<float>;        //!< A 2-dimensional AABoxCollider of floats for collision detection
-	using AABoxCollider2d = AABoxCollider2<double>;       //!< A 2-dimensional AABoxCollider of doubles for collision detection
-	using AABoxCollider2i = AABoxCollider2<int>;          //!< A 2-dimensional AABoxCollider of ints for collision detection
-	using AABoxCollider2u = AABoxCollider2<unsigned int>; //!< A 2-dimensional AABoxCollider of unsigned ints for collision detection
+	using AABoxCollider2f = AABoxCollider2<float>;    //!< A 2-dimensional AABoxCollider of floats for collision detection
+	using AABoxCollider2d = AABoxCollider2<double>;   //!< A 2-dimensional AABoxCollider of doubles for collision detection
+	using AABoxCollider2i = AABoxCollider2<int32_t>;  //!< A 2-dimensional AABoxCollider of ints for collision detection
+	using AABoxCollider2u = AABoxCollider2<uint32_t>; //!< A 2-dimensional AABoxCollider of unsigned ints for collision detection
 
-	using AABoxCollider3f = AABoxCollider3<float>;        //!< A 3-dimensional AABoxCollider of floats for collision detection
-	using AABoxCollider3d = AABoxCollider3<double>;       //!< A 3-dimensional AABoxCollider of doubles for collision detection
-	using AABoxCollider3i = AABoxCollider3<int>;          //!< A 3-dimensional AABoxCollider of ints for collision detection
-	using AABoxCollider3u = AABoxCollider3<unsigned int>; //!< A 3-dimensional AABoxCollider of unsigned ints for collision detection
+	using AABoxCollider3f = AABoxCollider3<float>;    //!< A 3-dimensional AABoxCollider of floats for collision detection
+	using AABoxCollider3d = AABoxCollider3<double>;   //!< A 3-dimensional AABoxCollider of doubles for collision detection
+	using AABoxCollider3i = AABoxCollider3<int32_t>;  //!< A 3-dimensional AABoxCollider of ints for collision detection
+	using AABoxCollider3u = AABoxCollider3<uint32_t>; //!< A 3-dimensional AABoxCollider of unsigned ints for collision detection
 
 	template <typename T>
-	using Box2 = AABoxCollider<T, 2>;                     //!< A 2-dimensional AABoxCollider of type T for containers
+	using Box2 = AABoxCollider<T, 2>;                 //!< A 2-dimensional AABoxCollider of type T for containers
 	template <typename T>
-	using Box3 = AABoxCollider<T, 3>;                     //!< A 3-dimensional AABoxCollider of type T for containers
+	using Box3 = AABoxCollider<T, 3>;                 //!< A 3-dimensional AABoxCollider of type T for containers
 	
-	using Box2f = Box2<float>;                            //!< A 2-dimensional AABoxCollider of floats for containers
-	using Box2d = Box2<double>;                           //!< A 2-dimensional AABoxCollider of doubles for containers
-	using Box2i = Box2<int>;                              //!< A 2-dimensional AABoxCollider of ints for containers
-	using Box2u = Box2<unsigned int>;                     //!< A 2-dimensional AABoxCollider of unsigned ints for containers
+	using Box2f = Box2<float>;                        //!< A 2-dimensional AABoxCollider of floats for containers
+	using Box2d = Box2<double>;                       //!< A 2-dimensional AABoxCollider of doubles for containers
+	using Box2i = Box2<int32_t>;                      //!< A 2-dimensional AABoxCollider of ints for containers
+	using Box2u = Box2<uint32_t>;                     //!< A 2-dimensional AABoxCollider of unsigned ints for containers
 	
-	using Box3f = Box3<float>;                            //!< A 3-dimensional AABoxCollider of floats for containers
-	using Box3d = Box3<double>;                           //!< A 3-dimensional AABoxCollider of doubles for containers
-	using Box3i = Box3<int>;                              //!< A 3-dimensional AABoxCollider of ints for containers
-	using Box3u = Box3<unsigned int>;                     //!< A 3-dimensional AABoxCollider of unsigned ints for containers
+	using Box3f = Box3<float>;                        //!< A 3-dimensional AABoxCollider of floats for containers
+	using Box3d = Box3<double>;                       //!< A 3-dimensional AABoxCollider of doubles for containers
+	using Box3i = Box3<int32_t>;                      //!< A 3-dimensional AABoxCollider of ints for containers
+	using Box3u = Box3<uint32_t>;                     //!< A 3-dimensional AABoxCollider of unsigned ints for containers
 }
-#endif // Aeon_Math_AABoxCollider_H_
 
 /*!
  \struct ae::AABoxCollider
@@ -415,7 +405,7 @@ namespace ae
  as the API user won't be using it to detect any collisions.
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.21
+ \version v0.7.0
+ \date 2021.12.19
  \copyright MIT License
 */

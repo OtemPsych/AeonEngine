@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_FontManager_H_
-#define Aeon_Graphics_FontManager_H_
-
-#include <yvals_core.h>
+#pragma once
 
 #include <AEON/Config.h>
 
@@ -40,7 +37,7 @@ namespace ae
 		 \brief Destructor.
 		 \details Releases the FreeType library pointer.
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		~FontManager();
 		/*!
@@ -55,7 +52,7 @@ namespace ae
 		 \since v0.5.0
 		*/
 		FontManager(FontManager&&) = delete;
-	public:
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -69,7 +66,7 @@ namespace ae
 		 \since v0.5.0
 		*/
 		FontManager& operator=(FontManager&&) = delete;
-	public:
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the FreeType library pointer.
@@ -83,9 +80,9 @@ namespace ae
 		 FT_Library ftLibrary = static_cast<FT_Library>(fontManager.getHandle());
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD void* getHandle() const noexcept;
+		[[nodiscard]] inline void* getHandle() const noexcept { return mLibrary; }
 
 		// Public static method(s)
 		/*!
@@ -98,16 +95,16 @@ namespace ae
 		 ae::FontManager& fontManager = ae::FontManager::getInstance();
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static FontManager& getInstance();
+		[[nodiscard]] static FontManager& getInstance();
 	private:
 		// Private constructor(s)
 		/*!
 		 \brief Default constructor.
 		 \details Initializes the FreeType library.
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		FontManager();
 
@@ -116,7 +113,6 @@ namespace ae
 		void* mLibrary; //!< The FreeType library pointer
 	};
 }
-#endif // Aeon_Graphics_FontManager_H_
 
 /*!
  \class ae::FontManager
@@ -126,7 +122,7 @@ namespace ae
  which will be used to create the font faces.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.06.04
+ \version v0.7.0
+ \date 2022.02.22
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_IndexBuffer_H_
-#define Aeon_Graphics_IndexBuffer_H_
+#pragma once
 
 #include <AEON/Graphics/internal/Buffer.h>
 
@@ -32,7 +31,7 @@ namespace ae
 	 \details Indices allows us to reuse the same vertex several times without duplicating it.
 	 \note This class is considered to be internal but may still be used by the API user.
 	*/
-	class _NODISCARD AEON_API IndexBuffer : public Buffer
+	class AEON_API IndexBuffer : public Buffer
 	{
 	public:
 		// Public constructor(s)
@@ -69,12 +68,10 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::IndexBuffer that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		IndexBuffer(IndexBuffer&& rvalue) noexcept;
-	public:
+		IndexBuffer(IndexBuffer&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -85,14 +82,12 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::IndexBuffer that will be moved
-
 		 \return The caller ae::IndexBuffer
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		IndexBuffer& operator=(IndexBuffer&& rvalue) noexcept;
-	public:
+		IndexBuffer& operator=(IndexBuffer&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief (Re)Creates a new data store for the ae::IndexBuffer with the \a size in bytes specified and the \a data itself.
@@ -125,25 +120,24 @@ namespace ae
 		 ibo->setData(sizeof(indices), indices); // Create and initialize the data store
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		void setData(unsigned int size, const unsigned int* data);
+		void setData(int64_t size, const uint32_t* data);
 		/*!
 		 \brief Retrieves the ae::IndexBuffer's total number of indices.
 
 		 \return The total number of indices held
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD unsigned int getCount() const noexcept;
+		[[nodiscard]] inline int64_t getCount() const noexcept { return mCount; }
 
 	private:
 		// Private member(s)
-		unsigned int mCount; //!< The total number of indices
-		uint32_t     mUsage; //!< The intended data store usage pattern
+		int64_t  mCount; //!< The total number of indices
+		uint32_t mUsage; //!< The intended data store usage pattern
 	};
 }
-#endif // Aeon_Graphics_IndexBuffer_H_
 
 /*!
  \class ae::IndexBuffer
@@ -155,7 +149,7 @@ namespace ae
  same index will be used to refer to them thus optimizing rendering.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

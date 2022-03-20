@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -28,6 +28,8 @@
 #include <AEON/Config.h>
 #include <AEON/Math/AABoxCollider.h>
 #include <AEON/Graphics/Texture2D.h>
+#include <AEON/Graphics/RenderTexture.h>
+#include <AEON/Graphics/Sprite.h>
 
 namespace ae
 {
@@ -55,7 +57,7 @@ namespace ae
 
 		 \param[in] format The ae::Texture2D::InternalFormat of the buffer's image data, ae::Texture2D::InternalFormat::RGBA8 by default
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		explicit TextureAtlas(Texture2D::InternalFormat format = Texture2D::InternalFormat::RGBA8);
 		/*!
@@ -95,6 +97,7 @@ namespace ae
 		/*!
 		 \brief Stores a pointer to an ae::Texture2D instance to be packed into the texture atlas.
 
+		 \param[in] textureID A unique identifier used to retrieve the computed texture position after packing
 		 \param[in] texture The ae::Texture2D to be added
 
 		 \par Example:
@@ -106,49 +109,50 @@ namespace ae
 
 		 // Create the texture atlas and add in the textures (only update the atlas once all textures have been added)
 		 ae::TextureAtlas atlas;
-		 atlas.add(*texture1);
-		 atlas.add(*texture2);
-		 atlas.add(*texture3);
+		 atlas.add(1, *texture1);
+		 atlas.add(2, *texture2);
+		 atlas.add(3, *texture3);
 
-		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
+		 // Pack the textures inserted into the texture atlas (the textures added prior to packing no longer need to be stored by the API user)
 		 atlas.pack();
 
 		 // Retrieve the texture containing all individual textures and their positions within it
 		 const ae::Texture2D& finalTexture = atlas.getTexture();
 
 		 // Retrieve the computed texture rectangle within the texture atlas of each texture added
-		 ae::Box2i texture2Rect = atlas.getTextureRect(*texture2);
+		 ae::Box2i texture2Rect = atlas.getTextureRect(2);
 		 \endcode
 
 		 \sa pack(), getTexture(), getTextureRect()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		void add(const Texture2D& texture);
+		void add(uint32_t textureID, const Texture2D& texture);
 		/*!
 		 \brief Packs together the ae::Texture2D instances that have been added thus far into the texture atlas.
+		 \details The textures added can safely be discarded by the API user after calling this method.
 
 		 \par Example:
 		 \code
 		 // Create the texture atlas and add in the textures
 		 ae::TextureAtlas atlas;
-		 atlas.add(*texture1);
-		 atlas.add(*texture2);
-		 atlas.add(*texture3);
+		 atlas.add(1, *texture1);
+		 atlas.add(2, *texture2);
+		 atlas.add(3, *texture3);
 
 		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
 		 atlas.pack();
 
-		 // Retrieve the texture containing all individual textures and their positions within it
+		 // Retrieve the texture containing all individual textures
 		 const ae::Texture2D& finalTexture = atlas.getTexture();
 
 		 // Retrieve the computed texture rectangle within the texture atlas of each texture added
-		 ae::Box2i texture2Rect = atlas.getTextureRect(*texture2);
+		 ae::Box2i texture2Rect = atlas.getTextureRect(2);
 		 \endcode
 
-		 \sa addTexture(), getTexture(), getTextureRect()
+		 \sa add(), getTexture(), getTextureRect()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		void pack();
 		/*!
@@ -161,9 +165,9 @@ namespace ae
 		 \code
 		 // Create the texture atlas and add in the textures (only update the atlas once all textures have been added)
 		 ae::TextureAtlas atlas;
-		 atlas.add(*texture1);
-		 atlas.add(*texture2);
-		 atlas.add(*texture3);
+		 atlas.add(1, *texture1);
+		 atlas.add(2, *texture2);
+		 atlas.add(3, *texture3);
 
 		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
 		 atlas.pack();
@@ -172,16 +176,16 @@ namespace ae
 		 const ae::Texture2D& finalTexture = atlas.getTexture();
 		 \endcode
 
-		 \sa add(), getTextureRects()
+		 \sa add(), getTextureRect()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		_NODISCARD const Texture2D& getTexture() const noexcept;
 		/*!
 		 \brief Retrieves the texture rect computed for the packed texture provided.
 		 \note The texture requested has to be added and the texture atlas packed prior to calling this method.
 
-		 \param[in] texture A texture that was previously added
+		 \param[in] textureID The identifier provided alongside the texture
 
 		 \return The texture rect that was computed for the packed texture requested
 
@@ -189,22 +193,22 @@ namespace ae
 		 \code
 		 // Create the texture atlas and add in the textures
 		 ae::TextureAtlas atlas;
-		 atlas.add(*texture1);
-		 atlas.add(*texture2);
-		 atlas.add(*texture3);
+		 atlas.add(1, *texture1);
+		 atlas.add(2, *texture2);
+		 atlas.add(3, *texture3);
 
 		 // Pack the textures inserted into the texture atlas (compute packed texture positions and render them into texture atlas)
 		 atlas.pack();
 
 		 // Retrieve the computed texture rectangle within the texture atlas of each texture added
-		 ae::Box2i texture2Rect = atlas.getTextureRect(*texture2);
+		 ae::Box2i texture2Rect = atlas.getTextureRect(2);
 		 \endcode
 
 		 \sa add(), pack(), getTexture()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Box2i getTextureRect(const Texture2D& texture) const noexcept;
+		_NODISCARD Box2i getTextureRect(uint32_t textureId) const noexcept;
 	private:
 		// Private method(s)
 		/*!
@@ -214,14 +218,17 @@ namespace ae
 
 		 \sa pack()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		Vector2i computePacking();
 
 	private:
 		// Private member(s)
-		std::map<const Texture2D*, Box2i> mTextures; //!< The textures to be packed and associated rectangles to be computed
-		std::shared_ptr<Texture2D>        mAtlas;    //!< The texture that will serve as the texture atlas
+		RenderTexture                                          mAtlas;         //!< The texture containing all individual textures added
+		std::map<uint32_t, Box2i>                              mRects;         //!< The texture rects within the atlas texture
+		std::map<uint32_t, std::pair<const Texture2D*, Box2i>> mUnpackedRects; //!< The textures that have yet to be packed
+		RenderTexture                                          mPreviousAtlas; //!< The previous atlas texture used in copying previous additions
+		Sprite                                                 mHelperSprite;  //!< The sprite used to render into the atlas texture
 	};
 }
 #endif //Aeon_Graphics_TextureAtlas_H_
@@ -237,7 +244,7 @@ namespace ae
  purely suited for runtime-creation of a texture atlas.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.07
+ \version v0.7.0
+ \date 2021.07.11
  \copyright MIT License
 */

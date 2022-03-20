@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -33,8 +33,18 @@ namespace ae
 	// Public method(s)
 	void GLResourceFactory::destroyUnused()
 	{
-		// Destroy all unused resources in the hashmaps
-		for (auto& resourceMap : mResourceMaps) {
+		// Destroy all unused textures in the hashmaps
+		ResourceMap& textureMap = mResourceMaps[ResourceType::Texture];
+		for (auto texture = textureMap.begin(); texture != textureMap.end(); ++texture) {
+			if (texture->second.use_count() == 1) {
+				AEON_LOG_INFO("Texture deallocation", "Texture \"" + texture->first + "\" was freed from memory.");
+				texture->second->destroy();
+				textureMap.erase(texture);
+				texture = textureMap.begin();
+			}
+		}
+
+		/*for (auto& resourceMap : mResourceMaps) {
 			for (auto itr = resourceMap.second.begin(); itr != resourceMap.second.end(); ++itr) {
 				if (itr->second.use_count() == 1) {
 					itr->second->destroy();
@@ -42,7 +52,7 @@ namespace ae
 					itr = resourceMap.second.begin();
 				}
 			}
-		}
+		}*/
 	}
 
 	void GLResourceFactory::destroy() const
@@ -140,9 +150,9 @@ namespace ae
 
 			// Create the VBOs
 		auto vbo = std::make_unique<VertexBuffer>(GL_DYNAMIC_DRAW);
-		vbo->getLayout().addElement(GL_FLOAT, 3, GL_FALSE);
-		vbo->getLayout().addElement(GL_FLOAT, 4, GL_FALSE);
-		vbo->getLayout().addElement(GL_FLOAT, 2, GL_FALSE);
+		vbo->getLayout().addElement(GL_FLOAT, 3, GL_FALSE); // position
+		vbo->getLayout().addElement(GL_FLOAT, 4, GL_FALSE); // color
+		vbo->getLayout().addElement(GL_FLOAT, 2, GL_FALSE); // uv coordinates
 
 			// Create the VAO and attach the VBOs and IBOs
 		auto vao = create<VertexArray>("_AEON_VAO");

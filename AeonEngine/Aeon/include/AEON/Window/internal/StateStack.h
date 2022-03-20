@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Window_StateStack_H_
-#define Aeon_Window_StateStack_H_
+#pragma once
 
+#include <unordered_map>
 #include <map>
 #include <queue>
 #include <functional>
@@ -63,7 +63,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		StateStack(StateStack&&) = delete;
-	public:
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -77,7 +77,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		StateStack& operator=(StateStack&&) = delete;
-	public:
+
 		// Public method(s)
 		/*!
 		 \brief Registers a state so that it may be added and/or removed during the application's execution.
@@ -96,13 +96,13 @@ namespace ae
 		 stateStack.registerState<GameState>(StateID::Game);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		template <class T, typename = std::enable_if_t<std::is_base_of_v<State, T>>>
 		void registerState(uint32_t stateID)
 		{
 			// Check if the identifier provided has already been registered (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
+			if constexpr (AEON_DEBUG) {
 				if (mStateFactories.find(stateID) != mStateFactories.end()) {
 					AEON_LOG_ERROR("Attempt to overwrite registered state", "The state identifier provided is already in use.\nAborting operation.");
 					return;
@@ -177,19 +177,18 @@ namespace ae
 
 		 \return The pointer to the previously pushed ae::State associated to the identifier provided or nullptr if it doesn't exist
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD State* const getState(uint32_t stateID) const;
-
+		[[nodiscard]] State* const getState(uint32_t stateID) const;
 		/*!
 		 \brief Checks if the ae::StateStack doesn't possess any pushed ae::State instances.
 		 \details This method is used internally to terminate the application when there are no pushed states.
 
 		 \return True if there aren't any pushed states, false otherwise
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool isEmpty() const noexcept;
+		[[nodiscard]] inline bool isEmpty() const noexcept { return mStates.empty(); }
 
 		// Public static method(s)
 		/*!
@@ -203,9 +202,9 @@ namespace ae
 		 ae::StateStack& singleInstance = ae::StateStack::getInstance();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static StateStack& getInstance() noexcept;
+		[[nodiscard]] static StateStack& getInstance() noexcept;
 	private:
 		// Private constructor(s)
 		/*!
@@ -215,18 +214,18 @@ namespace ae
 		 \since v0.3.0
 		*/
 		StateStack() noexcept;
-	private:
+
 		// Private method(s)
 		/*!
 		 \brief Creates and retrieves the previously registered ae::State associated to the identifier provided.
 
 		 \param[in] stateID The identifier associated with the registered state
 
-		 \return The ae::State constructed from the factory
+		 \return The ae::State constructed from the factory, nullptr if the \a stateID is invalid
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD std::unique_ptr<State> createState(uint32_t stateID) const;
+		[[nodiscard]] std::unique_ptr<State> createState(uint32_t stateID) const;
 		/*!
 		 \brief Applies the pending actions to apply to the pushed ae::State instances.
 
@@ -235,6 +234,7 @@ namespace ae
 		void applyPendingChanges();
 
 	private:
+		// Private struct(s)
 		/*!
 		 \brief The struct representing a pending action to apply to a pushed ae::State instance.
 		 \details These actions are stored internally and applied at the same time one after the other.
@@ -259,12 +259,11 @@ namespace ae
 
 	private:
 		// Private member(s)
-		std::map<uint32_t, std::unique_ptr<State>>                  mStates;         //!< The pushed states
-		std::map<uint32_t, std::function<std::unique_ptr<State>()>> mStateFactories; //!< The factories containing the creation of the registered states
-		std::queue<PendingChange>                                   mPendingQueue;   //!< The queue of actions to apply to the pushed states
+		std::map<uint32_t, std::unique_ptr<State>>                            mStates;         //!< The pushed states
+		std::unordered_map<uint32_t, std::function<std::unique_ptr<State>()>> mStateFactories; //!< The factories containing the creation of the registered states
+		std::queue<PendingChange>                                             mPendingQueue;   //!< The queue of actions to apply to the pushed states
 	};
 }
-#endif // Aeon_Window_StateStack_H_
 
 /*!
  \class ae::StateStack
@@ -276,7 +275,7 @@ namespace ae
  them the command to render their respective elements.
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.28
+ \version v0.7.0
+ \date 2022.02.13
  \copyright MIT License
 */

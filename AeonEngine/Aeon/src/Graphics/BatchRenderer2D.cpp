@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,84 +24,39 @@
 
 #include <GL/glew.h>
 
+#include <AEON/Graphics/Shader.h>
+#include <AEON/Graphics/Texture2D.h>
 #include <AEON/Graphics/internal/GLCommon.h>
 #include <AEON/Graphics/internal/RenderTarget.h>
-#include <AEON/Graphics/BlendMode.h>
-#include <AEON/Graphics/Camera.h>
-#include <AEON/Graphics/GLResourceFactory.h>
-#include <AEON/Graphics/Renderable2D.h>
-#include <AEON/Graphics/RenderStates.h>
+#include <AEON/Graphics/internal/VertexArray.h>
+#include <AEON/Graphics/internal/IndexBuffer.h>
 
 namespace ae
 {
 	// Public virtual method(s)
 	void BatchRenderer2D::endScene()
 	{
-		GLCall(glEnable(GL_DEPTH_TEST));
 		mRenderTarget->activate();
 		mVAO->bind();
 
-		// Render opaque entities front-to-back
-		flush(mOpaqueCalls, true);
+		flush();
+		mSubmissions.clear();
 
-		// Render transparent entities back-to-front
-		flush(mTransparentCalls, false);
-
-		// Unbind the VAO, disable depth-testing and invalidate scene-specific pointers
 		Renderer2D::endScene();
 	}
 
 	void BatchRenderer2D::submit(const std::vector<Vertex2D>& vertices, const std::vector<unsigned int>& indices, const RenderStates& states)
 	{
-		// Check if the submission is opaque or transparent
-		ShaderPasses& drawcalls = (vertices.front().color.w < 1.f) ? mTransparentCalls : mOpaqueCalls;
-
-		// Find an existing shader pass or create one
-		auto shaderItr = drawcalls.find(states.shader);
-		if (shaderItr == drawcalls.end()) {
-			shaderItr = drawcalls.emplace(states.shader, BlendPasses()).first;
+		if (vertices.empty() || indices.empty()) {
+			return;
 		}
 
-		// Find an existing blend pass or create one
-		BlendPasses& blendPasses = shaderItr->second;
-		auto blendItr = blendPasses.find(states.blendMode);
-		if (blendItr == blendPasses.end()) {
-			blendItr = blendPasses.emplace(states.blendMode, TexturePasses()).first;
-		}
+		mSubmissions.emplace_back(SubmissionData{ states, &vertices, &indices });
+	}
 
-		// Find an existing texture pass or create one
-		TexturePasses& texturePasses = blendItr->second;
-		const Texture* const texture = (!states.texture) ? mWhiteTexture.get() : states.texture;
-		auto textureItr = texturePasses.find(texture);
-		if (textureItr == texturePasses.end()) {
-			textureItr = texturePasses.emplace(texture, RenderData()).first;
-		}
-
-		// Check if submission is cached
-		auto submissionItr = textureItr->second.lookup.find(&vertices);
-		if (submissionItr != textureItr->second.lookup.end()) {
-			if (states.dirty || submissionItr->second->transform != states.transform) {
-				submissionItr->second->transform = states.transform;
-				submissionItr->second->vertexList = &vertices;
-				submissionItr->second->indexList = &indices;
-				submissionItr->second->dirty = true;
-			}
-			else {
-				submissionItr->second->resubmitted = true;
-			}
-		}
-		else {
-			// Create the submission
-			textureItr->second.submissions.emplace_back(
-				SubmissionData{
-					states.transform, // transform
-					&vertices,        // vertexList
-					&indices,         // indexList
-					true,             // resubmitted
-					false             // dirty
-				}
-			);
-		}
+	void BatchRenderer2D::submit(const Render2DComponent& component, const RenderStates& states)
+	{
+		submit(component.getVertices(), component.getIndices(), states);
 	}
 
 	// Public static method(s)
@@ -114,146 +69,104 @@ namespace ae
 	// Private constructor(s)
 	BatchRenderer2D::BatchRenderer2D()
 		: Renderer2D()
-		, mOpaqueCalls()
-		, mTransparentCalls()
+		, mSubmissions()
+		, mIndexOffset(0)
 	{
 	}
 
 	// Private method(s)
-	void BatchRenderer2D::flush(ShaderPasses& drawcalls, bool frontToBack)
+	void BatchRenderer2D::flush()
 	{
-		for (auto& shaderPass : drawcalls)
-		{
-			// Bind the shader
-			shaderPass.first->bind();
+		RenderStates currentStates;
 
-			for (auto& blendPass : shaderPass.second)
-			{
-				// Set the appropriate blending
-				if (blendPass.first != BlendMode::BlendNone) {
+		for (size_t i = 0; i < mSubmissions.size(); ++i) {
+			RenderStates& states = mSubmissions[i].states;
+
+			// Bind the shader
+			if (currentStates.shader != states.shader) {
+				states.shader->bind();
+				currentStates.shader = states.shader;
+			}
+
+			// Set the blending
+			if (currentStates.blendMode != states.blendMode) {
+				if (states.blendMode != BlendMode::BlendNone) {
 					GLCall(glEnable(GL_BLEND));
-					GLCall(glBlendEquationSeparate(blendPass.first.colorEquation, blendPass.first.alphaEquation));
-					GLCall(glBlendFuncSeparate(blendPass.first.colorSrcFactor, blendPass.first.colorDstFactor,
-					                           blendPass.first.alphaSrcFactor, blendPass.first.alphaDstFactor));
+					GLCall(glBlendEquationSeparate(states.blendMode.colorEquation, states.blendMode.alphaEquation));
+					GLCall(glBlendFuncSeparate(states.blendMode.colorSrcFactor, states.blendMode.colorDstFactor,
+					                           states.blendMode.alphaSrcFactor, states.blendMode.alphaDstFactor));
 				}
 				else {
 					GLCall(glDisable(GL_BLEND));
 				}
+				currentStates.blendMode = states.blendMode;
+			}
 
-				for (auto& texturePass : blendPass.second)
-				{
-					// Bind the texture
-					texturePass.first->bind();
+			// Bind texture
+			if (currentStates.texture != states.texture) {
+				const Texture* const texture = (!states.texture) ? mWhiteTexture.get() : states.texture;
+				texture->bind();
+				currentStates.texture = states.texture;
+			}
 
-					// Sort the submissions
-					sortSubmissions(texturePass.second, frontToBack);
+			// Batch submission
+			std::vector<Vertex2D> batchVertices;
+			std::vector<uint32_t> batchIndices;
+			mIndexOffset = 0;
+			batchSubmission(mSubmissions[i], batchVertices, batchIndices);
 
-					// Upload the vertices
-					VertexBuffer* const vboPtr = mVAO->getVBO(0);
-					vboPtr->setData(static_cast<int>(sizeof(Vertex2D) * texturePass.second.vertices.size()), texturePass.second.vertices.data());
-
-					// Upload the indices
-					IndexBuffer* const iboPtr = mVAO->getIBO();
-					iboPtr->setData(texturePass.second.indices.size() * sizeof(GLuint), texturePass.second.indices.data());
-
-					// Draw the indices
-					GLCall(glDrawElements(GL_TRIANGLES, iboPtr->getCount(), GL_UNSIGNED_INT, nullptr));
-
-					// Unbind the texture
-					texturePass.first->unbind();
-
-					// Reset the submissions' resubmission flags
-					resetSubmissions(texturePass.second);
+			// Attempt to batch more submissions
+			for (size_t j = i + 1; j < mSubmissions.size(); ++j) {
+				if (isSubmissionBatchable(states, mSubmissions[j].states)) {
+					batchSubmission(mSubmissions[j], batchVertices, batchIndices);
+					++i;
+				}
+				else {
+					break;
 				}
 			}
 
-			// Unbind the shader
-			shaderPass.first->unbind();
+			// Upload the vertices
+			VertexBuffer* const vbo = mVAO->getVBO(0);
+			vbo->setData(static_cast<int64_t>(sizeof(Vertex2D) * batchVertices.size()), batchVertices.data());
+
+			// Upload the indices
+			IndexBuffer* const ibo = mVAO->getIBO();
+			ibo->setData(static_cast<int64_t>(sizeof(GLuint) * batchIndices.size()), batchIndices.data());
+
+			// Render the geometry
+			GLCall(glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(ibo->getCount()), GL_UNSIGNED_INT, nullptr));
 		}
 	}
 
-	void BatchRenderer2D::sortSubmissions(RenderData& data, bool frontToBack)
+	bool BatchRenderer2D::isSubmissionBatchable(const RenderStates& currentStates, const RenderStates& newStates)
 	{
-		bool dirtySubmissionFound = false;
-
-		// Retrieve the vertex and index count of all submissions, and check if any submission is dirty
-		size_t vertexCount = 0, indexCount = 0;
-		for (const auto& submission : data.submissions) {
-			vertexCount += submission.vertexList->size();
-			indexCount += submission.indexList->size();
-
-			if (submission.dirty) {
-				dirtySubmissionFound = true;
-			}
-		}
-
-		// Check if the submissions need to be sorted
-		if (!dirtySubmissionFound && data.vertices.size() == vertexCount && data.indices.size() == indexCount) {
-			return;
-		}
-
-		// Sort the submissions
-		if (frontToBack) {
-			std::sort(data.submissions.begin(), data.submissions.end(), [](SubmissionData& data1, SubmissionData& data2) {
-				return data1.vertexList->front().position.z > data2.vertexList->front().position.z;
-			});
-		}
-		else {
-			std::sort(data.submissions.begin(), data.submissions.end(), [](SubmissionData& data1, SubmissionData& data2) {
-				return data1.vertexList->front().position.z < data2.vertexList->front().position.z;
-			});
-		}
-
-		// Clear the stored vertices and indices, and reset the index offset
-		data.vertices.clear();
-		data.indices.clear();
-		data.lookup.clear();
-		data.indexOffset = 0;
-
-		// Store the submissions' vertices and indices
-		data.vertices.reserve(vertexCount);
-		data.indices.reserve(indexCount);
-		for (auto& submission : data.submissions)
-		{
-			// Store the vertices
-			for (const Vertex2D& vertex : *submission.vertexList) {
-				data.vertices.emplace_back(
-					Vertex2D{
-						Vector3f((submission.transform * Vector3f(vertex.position.xy)).xy, vertex.position.z),
-						vertex.color,
-						vertex.uv
-					}
-				);
-			}
-
-			// Store the indices
-			for (const unsigned int& index : *submission.indexList) {
-				data.indices.emplace_back(index + data.indexOffset);
-			}
-
-			// Update the index offset by retrieving the max element of the submission's indices
-			auto maxIndex = std::max_element(submission.indexList->begin(), submission.indexList->end());
-			data.indexOffset += *maxIndex + 1;
-
-			// Update the lookup table to detect if a submission was resubmitted faster
-			data.lookup.try_emplace(submission.vertexList, &submission);
-		}
+		return currentStates.shader == newStates.shader && currentStates.blendMode == newStates.blendMode && currentStates.texture == newStates.texture;
 	}
 
-	void BatchRenderer2D::resetSubmissions(RenderData& data)
+	void BatchRenderer2D::batchSubmission(const SubmissionData& submission, std::vector<Vertex2D>& vertices, std::vector<uint32_t>& indices)
 	{
-		// Delete the submissions if at least one wasn't resubmitted this frame
-		for (const auto& submission : data.submissions) {
-			if (!submission.resubmitted) {
-				data = RenderData();
-				break;
-			}
+		// Apply the transform to the vertices
+		vertices.reserve(vertices.size() + submission.vertices->size());
+		for (const Vertex2D& vertex : *submission.vertices) {
+			vertices.emplace_back(
+				Vertex2D {
+					Vector3f((submission.states.transform * Vector4f(vertex.position, 1.f)).xy, vertex.position.z),
+					vertex.color,
+					vertex.uv
+				}
+			);
 		}
 
-		// Reset the submissions' flags
-		for (auto& submission : data.submissions) {
-			submission.resubmitted = false;
-			submission.dirty = false;
+		// Add in the indices
+		indices.reserve(indices.size() + submission.indices->size());
+		uint32_t maxIndex = 0;
+		for (uint32_t index : *submission.indices) {
+			indices.emplace_back(index + mIndexOffset);
+			if (index > maxIndex) {
+				maxIndex = index;
+			}
 		}
+		mIndexOffset += maxIndex + 1;
 	}
 }

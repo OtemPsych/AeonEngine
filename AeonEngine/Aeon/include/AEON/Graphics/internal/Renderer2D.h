@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -34,7 +34,7 @@ namespace ae
 	struct RenderStates;
 	struct Vertex2D;
 	class RenderTarget;
-	class Renderable2D;
+	class Render2DComponent;
 	class Texture2D;
 	class UniformBuffer;
 	class VertexArray;
@@ -90,7 +90,7 @@ namespace ae
 
 		 \since v0.6.0
 		*/
-		void submit(const Renderable2D& renderable, const RenderStates& states);
+		virtual void submit(const Render2DComponent& renderComponent, const RenderStates& states);
 
 		// Public virtual method(s)
 		/*!
@@ -127,7 +127,7 @@ namespace ae
 
 		 \since v0.6.0
 		*/
-		virtual void submit(const std::vector<Vertex2D>& vertices, const std::vector<unsigned int>& indices, const RenderStates& states) = 0;
+		virtual void submit(const std::vector<Vertex2D>& vertices, const std::vector<uint32_t>& indices, const RenderStates& states) = 0;
 
 		// Public static method(s)
 		/*!

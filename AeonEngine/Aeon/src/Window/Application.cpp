@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,13 +22,16 @@
 
 #include <AEON/Window/Application.h>
 
+#include <thread>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <AEON/System/Clock.h>
 #include <AEON/Window/internal/EventQueue.h>
 #include <AEON/Window/MonitorManager.h>
 #include <AEON/Graphics/GLResourceFactory.h>
+#include <AEON/Graphics/AnimationManager.h>
+#include <AEON/Graphics/internal/FontManager.h>
 
 namespace ae
 {
@@ -50,13 +53,47 @@ namespace ae
 			AEON_LOG_ERROR("Initialization of GLEW failed", "Error: " + std::string(reinterpret_cast<const char*>(glewGetErrorString(glewError))));
 		}
 
-		// Log an informational message indicating GLEW's version (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			AEON_LOG_INFO("GLEW Version", "Using GLEW " + std::string(reinterpret_cast<const char*>(glewGetString(GLEW_VERSION))));
-		}
+		// Initialize the FreeType library
+		FontManager::getInstance();
 
 		// Set the window as the active target
 		mWindow->activate();
+	}
+
+	void Application::run()
+	{
+		// The variables needed to count the frames per second
+		const Time ONE_SECOND = Time::seconds(1.0);
+		int32_t recordedFps = 0;
+		Time timeCounter;
+
+		// Start the main clock
+		Time prevTime, currTime, timeElapsed;
+		Clock clock;
+
+		// The application's game loop
+		while (mWindow->isOpen())
+		{
+			prevTime = currTime;
+			currTime = clock.getElapsedTime();
+			timeElapsed = currTime - prevTime;
+
+			processEvents();
+			update(timeElapsed);
+			render();
+
+			// FPS Counter
+			if ((timeCounter += timeElapsed) >= ONE_SECOND) {
+				timeCounter = Time::Zero;
+				mFramerate = recordedFps;
+				recordedFps = 0;
+			}
+			else {
+				++recordedFps;
+			}
+
+			sleep(timeElapsed);
+		}
 	}
 
 	void Application::pushState(uint32_t stateID)
@@ -64,59 +101,12 @@ namespace ae
 		mStateStack.pushState(stateID);
 	}
 
-	void Application::run()
+	void Application::setFramerateLimit(int32_t limit) noexcept
 	{
-		// The variables needed to count the frames per second
-		const Time ONE_SECOND = Time::seconds(1.0);
-		int recordedFps = 0;
-		Time timeCounter;
-
-		// Start the main clock
-		Time timeSinceLastUpdate;
-		Time timeElapsed;
-		Clock clock;
-
-		// The application's game loop
-		while (mWindow->isOpen())
-		{
-			processEvents();
-
-			// Retrieve the time elapsed and restart the clock
-			timeElapsed = clock.restart();
-
-			// Update until the fixed time interval is reached
-			timeSinceLastUpdate += timeElapsed;
-			while (timeSinceLastUpdate > mTimeStep) {
-				timeSinceLastUpdate -= mTimeStep;
-				update(mTimeStep);
-			}
-			render();
-
-			// FPS Counter
-			if ((timeCounter += timeElapsed) >= ONE_SECOND) {
-				timeCounter = Time::Zero;
-				mCurrentFPS = recordedFps;
-				recordedFps = 0;
-			}
-			else {
-				++recordedFps;
-			}
+		if (mFramerateLimit < limit) {
+			mSleepTimeVariance = 0.0;
 		}
-	}
-
-	void Application::setFixedTimeStep(int timeStep)
-	{
-		mTimeStep = Time::seconds(1.0 / static_cast<double>(timeStep));
-	}
-
-	int Application::getFPS() const noexcept
-	{
-		return mCurrentFPS;
-	}
-
-	Window& Application::getWindow() noexcept
-	{
-		return *mWindow;
+		mFramerateLimit = limit;
 	}
 
 	// Public static method(s)
@@ -132,40 +122,25 @@ namespace ae
 		, mStateStack(StateStack::getInstance())
 		, mPolledEvent(nullptr)
 		, mEventQueue(EventQueue::getInstance())
-		, mCurrentFPS(0)
-		, mTimeStep(Time::seconds(1.0 / 60.0))
+		, mFramerate(0)
+		, mFramerateLimit(0)
+		, mSleepTimeVariance(0.001)
 	{
 		// Initialize GLFW
 		init();
 	}
 
 	// Private method(s)
-	void Application::init() const
-	{
-		if (!glfwInit()) {
-			AEON_LOG_ERROR("Initialization of GLFW failed", "Failed to initialize the GLFW library.");
-			return;
-		}
-
-		// Log an information message indicating that GLFW initialization succeeded (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			AEON_LOG_INFO("Initialization of GLFW succeeded", "Succeeded in initializing the GLFW library.");
-		}
-	}
-
 	void Application::processEvents()
 	{
-		// Poll every input event that has been generated thus far
-		while (mEventQueue.pollEvent(mPolledEvent))
-		{
-			// Automatically handle certain events
-			if (mPolledEvent->type == Event::Type::MonitorConnected || mPolledEvent->type == Event::Type::MonitorDisconnected) {
+		while (mEventQueue.pollEvent(mPolledEvent))	{
+			if (mPolledEvent->type == Event::Type::WindowClosed) {
+				GLResourceFactory::getInstance().destroy();
+			}
+			else if (mPolledEvent->type == Event::Type::MonitorConnected || mPolledEvent->type == Event::Type::MonitorDisconnected) {
 				MonitorEvent* const monitorEvent = mPolledEvent->as<MonitorEvent>();
 				MonitorManager::getInstance().update(monitorEvent);
 				monitorEvent->handled = true;
-			}
-			else if (mPolledEvent->type == Event::Type::WindowClosed) {
-				GLResourceFactory::getInstance().destroy();
 			}
 
 			// Send the event to the window and to the user-created states
@@ -176,13 +151,40 @@ namespace ae
 
 	void Application::update(const Time& dt)
 	{
+		AnimationManager::getInstance().deleteFinishedAnimations();
 		mStateStack.update(dt);
 	}
 
 	void Application::render()
 	{
-		//mWindow->clear();
 		mStateStack.draw();
 		mWindow->display();
+	}
+
+	void Application::sleep(const ae::Time& timeElapsed)
+	{
+		if (mWindow->isVerticalSyncEnabled() || mFramerateLimit <= 0) {
+			return;
+		}
+
+		const int32_t FPS_DELTA = std::abs(mFramerate - mFramerateLimit);
+		if (mFramerate > mFramerateLimit) {
+			mSleepTimeVariance += 0.000001 * FPS_DELTA;
+		}
+		else if (mFramerate < mFramerateLimit) {
+			mSleepTimeVariance = Math::max(mSleepTimeVariance - 0.000001 * FPS_DELTA, 0.0);
+		}
+
+		if (mSleepTimeVariance > 0.0) {
+			std::this_thread::sleep_for(std::chrono::duration<double>(mSleepTimeVariance));
+		}
+	}
+
+	void Application::init() const
+	{
+		if (!glfwInit()) {
+			AEON_LOG_ERROR("Initialization of GLFW failed", "Failed to initialize the GLFW library.");
+			return;
+		}
 	}
 }

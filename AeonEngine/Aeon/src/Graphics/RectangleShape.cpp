@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -31,62 +31,33 @@ namespace ae
 		, mCornerRadius(cornerRadius)
 		, mCornerPointCount(cornerPointCount)
 	{
-	}
-
-	RectangleShape::RectangleShape(RectangleShape&& rvalue) noexcept
-		: Shape(std::move(rvalue))
-		, mSize(std::move(rvalue.mSize))
-		, mCornerRadius(rvalue.mCornerRadius)
-		, mCornerPointCount(rvalue.mCornerPointCount)
-	{
-	}
-
-	// Public operator(s)
-	RectangleShape& RectangleShape::operator=(RectangleShape&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		Shape::operator=(std::move(rvalue));
-		mSize = std::move(rvalue.mSize);
-		mCornerRadius = rvalue.mCornerRadius;
-		mCornerPointCount = rvalue.mCornerPointCount;
-
-		return *this;
+		updatePositions();
 	}
 
 	// Public method(s)
 	void RectangleShape::setSize(const Vector2f& size) noexcept
 	{
 		mSize = size;
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	void RectangleShape::setSize(float sizeX, float sizeY) noexcept
 	{
 		mSize.x = sizeX;
 		mSize.y = sizeY;
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	void RectangleShape::setCornerRadius(float radius) noexcept
 	{
 		mCornerRadius = radius;
-		mUpdatePositions = true;
+		updatePositions();
 	}
 
 	void RectangleShape::setCornerPointCount(size_t count) noexcept
 	{
 		mCornerPointCount = count;
-		mUpdatePositions = true;
-	}
-
-	const Vector2f& RectangleShape::getSize() const noexcept
-	{
-		return mSize;
-	}
-
-	float RectangleShape::getCornerRadius() const noexcept
-	{
-		return mCornerRadius;
+		updatePositions();
 	}
 
 	// Public virtual method(s)
@@ -97,17 +68,12 @@ namespace ae
 
 	Vector2f RectangleShape::getPoint(size_t index) const
 	{
-		// Check if an invalid index was provided (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (index >= getPointCount()) {
-				return Vector2f();
-			}
-		}
+		assert(index < getPointCount());
 
 		const float DELTA_ANGLE = 90.f / (Math::max(static_cast<int>(mCornerPointCount) - 1, 1));
 		const size_t CENTER_INDEX = index / mCornerPointCount;
 		const size_t DELTA_INDEX = index - CENTER_INDEX;
-		const float FINAL_ANGLE = Math::toRadians(DELTA_ANGLE * DELTA_INDEX);
+		const float FINAL_ANGLE = Math::radians(DELTA_ANGLE * DELTA_INDEX);
 
 		Vector2f center;
 		switch (CENTER_INDEX)

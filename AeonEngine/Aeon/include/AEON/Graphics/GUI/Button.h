@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,22 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_GUI_Button_H_
-#define Aeon_Graphics_GUI_Button_H_
+#pragma once
 
 #include <AEON/Graphics/GUI/internal/Widget.h>
 #include <AEON/Graphics/RectangleShape.h>
+#include <AEON/Graphics/Text.h>
 
 namespace ae
 {
-	// Forward declaration(s)
-	class Text;
-
 	/*!
 	 \brief Class representing a GUI button.
 	 \details The Idle and Hover states need to be configured.
 	*/
-	class _NODISCARD AEON_API Button : public Widget<RectangleShape>
+	template <typename T = RectangleShape>
+	class AEON_API Button : public Widget<T>
 	{
 	public:
 		// Public constructor(s)
@@ -43,7 +41,7 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the ae::Button's and the associated text's origins to their centers.
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		Button();
 		/*!
@@ -57,10 +55,17 @@ namespace ae
 
 		 \param[in] rvalue The ae::Button that will be moved
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		Button(Button&& rvalue) noexcept;
-	public:
+		/*!
+		 \brief Virtual destructor.
+		 \details This is needed as the API user may derive from it.
+
+		 \since v0.7.0
+		*/
+		virtual ~Button() = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -78,7 +83,7 @@ namespace ae
 		 \since v0.6.0
 		*/
 		Button& operator=(Button&& rvalue) noexcept;
-	public:
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the ae::Button's text.
@@ -91,27 +96,19 @@ namespace ae
 		 ae::Text& text = button->getText();
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Text& getText() const noexcept;
-	private:
-		// Private virtual method(s)
-		/*!
-		 \brief Attaches the text to the active state.
-
-		 \param[in] state The ae::Widget::State that will be enabled
-
-		 \since v0.6.0
-		*/
-		virtual void enableState(State state) override final;
+		[[nodiscard]] Text& getText() const noexcept;
+	protected:
+		// Protected virtual method(s)
 		/*!
 		 \brief Sets the ae::Button to its hover state if it's currently clicked.
 
 		 \param[in] dt The time difference between the previous frame and the current frame
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		virtual void updateSelf(const Time& dt) override final;
+		virtual void updateSelf(const Time& dt) override;
 		/*!
 		 \brief Updates the ae::Button's state based on the input event.
 		 \details Updates the active state based on mouse movement and mouse clicks.
@@ -120,14 +117,14 @@ namespace ae
 
 		 \since v0.6.0
 		*/
-		virtual void handleEventSelf(Event* const event) override final;
+		virtual void handleEventSelf(Event* const event) override;
 
 	private:
 		// Private member(s)
 		Text* mText; //!< The button's text
 	};
 }
-#endif // Aeon_Graphics_GUI_Button_H_
+#include <AEON/Graphics/GUI/Button.inl>
 
 /*!
  \class ae::Button
@@ -138,7 +135,7 @@ namespace ae
  which is automatically situated at the center of the button.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.17
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

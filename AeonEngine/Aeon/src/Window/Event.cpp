@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -58,9 +58,10 @@ namespace ae
 
 	// FramebufferResizeEvent
 		// Public constructor(s)
-	FramebufferResizeEvent::FramebufferResizeEvent(int width, int height) noexcept
+	FramebufferResizeEvent::FramebufferResizeEvent(int width, int height, unsigned int handle) noexcept
 		: Event(Type::FramebufferResized)
 		, size(width, height)
+		, handle(handle)
 	{
 	}
 
@@ -142,14 +143,6 @@ namespace ae
 		: Event(Type::MouseWheelScrolled)
 		, wheel(wheel)
 		, offset(offset)
-	{
-	}
-
-	// FontEvent
-		// Public constructor(s)
-	FontEvent::FontEvent(const Font* const font) noexcept
-		: Event(Type::FontUpdated)
-		, font(font)
 	{
 	}
 }

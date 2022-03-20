@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,7 +22,7 @@
 
 #include <AEON/Graphics/internal/FontManager.h>
 
-#include <string>
+#include <cassert>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -35,19 +35,12 @@ namespace ae
 	FontManager::~FontManager()
 	{
 		// Release the FreeType library's resources
-		if (mLibrary) {
-			FT_Library ftLibrary = static_cast<FT_Library>(mLibrary);
-			FT_Error ftError = FT_Done_FreeType(ftLibrary);
-			if (ftError) {
-				AEON_LOG_ERROR("Failed to release FreeType library", "Error code: " + std::to_string(ftError) + '.');
-			}
+		assert(mLibrary);
+		FT_Library ftLibrary = static_cast<FT_Library>(mLibrary);
+		FT_Error ftError = FT_Done_FreeType(ftLibrary);
+		if (ftError) {
+			AEON_LOG_ERROR("Failed to release FreeType library", "Error code: " + std::to_string(ftError) + '.');
 		}
-	}
-
-	// Public method(s)
-	void* FontManager::getHandle() const noexcept
-	{
-		return mLibrary;
 	}
 
 	// Public static method(s)

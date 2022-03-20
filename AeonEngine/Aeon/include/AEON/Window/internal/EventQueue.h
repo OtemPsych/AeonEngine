@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Window_EventQueue_H_
-#define Aeon_Window_EventQueue_H_
+#pragma once
 
-#include <yvals_core.h>
 #include <queue>
 #include <memory>
 
@@ -54,7 +52,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		EventQueue(EventQueue&&) = delete;
-	public:
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -68,7 +66,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		EventQueue& operator=(EventQueue&&) = delete;
-	public:
+
 		// Public method(s)
 		/*!
 		 \brief Enqueues a new \a event at the end of the queue to be processed.
@@ -108,25 +106,25 @@ namespace ae
 
 		 \sa enqueueEvent()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool pollEvent(std::unique_ptr<Event>& event);
+		[[nodiscard]] bool pollEvent(std::unique_ptr<Event>& event);
 
 		// Public static method(s)
 		/*!
 		 \brief Retrieves the single instance of the ae::EventQueue.
-		 \details The ae::EventQueue will be instatiated for the first time by calling this static method.
+		 \details The ae::EventQueue will be instantiated for the first time by calling this static method.
 
 		 \return The single instance of the ae::EventQueue
 
 		 \par Example:
 		 \code
-		 ae::EventQueue& singleInstance = ae::EventQueue::getInstance();
+		 ae::EventQueue& eventQueue = ae::EventQueue::getInstance();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static EventQueue& getInstance() noexcept;
+		[[nodiscard]] static EventQueue& getInstance() noexcept;
 	private:
 		// Private constructor(s)
 		/*!
@@ -137,12 +135,10 @@ namespace ae
 		*/
 		EventQueue() noexcept;
 
-	private:
 		// Private member(s)
 		std::queue<std::unique_ptr<Event>> mQueue; //!< The queue that stores the unpolled events
 	};
 }
-#endif // Aeon_Window_EventQueue_H_
 
 /*!
  \class ae::EventQueue
@@ -156,7 +152,7 @@ namespace ae
  one at a time and sends them out to the user-created ae::State instances.
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.27
+ \version v0.7.0
+ \date 2021.12.20
  \copyright MIT License
 */

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -35,14 +35,22 @@ namespace ae
 {
 	// Public constructor(s)
 	TextureAtlas::TextureAtlas(Texture2D::InternalFormat format)
-		: mTextures()
-		, mAtlas(GLResourceFactory::getInstance().create<Texture2D>("", Texture2D::Filter::Linear, Texture2D::Wrap::ClampToEdge, format))
+		: mAtlas()
+		, mRects()
+		, mUnpackedRects()
+		, mPreviousAtlas()
+		, mHelperSprite()
 	{
+		mAtlas.setColorProperties(Texture::Filter::Linear, Texture::Wrap::ClampToEdge, format);
+		mPreviousAtlas.setColorProperties(Texture::Filter::Linear, Texture::Wrap::ClampToEdge, format);
 	}
 
 	TextureAtlas::TextureAtlas(TextureAtlas&& rvalue) noexcept
-		: mTextures(std::move(rvalue.mTextures))
-		, mAtlas(std::move(rvalue.mAtlas))
+		: mAtlas(std::move(rvalue.mAtlas))
+		, mRects(std::move(rvalue.mRects))
+		, mUnpackedRects(std::move(rvalue.mUnpackedRects))
+		, mPreviousAtlas(std::move(rvalue.mPreviousAtlas))
+		, mHelperSprite(std::move(rvalue.mHelperSprite))
 	{
 	}
 
@@ -50,57 +58,98 @@ namespace ae
 	TextureAtlas& TextureAtlas::operator=(TextureAtlas&& rvalue) noexcept
 	{
 		// Move the rvalue's data
-		mTextures = std::move(rvalue.mTextures);
 		mAtlas = std::move(rvalue.mAtlas);
+		mRects = std::move(rvalue.mRects);
+		mUnpackedRects = std::move(rvalue.mUnpackedRects);
+		mPreviousAtlas = std::move(rvalue.mPreviousAtlas);
+		mHelperSprite = std::move(rvalue.mHelperSprite);
 
 		return *this;
 	}
 
 	// Public method(s)
-	void TextureAtlas::add(const Texture2D& texture)
+	void TextureAtlas::add(uint32_t textureID, const Texture2D& texture)
 	{
 		// Add the texture and its size to the hashmap
 		const Vector2u& textureSize = texture.getSize();
-		const bool SUCCESS = mTextures.try_emplace(&texture, 0, 0, textureSize.x, textureSize.y).second;
+		const bool SUCCESS = mUnpackedRects.try_emplace(textureID, std::make_pair(&texture, Box2i(0, 0, textureSize.x, textureSize.y))).second;
 
 		// Check if the texture was successfully added
 		if (!SUCCESS) {
-			AEON_LOG_WARNING("Texture emplacement failed", "The texture provided may have already been previously added.");
+			AEON_LOG_WARNING("Texture emplacement failed v2", "The texture provided may have already been previously added.");
 		}
 	}
 
 	void TextureAtlas::pack()
 	{
+		BasicRenderer2D& renderer = BasicRenderer2D::getInstance();
+
 		// Check if there is at least one texture added
-		if (mTextures.empty()) {
-			AEON_LOG_WARNING("No textures added", "No textures have yet been added to the texture atlas.\nAborting packing.");
+		if (mUnpackedRects.empty()) {
+			AEON_LOG_WARNING("No textures added v2", "No textures have yet been added to the texture atlas.\nAborting packing.");
 			return;
+		}
+
+		// Keep a copy of the previous rects
+		auto prevRects = mRects;
+
+		// Add the unpacked rects to the current rects
+		for (auto& unpackedItr : mUnpackedRects) {
+			mRects.insert(std::make_pair(unpackedItr.first, unpackedItr.second.second));
 		}
 
 		// Calculate the optimal positions for each texture within the texture atlas and create it
 		const Vector2i ATLAS_SIZE = computePacking();
+		mAtlas.create(ATLAS_SIZE.x, ATLAS_SIZE.y);
 
-		// (Re)Create the texture atlas and copy each individual texture's image data
-		mAtlas->create(ATLAS_SIZE.x, ATLAS_SIZE.y);
-		for (auto& texture : mTextures) {
-			GLCall(glCopyImageSubData(texture.first->getHandle(), GL_TEXTURE_2D, 0, 0, 0, 0,
-			                          mAtlas->getHandle(), GL_TEXTURE_2D, 0, texture.second.position.x, texture.second.position.y, 0,
-			                          texture.second.size.x, texture.second.size.y, 1));
+		// Copy over the old texture atlas
+		renderer.beginScene(mAtlas);
+		if (!prevRects.empty()) {
+			mHelperSprite.setTexture(*mPreviousAtlas.getTexture());
+			for (auto rectItr : prevRects) {
+				mHelperSprite.setTextureRect(Box2f(rectItr.second));
+				mHelperSprite.getComponent<Transform2DComponent>()->setPosition(mRects.find(rectItr.first)->second.min);
+				mHelperSprite.update(Time::Zero);
+				mHelperSprite.render(BlendMode::BlendNone);
+			}
 		}
+
+		// Copy each unpacked texture's image data
+		for (auto& texture : mUnpackedRects) {
+			mHelperSprite.setTexture(*texture.second.first, true);
+			mHelperSprite.getComponent<Transform2DComponent>()->setPosition(mRects.find(texture.first)->second.min);
+			mHelperSprite.update(Time::Zero);
+			mHelperSprite.render(BlendMode::BlendNone);
+		}
+		renderer.endScene();
+
+		// Update atlas textures rects
+		mUnpackedRects.clear();
+
+		// Overwrite previous atlas with new one
+		mPreviousAtlas.create(ATLAS_SIZE.x, ATLAS_SIZE.y);
+		renderer.beginScene(mPreviousAtlas);
+		mHelperSprite.setTexture(*mAtlas.getTexture(), true);
+		mHelperSprite.getComponent<Transform2DComponent>()->setPosition(0.f, 0.f);
+		mHelperSprite.update(Time::Zero);
+		mHelperSprite.render(BlendMode::BlendNone);
+		renderer.endScene();
 	}
 
 	const Texture2D& TextureAtlas::getTexture() const noexcept
 	{
-		return *mAtlas;
+		return *mAtlas.getTexture();
 	}
 
-	Box2i TextureAtlas::getTextureRect(const Texture2D& texture) const noexcept
+	Box2i TextureAtlas::getTextureRect(uint32_t textureId) const noexcept
 	{
 		// Find the texture requested
-		auto itr = mTextures.find(&texture);
-		if (itr == mTextures.end()) {
-			AEON_LOG_WARNING("Invalid texture pointer", "The pointer provided hasn't been added to the texture atlas.\nReturning empty rect.");
-			return Box2i();
+		auto itr = mRects.find(textureId);
+		if _CONSTEXPR_IF (AEON_DEBUG) {
+			if (itr == mRects.end()) {
+				AEON_LOG_WARNING("Invalid texture identifier", "The identifier provided hasn't been added to the texture atlas.\nReturning empty rect.");
+				return Box2i();
+			}
 		}
 
 		// Return the corresponding texture rectangle
@@ -118,8 +167,8 @@ namespace ae
 
 		// Create the rectpack2D rectangles
 		std::vector<rp2d_rectType> rp2d_rects;
-		rp2d_rects.reserve(mTextures.size());
-		for (const auto& texture : mTextures) {
+		rp2d_rects.reserve(mRects.size());
+		for (const auto& texture : mRects) {
 			rp2d_rects.emplace_back(0, 0, texture.second.size.x + 1, texture.second.size.y + 1);
 		}
 
@@ -133,11 +182,11 @@ namespace ae
 				[](rp2d_rectType&) { return rectpack2D::callback_result::ABORT_PACKING; },
 				rectpack2D::flipping_option::DISABLED
 			)
-		);
+			);
 
 		// Assign the optimal positions to the stored texture rects
 		auto rp2dItr = rp2d_rects.begin();
-		for (auto itr = mTextures.begin(); itr != mTextures.end(); ++itr, ++rp2dItr) {
+		for (auto itr = mRects.begin(); itr != mRects.end(); ++itr, ++rp2dItr) {
 			itr->second.position.x = rp2dItr->x;
 			itr->second.position.y = rp2dItr->y;
 		}

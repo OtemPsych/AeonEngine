@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,12 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Glyph_H_
-#define Aeon_Graphics_Glyph_H_
+#pragma once
 
-#include <yvals_core.h>
-
-#include <AEON/Config.h>
 #include <AEON/Math/AABoxCollider.h>
 #include <AEON/Math/Vector.h>
 
@@ -37,14 +33,13 @@ namespace ae
 	/*!
 	 \brief The structure describing a glyph (a text character).
 	*/
-	struct _NODISCARD AEON_API Glyph
+	struct AEON_API Glyph
 	{
 		// Public member(s)
-		Box2i                      textureRect;       //!< The position and size of the glyph within the texture
-		Vector2i                   bearing;           //!< The glyph's offset in pixels based on its origin
-		const Texture2D*           texture;           //!< The texture atlas containing the glyph
-		std::shared_ptr<Texture2D> individualTexture; //!< The glyph's individual texture
-		unsigned int               advance;           //!< The horizontal offset in 1/64 pixels to the next glyph's origin
+		Box2i            textureRect; //!< The position and size of the glyph within the texture
+		Vector2i         bearing;     //!< The glyph's offset in pixels based on its origin
+		const Texture2D* texture;     //!< The texture atlas containing the glyph
+		uint32_t         advance;     //!< The horizontal offset in 1/64 pixels to the next glyph's origin
 
 		// Public constructor(s)
 		/*!
@@ -56,19 +51,15 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \param[in] copy The ae::Glyph that will be copied
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Glyph(const Glyph& copy) = default;
+		Glyph(const Glyph&) = default;
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::Glyph that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Glyph(Glyph&& rvalue) noexcept;
+		Glyph(Glyph&&) noexcept = default;
 
 		// Public operator(s)
 		/*!
@@ -80,16 +71,13 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Glyph that will be moved
-
 		 \return The caller ae::Glyph
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Glyph& operator=(Glyph&& rvalue) noexcept;
+		Glyph& operator=(Glyph&&) noexcept = default;
 	};
 }
-#endif // Aeon_Graphics_Glyph_H_
 
 /*!
  \struct ae::Glyph
@@ -102,11 +90,10 @@ namespace ae
  \li The texture rect indicating its position within the texture and the its size
  \li The glyph's offset in pixels based on its origin
  \li The pointer to the texture atlas that contains part of the bitmap of the glyph
- \li The pointer to the glyph's individual texture
  \li The horizontal offset in 1/64 pixels by the glyph's origin until the origin of the next glyph
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.07
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

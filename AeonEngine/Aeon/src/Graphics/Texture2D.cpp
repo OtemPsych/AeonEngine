@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -41,31 +41,11 @@ namespace ae
 	{
 	}
 
-	Texture2D::Texture2D(Texture2D&& rvalue) noexcept
-		: Texture(std::move(rvalue))
-		, mFilepath(std::move(rvalue.mFilepath))
-		, mSize(std::move(rvalue.mSize))
-	{
-	}
-
-	// Public operator(s)
-	Texture2D& Texture2D::operator=(Texture2D&& rvalue) noexcept
-	{
-		// Move the rvalue's data
-		Texture::operator=(std::move(rvalue));
-		mFilepath = std::move(rvalue.mFilepath);
-		mSize = std::move(rvalue.mSize);
-
-		return *this;
-	}
-
 	// Public method(s)
 	bool Texture2D::create(unsigned int width, unsigned int height, const void* data)
 	{
 		// Check that the dimensions provided are valid (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG)
-		{
-			// Emit error if the dimensions are null
+		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if (width == 0 || height == 0) {
 				AEON_LOG_ERROR("Failed to create texture", "The dimensions (" + std::to_string(width) + "x" + std::to_string(height) + ") are invalid.");
 				return false;
@@ -91,7 +71,7 @@ namespace ae
 			GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 		}
 
-		// Create the OpenGL texture with the dimensions width x height and fill it with the image data provided
+		// Create the OpenGL texture and fill it with the image data provided
 		GLCall(glTextureStorage2D(mHandle, 1, static_cast<GLenum>(mFormat.internal), width, height));
 		if (data) {
 			GLCall(glTextureSubImage2D(mHandle, 0, 0, 0, width, height, mFormat.base, GL_UNSIGNED_BYTE, data));
@@ -108,20 +88,16 @@ namespace ae
 	bool Texture2D::update(unsigned int offsetX, unsigned int offsetY, unsigned int width, unsigned int height, const void* data)
 	{
 		// Check that the parameters provided are valid (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG)
-		{
-			// Emit error if the texture has yet to be created
+		if _CONSTEXPR_IF (AEON_DEBUG) {
 			if (mSize.x == 0 || mSize.y == 0) {
 				AEON_LOG_ERROR("Failed to update texture", "The texture has yet to be created.");
 				return false;
 			}
-			// Emit error if the offsets provided are greater than the texture's size
-			if (offsetX >= mSize.x || offsetY >= mSize.y) {
+			else if (offsetX >= mSize.x || offsetY >= mSize.y) {
 				AEON_LOG_ERROR("Failed to update texture", "The offsets (" + std::to_string(offsetX) + ", " + std::to_string(offsetY) + ") are invalid.");
 				return false;
 			}
-			// Emit error if the dimensions are null or greater than the texture's size
-			if (width == 0 || height == 0 || width + offsetX > mSize.x || height + offsetY > mSize.y) {
+			else if (width == 0 || height == 0 || width + offsetX > mSize.x || height + offsetY > mSize.y) {
 				AEON_LOG_ERROR("Failed to update texture", "The dimensions (" + std::to_string(width) + "x" + std::to_string(height) + ") are invalid.");
 				return false;
 			}
@@ -200,14 +176,10 @@ namespace ae
 		return true;
 	}
 
-	const std::string& Texture2D::getFilepath() const noexcept
+	void Texture2D::getPixels(std::vector<uint8_t>& pixels) const
 	{
-		return mFilepath;
-	}
-
-	const Vector2u& Texture2D::getSize() const noexcept
-	{
-		return mSize;
+		pixels.resize(mSize.x * mSize.y * mFormat.imposedChannels);
+		GLCall(glGetTextureImage(mHandle, 0, mFormat.base, (mFormat.bitCount == 8) ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT, mSize.x * mSize.y * mFormat.imposedChannels * sizeof(uint8_t), pixels.data()));
 	}
 
 	// Public virtual method(s)

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -24,6 +24,7 @@
 #define Aeon_Graphics_Shader_H_
 
 #include <map>
+#include <string>
 
 #include <AEON/Math/Vector.h>
 #include <AEON/Math/Matrix.h>
@@ -39,7 +40,7 @@ namespace ae
 	 \brief The class representing an OpenGL shader program to which several shader stages can be attached.
 	 \details The API user can find several pre-compiled shaders in the ae::GLResourceFactory singleton class.
 	*/
-	class _NODISCARD AEON_API Shader : public GLResource
+	class AEON_API Shader : public GLResource
 	{
 	public:
 		/*!
@@ -109,9 +110,9 @@ namespace ae
 
 		 \param[in] rvalue The ae::Shader that will be moved
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Shader(Shader&& rvalue) noexcept;
+		Shader(Shader&& rvalue) noexcept = default;
 	public:
 		// Public operator(s)
 		/*!
@@ -127,9 +128,9 @@ namespace ae
 
 		 \return The caller ae::Shader
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Shader& operator=(Shader&& rvalue) noexcept;
+		Shader& operator=(Shader&& rvalue) noexcept = default;
 	public:
 		// Public method(s)
 		/*!
@@ -204,7 +205,7 @@ namespace ae
 
 		 \sa loadFromSource(), loadFromFile()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		void link() const;
 		/*!
@@ -265,12 +266,12 @@ namespace ae
 
 		 \sa bind()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		_NODISCARD bool isBound() const;
 
 		/*!
-		 \brief Retrieves the ae::Shader's uniform block's index and assigns the ae::UniformBuffer's binding point to the uniform block's index.
+		 \brief Assigns the ae::UniformBuffer's binding point to the uniform block's index.
 		 
 		 \param[in] ubo A ae::UniformBuffer from which the uniform block data will be retrieved
 
@@ -293,7 +294,7 @@ namespace ae
 		 shader->addUniformBuffer(*ubo);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		void addUniformBuffer(const UniformBuffer& ubo);
 
@@ -480,9 +481,9 @@ namespace ae
 		 layout.addElement(GL_FLOAT, 4, GL_FALSE);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD VertexBuffer::Layout& getDataLayout() noexcept;
+		_NODISCARD inline VertexBuffer::Layout& getDataLayout() noexcept { return mDataLayout; }
 
 		// Public virtual method(s)
 		/*!
@@ -647,7 +648,7 @@ namespace ae
  longer needed.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.04
+ \version v0.7.0
+ \date 2021.07.26
  \copyright MIT License
 */

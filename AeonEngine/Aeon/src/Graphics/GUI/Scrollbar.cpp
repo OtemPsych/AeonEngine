@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -25,42 +25,96 @@
 namespace ae
 {
 	// Public constructor(s)
-	Scrollbar::Scrollbar(float actualSize)
+	Scrollbar::Scrollbar(float startPosition)
 		: Widget()
-		, mActualSize(actualSize)
-		, mVisibleSize(actualSize)
+		, mScrollArea()
+		, mContainerMin(0.f)
+		, mContainerMax(1.f)
+		, mContentMin(0.f)
+		, mContentMax(1.f)
+		, mOnScroll()
+		, mDuration(ae::Time::seconds(0.15))
+		, mElapsed(ae::Time::Zero)
+		, mSpeedUpDuration(ae::Time::seconds(0.05))
+		, mSpeedUpElapsed(ae::Time::Zero)
+		, mStartPosition(startPosition)
+		, mEndPosition(startPosition)
+		, mCurrentPosition(startPosition)
+		, mBaseSpeed(100.f)
+		, mSpeed(100.f)
+		, mSpeedUp(60.f)
 	{
-		// Set the states' size
-		updateSize(actualSize, actualSize);
-
-		setOriginFlags(OriginFlag::Right | OriginFlag::Top);
 	}
 
 	// Public method(s)
-	void Scrollbar::scrollTo(float pos)
+	void Scrollbar::scroll(float wheelOffset)
 	{
-		setPosition(getPosition().x, Math::clamp(pos, 0.f, mActualSize));
+		scrollTo(mCurrentPosition - wheelOffset * mSpeed);
 	}
 
-	void Scrollbar::scroll(float offset)
+	void Scrollbar::scrollTo(float position)
 	{
-		setPosition(getPosition().x, Math::clamp(offset, 0.f, mActualSize));
-	}
-
-	void Scrollbar::updateSize(float actualSize, float visibleSize)
-	{
-		// Set the states' size
-		for (size_t i = 0; i < State::StateCount; ++i) {
-			RectangleShape& state = getState(static_cast<State>(i));
-			state.setSize(state.getSize().x, visibleSize * visibleSize / actualSize);
+		if (mContentMax - mContentMin <= mContainerMax - mContainerMin) {
+			if (mCurrentPosition > mContentMin) {
+				mEndPosition = mContentMin;
+			}
+			else {
+				return;
+			}
+		}
+		else {
+			mEndPosition = ae::Math::clamp(position, mContentMin, mContentMax);
 		}
 
-		mActualSize = actualSize;
-		mVisibleSize = visibleSize;
+		if (mCurrentPosition != mEndPosition) {
+			mSpeed += mSpeedUp;
+			mStartPosition = mCurrentPosition;
+			mElapsed = ae::Time::Zero;
+			mSpeedUpElapsed = ae::Time::Zero;
+		}
 	}
 
-	// Private virtual method(s)
-	void Scrollbar::handleEventSelf(Event* const event)
+	void Scrollbar::setContainer(float min, float max) noexcept
+	{
+		mContainerMin = min;
+		mContainerMax = max;
+
+		updateSize();
+		updateScroll();
+	}
+
+	void Scrollbar::setContent(float min, float max) noexcept
+	{
+		mContentMin = min;
+		mContentMax = max;
+
+		updateSize();
+		updateScroll();
+	}
+
+	void Scrollbar::setScrollArea(const ae::Box2f& scrollArea) noexcept
+	{
+		mScrollArea = scrollArea;
+
+		updateSize();
+		updateScroll();
+	}
+
+	void Scrollbar::setScrollDuration(const ae::Time& duration, const ae::Time& speedUpDuration) noexcept
+	{
+		mDuration = duration;
+		mSpeedUpDuration = speedUpDuration;
+	}
+
+	void Scrollbar::setScrollSpeed(float speed, float speedUp) noexcept
+	{
+		mBaseSpeed = speed;
+		mSpeed = speed;
+		mSpeedUp = speedUp;
+	}
+
+	// Protected virtual method(s)
+	void Scrollbar::handleEventSelf(ae::Event* const event)
 	{
 		// Check if the scrollbar has been disabled
 		const State ACTIVE_STATE = getActiveState();
@@ -68,36 +122,85 @@ namespace ae
 			return;
 		}
 
-		// Check if the scrollbar is being hovered over or moved
 		if (event->type == Event::Type::MouseMoved) {
 			auto mouseMoveEvent = event->as<MouseMoveEvent>();
 			if (ACTIVE_STATE == State::Idle || ACTIVE_STATE == State::Hover) {
 				const bool HOVERED_OVER = isHoveredOver(mouseMoveEvent->position);
-				if (HOVERED_OVER && ACTIVE_STATE == State::Idle) {
-					enableState(State::Hover);
+				if (!event->handled && HOVERED_OVER) {
+					if (ACTIVE_STATE == State::Idle) {
+						enableState(State::Hover);
+					}
+					event->handled = true;
 				}
 				else if (!HOVERED_OVER && ACTIVE_STATE == State::Hover) {
 					enableState(State::Idle);
 				}
 			}
 			else if (ACTIVE_STATE == State::Click) {
-				scrollTo(mouseMoveEvent->position.y);
+				const float SCROLL_HEIGHT = getState(State::Idle).getSize().y;
+				const float NEW_POS = ae::Math::clamp(static_cast<float>(mouseMoveEvent->position.y) - SCROLL_HEIGHT / 2.f, mContentMin, mContainerMax);
+				const float CONTAINER_HEIGHT = mContainerMax - mContainerMin;
+				scrollTo(NEW_POS * ae::Math::max(mContentMax - mContentMin, CONTAINER_HEIGHT) / CONTAINER_HEIGHT);
 			}
 		}
-		// Check if the scrollbar is clicked
-		else if (event->type == Event::Type::KeyPressed && !event->handled && ACTIVE_STATE == State::Hover) {
+		else if (event->type == Event::Type::MouseButtonPressed && !event->handled && ACTIVE_STATE == State::Hover) {
 			auto mouseButtonEvent = event->as<MouseButtonEvent>();
 			if (mouseButtonEvent->button == Mouse::Button::Left) {
 				enableState(State::Click);
 				event->handled = true;
 			}
 		}
-		// Check if the scrollbar is released
-		else if (event->type == Event::Type::KeyReleased && ACTIVE_STATE == State::Click) {
+		else if (event->type == Event::Type::MouseButtonReleased && ACTIVE_STATE == State::Click) {
 			auto mouseButtonEvent = event->as<MouseButtonEvent>();
 			if (mouseButtonEvent->button == Mouse::Button::Left) {
-				enableState((isHoveredOver(Mouse::getPosition())) ? State::Hover : State::Idle);
+				enableState(isHoveredOver(ae::Mouse::getPosition()) ? State::Hover : State::Idle);
 			}
+		}
+	}
+
+	void Scrollbar::updateSelf(const ae::Time& dt)
+	{
+		// Reset speed if no longer scrolling after a certain amount of time
+		if ((mSpeedUpElapsed += dt) >= mSpeedUpDuration) {
+			mSpeed = mBaseSpeed;
+		}
+
+		if (mElapsed != mDuration) {
+			mElapsed = ae::Time::seconds(ae::Math::min(mDuration.asSeconds(), (mElapsed + dt).asSeconds()));
+
+			const float FACTOR = static_cast<float>(ae::Math::sin(1.5707963 * (mElapsed / mDuration).asSeconds()));
+			mCurrentPosition = ae::Math::lerp(mStartPosition, mEndPosition, FACTOR);
+
+			updateScroll();
+			mOnScroll(mCurrentPosition);
+
+			if (mElapsed == mDuration) {
+				mStartPosition = mEndPosition;
+			}
+		}
+
+		Widget::updateSelf(dt);
+	}
+
+	// Private method(s)
+	void Scrollbar::updateScroll() noexcept
+	{
+		const float CONTAINER_HEIGHT = mContainerMax - mContainerMin;
+		const float CONTENT_HEIGHT = ae::Math::max(mContentMax - mContentMin, CONTAINER_HEIGHT);
+		const float SCROLL_HEIGHT = getState(State::Idle).getSize().y;
+
+		const float POS_Y = mScrollArea.min.y + (mScrollArea.max.y - SCROLL_HEIGHT) * (mCurrentPosition / CONTENT_HEIGHT);
+		getComponent<ae::Transform2DComponent>()->setPosition(mScrollArea.min.x, POS_Y);
+	}
+
+	void Scrollbar::updateSize() noexcept
+	{
+		const float CONTAINER_HEIGHT = mContainerMax - mContainerMin;
+		const float CONTENT_HEIGHT = ae::Math::max(mContentMax - mContentMin, CONTAINER_HEIGHT);
+		
+		for (uint32_t i = 0; i < State::StateCount; ++i) {
+			ae::RectangleShape& state = getState(static_cast<State>(i));
+			state.setSize(mScrollArea.max.x, CONTAINER_HEIGHT / CONTENT_HEIGHT * mScrollArea.max.y);
 		}
 	}
 }

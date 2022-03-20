@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,13 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Component_H_
-#define Aeon_Graphics_Component_H_
+#pragma once
+
+#include <memory>
 
 #include <AEON/Config.h>
 
 namespace ae
 {
+	// Forward declaration(s)
+	class Actor;
+
 	/*!
 	 \brief Abstract base class used in component-based design.
 	 \note No direct instance of this class may be created.
@@ -42,15 +46,38 @@ namespace ae
 		 \since v0.7.0
 		*/
 		virtual ~Component() = default;
-	protected:
-		// Protected constructor(s)
+
+		// Public method(s)
 		/*!
-		 \brief Default constructor.
-		 \note No direct instance of this class may be created.
+		 \brief Raises/lowers the dirty flag.
+		 \note This method should in most cases be used internally.
+
+		 \param[in] flag True to raise the dirty flag, false otherwise
+
+		 \sa isDirty()
 
 		 \since v0.7.0
 		*/
-		Component() noexcept = default;
+		inline void setDirty(bool flag) noexcept { mIsDirty = flag; }
+		/*!
+		 \brief Checks whether the component has been modified.
+
+		 \return True if the component has been dirtied, false otherwise
+
+		 \since v0.7.0
+		*/
+		[[nodiscard]] inline bool isDirty() const noexcept { return mIsDirty; }
+	protected:
+		// Protected constructor(s)
+		/*!
+		 \brief Constructs the component by providing the associated actor.
+		 \note No direct instance of this class may be created.
+
+		 \param[in] associatedActor The ae::Actor to which the component is attached
+
+		 \since v0.7.0
+		*/
+		explicit Component(Actor& associatedActor) noexcept;
 		/*!
 		 \brief Copy constructor.
 
@@ -63,7 +90,7 @@ namespace ae
 		 \since v0.7.0
 		*/
 		Component(Component&&) noexcept = default;
-	protected:
+
 		// Protected operator(s)
 		/*!
 		 \brief Assignment operator.
@@ -81,9 +108,15 @@ namespace ae
 		 \since v0.7.0
 		*/
 		Component& operator=(Component&&) noexcept = default;
+
+	protected:
+		// Protected member(s)
+		Actor& mAssociatedActor; //!< The actor to which the component is attached
+	private:
+		// Private member(s)
+		bool   mIsDirty;         //!< The dirty flag used by the associated actor
 	};
 }
-#endif // Aeon_Graphics_Component_H_
 
 /*!
  \class ae::Component
@@ -91,10 +124,10 @@ namespace ae
 
  The ae::Component abstract base class in used to separate various
  functionalities such as a transformable actor, a renderabe actor, etc.
- into components which can easily be added, removed and generally managed.
+ into components which can easily be added and generally managed.
 
  \author Filippos Gleglakos
  \version v0.7.0
- \date 2021.06.15
+ \date 2022.01.02
  \copyright MIT License
 */

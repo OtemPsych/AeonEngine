@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_System_Time_H_
-#define Aeon_System_Time_H_
+#pragma once
 
-#include <cstdint>
 #include <string>
 
 #include <AEON/Config.h>
@@ -39,7 +37,6 @@ namespace ae
 		// Public static member(s)
 		static const Time Zero; //!< The pre-defined time value of 'zero'
 
-	public:
 		// Public constructor(s)
 		/*!
 		 \brief Default constructor.
@@ -51,41 +48,33 @@ namespace ae
 		/*!
 		 \brief Copy constructor.
 
-		 \param[in] copy The ae::Time that will be copied
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Time(const Time& copy) = default;
+		Time(const Time&) noexcept = default;
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::Time that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Time(Time&& rvalue) noexcept;
-	public:
+		Time(Time&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Assignment operator.
 
-		 \param[in] other The ae::Time that will be copied
-
 		 \return The caller ae::Time
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Time& operator=(const Time& other) = default;
+		Time& operator=(const Time&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Time that will be moved
-
 		 \return The caller ae::Time
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Time& operator=(Time&& rvalue) noexcept;
+		Time& operator=(Time&&) noexcept = default;
 
 		/*!
 		 \brief Addition operator.
@@ -104,9 +93,9 @@ namespace ae
 
 		 \sa operator-(const Time&), operator/(const Time&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Time operator+(const Time& other) const noexcept;
+		[[nodiscard]] Time operator+(const Time& other) const noexcept;
 		/*!
 		 \brief Subtraction operator.
 		 \details Performs a subtraction of the caller's and the \a other's time values.
@@ -124,9 +113,9 @@ namespace ae
 
 		 \sa operator+(const Time&), operator/(const Time&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Time operator-(const Time& other) const noexcept;
+		[[nodiscard]] Time operator-(const Time& other) const noexcept;
 		/*!
 		 \brief Division operator.
 		 \details Performs a division of the caller's and the \a other's time values.\n
@@ -145,9 +134,9 @@ namespace ae
 
 		 \sa operator+(const Time&), operator-(const Time&)
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Time operator/(const Time& other) const noexcept;
+		[[nodiscard]] Time operator/(const Time& other) const noexcept;
 
 		/*!
 		 \brief Multiplication operator.
@@ -160,14 +149,14 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::Time time = ae::Time::seconds(2.0);
-		 ae::Time doubledTime = time * 2.0;
+		 ae::Time doubledTime = time * 2.0; // 4 seconds
 		 \endcode
 
 		 \sa operator/(double)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Time operator*(double scale) const noexcept;
+		[[nodiscard]] Time operator*(double scale) const noexcept;
 		/*!
 		 \brief Division operator.
 		 \details Scales the ae::Time's time value by the scalar value provided.\n
@@ -180,14 +169,14 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::Time time = ae::Time::seconds(2.0);
-		 ae::Time halvedTime = time / 2.0;
+		 ae::Time halvedTime = time / 2.0; // 1 second
 		 \endcode
 
 		 \sa operator*(double)
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Time operator/(double scale) const;
+		[[nodiscard]] Time operator/(double scale) const;
 
 		/*!
 		 \brief Addition and assignment operator.
@@ -195,7 +184,7 @@ namespace ae
 
 		 \param[in] other The ae::Time of which its time value will be added with the caller's time value
 
-		 \return The caller ae::Time containing the sum of the addition, these calls can be chained together one after the other
+		 \return The caller ae::Time containing the sum of the addition
 
 		 \par Example:
 		 \code
@@ -207,7 +196,7 @@ namespace ae
 
 		 \sa operator-=(const Time&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Time& operator+=(const Time& other) noexcept;
 		/*!
@@ -216,7 +205,7 @@ namespace ae
 
 		 \param[in] other The ae::Time of which its time value will subtract from the caller's time value
 
-		 \return The caller ae::Time containing the difference of the subtraction, these calls can be chained together one after the other
+		 \return The caller ae::Time containing the difference of the subtraction
 
 		 \par Example:
 		 \code
@@ -228,17 +217,16 @@ namespace ae
 
 		 \sa operator+=(const Time&)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Time& operator-=(const Time& other) noexcept;
-
 		/*!
 		 \brief Multiplication and assignment operator.
 		 \details Scales the ae::Time's time value by the scalar value provided, and assigns the product to the ae::Time.
 
 		 \param[in] scale The scalar value which will scale the ae::Time's time value
 
-		 \return The ae::Time containing the scaled time value, these calls can be chained together one after the other
+		 \return The ae::Time containing the scaled time value
 
 		 \par Example:
 		 \code
@@ -249,17 +237,16 @@ namespace ae
 
 		 \sa operator/=(double)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Time& operator*=(double scale) noexcept;
 		/*!
 		 \brief Division and assignment operator.
-		 \details Scales the ae::Time's time value by the scalar value provided, and assigns the quotient to the ae::Time.\n
-		 Performs a check to see if a division by 0 will occur.
+		 \details Scales the ae::Time's time value by the scalar value provided, and assigns the quotient to the ae::Time.
 
 		 \param[in] scale The scalar value which will scale the ae::Time's time value
 
-		 \return The ae::Time containing the scaled time value, these calls can be chained together one after the other
+		 \return The ae::Time containing the scaled time value
 
 		 \par Example:
 		 \code
@@ -270,7 +257,7 @@ namespace ae
 
 		 \sa operator*=(double)
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Time& operator/=(double scale);
 
@@ -293,9 +280,9 @@ namespace ae
 
 		 \sa operator!=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator==(const Time& other) const noexcept;
+		[[nodiscard]] bool operator==(const Time& other) const noexcept;
 		/*!
 		 \brief Inequality operator.
 		 \details Checks if the caller's and the \a other's time values are inequal.
@@ -315,9 +302,9 @@ namespace ae
 
 		 \sa operator==()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator!=(const Time& other) const noexcept;
+		[[nodiscard]] bool operator!=(const Time& other) const noexcept;
 		/*!
 		 \brief Less than operator.
 		 \details Checks if the caller's time value is less than the \a other's time value.
@@ -337,9 +324,9 @@ namespace ae
 
 		 \sa operator<=(), operator>(), operator>=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator<(const Time& other) const noexcept;
+		[[nodiscard]] bool operator<(const Time& other) const noexcept;
 		/*!
 		 \brief Less than or equal to operator.
 		 \details Checks if the caller's time value is less than or equal to the \a other's time value.
@@ -359,9 +346,9 @@ namespace ae
 
 		 \sa operator<(), operator>=(), operator>()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator<=(const Time& other) const noexcept;
+		[[nodiscard]] bool operator<=(const Time& other) const noexcept;
 		/*!
 		 \brief Greater than operator.
 		 \details Checks if the caller's time value is greater than the \a other's time value.
@@ -381,9 +368,9 @@ namespace ae
 
 		 \sa operator>=(), operator<(), operator<=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator>(const Time& other) const noexcept;
+		[[nodiscard]] bool operator>(const Time& other) const noexcept;
 		/*!
 		 \brief Greater than or equal to operator.
 		 \details Checks if the caller's time value is greater than or equal to the \a other's time value.
@@ -403,9 +390,9 @@ namespace ae
 
 		 \sa operator>(), operator<=(), operator<()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator>=(const Time& other) const noexcept;
+		[[nodiscard]] bool operator>=(const Time& other) const noexcept;
 
 		// Friend operator(s)
 		/*!
@@ -420,15 +407,12 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::Time time = ae::Time::seconds(2.0);
-		 ae::Time doubledTime = 2.0 * time;
+		 ae::Time doubledTime = 2.0 * time; // 4 seconds
 		 \endcode
 
-		 \sa operator/(double, const Time&)
-
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		friend AEON_API Time operator*(double scale, const Time& time) noexcept;
-
 		/*!
 		 \brief Unary negation operator.
 		 \details Performs a negation on the \a time's value in which its sign will be inversed (positive to negative and vice-versa).
@@ -440,13 +424,13 @@ namespace ae
 		 \par Example:
 		 \code
 		 ae::Time time = ae::Time::seconds(2.0);
-		 ae::Time negativeTime = -time; // -2.0
+		 ae::Time negativeTime = -time; // -2 seconds
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		friend AEON_API Time operator-(const Time& time) noexcept;
-	public:
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the ae::Time's time value in milliseconds.
@@ -461,9 +445,9 @@ namespace ae
 
 		 \sa asSeconds(), asMicroseconds()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD int_fast32_t asMilliseconds() const noexcept;
+		[[nodiscard]] int32_t asMilliseconds() const noexcept;
 		/*!
 		 \brief Retrieves the ae::Time's time value in microseconds.
 
@@ -477,9 +461,9 @@ namespace ae
 
 		 \sa asSeconds(), asMilliseconds()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD int_fast64_t asMicroseconds() const noexcept;
+		[[nodiscard]] int64_t asMicroseconds() const noexcept;
 		/*!
 		 \brief Retrieves the ae::Time's time value in seconds.
 
@@ -493,9 +477,9 @@ namespace ae
 
 		 \sa asMilliseconds(), asMicroseconds()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD double asSeconds() const noexcept;
+		[[nodiscard]] inline double asSeconds() const noexcept { return mSeconds; }
 
 		// Public static method(s)
 		/*!
@@ -507,14 +491,14 @@ namespace ae
 
 		 \par Example:
 		 \code
-		 ae::Time time = ae::Time::seconds(2.0); // 2 seconds
+		 ae::Time time = ae::Time::seconds(2.0);
 		 \endcode
 
 		 \sa milliseconds(), microseconds()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Time seconds(double seconds) noexcept;
+		[[nodiscard]] static Time seconds(double seconds) noexcept;
 		/*!
 		 \brief Constructs the ae::Time by providing a time value in milliseconds.
 
@@ -529,9 +513,9 @@ namespace ae
 
 		 \sa seconds(), microseconds()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Time milliseconds(int_fast32_t milliseconds) noexcept;
+		[[nodiscard]] static Time milliseconds(int32_t milliseconds) noexcept;
 		/*!
 		 \brief Constructs the ae::Time by providing a time value in microseconds.
 
@@ -546,9 +530,9 @@ namespace ae
 
 		 \sa seconds(), milliseconds()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static Time microseconds(int_fast64_t microseconds) noexcept;
+		[[nodiscard]] static Time microseconds(int64_t microseconds) noexcept;
 
 		/*!
 		 \brief Retrieves a formatted string containing the current system date.
@@ -563,9 +547,9 @@ namespace ae
 
 		 \sa getSystemTime()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static std::string getSystemDate();
+		[[nodiscard]] static std::string getSystemDate();
 		/*!
 		 \brief Retrieves a formatted string containing the current system time.
 		 \details The format is: HH:MM:SS.
@@ -579,9 +563,9 @@ namespace ae
 
 		 \sa getSystemDate()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD static std::string getSystemTime();
+		[[nodiscard]] static std::string getSystemTime();
 	private:
 		// Private constructor(s)
 		/*!
@@ -594,12 +578,10 @@ namespace ae
 		*/
 		explicit Time(double seconds) noexcept;
 
-	private:
 		// Private member(s)
 		double mSeconds; //!< The time value in seconds
 	};
 }
-#endif // Aeon_System_Time_H_
 
 /*!
  \class ae::Time
@@ -617,10 +599,10 @@ namespace ae
  Usage example:
  \code
  ae::Time time1 = ae::Time::seconds(0.1);
- int_fast32_t milli = time1.asMilliseconds(); // 100 milliseconds
+ int32_t milli = time1.asMilliseconds(); // 100 milliseconds
 
  ae::Time time2 = ae::Time::milliseconds(30);
- int_fast64_t micro = time2.asMicroseconds(); // 30'000 microseconds
+ int64_t micro = time2.asMicroseconds(); // 30'000 microseconds
 
  ae::Time time3 = ae::Time::microseconds(-800'000);
  double sec = time3.asSeconds(); // -0.8 seconds
@@ -629,7 +611,7 @@ namespace ae
  \sa ae::Clock
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.01.23
+ \version v0.7.0
+ \date 2021.12.20
  \copyright MIT License
 */

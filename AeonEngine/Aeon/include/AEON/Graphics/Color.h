@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Color_H_
-#define Aeon_Graphics_Color_H_
+#pragma once
 
 #include <AEON/Math/Vector.h>
 
@@ -30,7 +29,7 @@ namespace ae
 	/*!
 	 \brief The utility class used to manipulate RGBA colors.
 	*/
-	class _NODISCARD AEON_API Color
+	class AEON_API Color
 	{
 	public:
 		// Public static member(s)
@@ -44,7 +43,6 @@ namespace ae
 		static const Color Cyan;        //!< The predefined cyan color
 		static const Color Transparent; //!< The predefined transparent color
 
-	public:
 		// Public member(s)
 		uint8_t r; //!< The red component
 		uint8_t g; //!< The green component
@@ -61,20 +59,20 @@ namespace ae
 		*/
 		Color() noexcept;
 		/*!
-		 \brief Constructs the ae::Color by providing the 4 RGBA components.
+		 \brief Constructs the ae::Color by providing the 3 RGB components and an optional alpha component.
 		 \details The \a alpha component is optional and defaults to 255 (opaque) if not provided.
 
-		 \param[in] red The red component (in the range [0,255])
-		 \param[in] green The green component (in the range [0,255])
-		 \param[in] blue The blue component (in the range [0,255])
-		 \param[in] alpha The optional opacity component (in the range [0,255]), 255 by default
+		 \param[in] red The red component (in the range [0;255])
+		 \param[in] green The green component (in the range [0;255])
+		 \param[in] blue The blue component (in the range [0;255])
+		 \param[in] alpha The optional opacity component (in the range [0;255]), 255 by default
 
 		 \par Example:
 		 \code
 		 ae::Color semiTranparentYellow(255, 255, 0, 128);
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
 		Color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255) noexcept;
 		/*!
@@ -91,7 +89,7 @@ namespace ae
 		 \since v0.3.0
 		*/
 		explicit Color(uint32_t hexcode) noexcept;
-	public:
+
 		// Public operator(s)
 		/*!
 		 \brief Addition operator.
@@ -111,9 +109,9 @@ namespace ae
 
 		 \sa operator-(), operator*()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Color operator+(const Color& other) const noexcept;
+		[[nodiscard]] Color operator+(const Color& other) const noexcept;
 		/*!
 		 \brief Subtraction operator.
 		 \details Performs a memberwise subtraction of the caller's and the \a other's components.\n
@@ -132,9 +130,9 @@ namespace ae
 
 		 \sa operator+(), operator*()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Color operator-(const Color& other) const noexcept;
+		[[nodiscard]] Color operator-(const Color& other) const noexcept;
 		/*!
 		 \brief Multiplication operator.
 		 \details Performs a memberwise multiplication of the caller's and the \a other's components.\n
@@ -153,9 +151,9 @@ namespace ae
 
 		 \sa operator+(), operator-()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Color operator*(const Color& other) const noexcept;
+		[[nodiscard]] Color operator*(const Color& other) const noexcept;
 
 		/*!
 		 \brief Addition and assignment operator.
@@ -240,9 +238,9 @@ namespace ae
 
 		 \sa operator!=()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator==(const Color& other) const noexcept;
+		[[nodiscard]] bool operator==(const Color& other) const noexcept;
 		/*!
 		 \brief Inequality operator.
 		 \details Checks if the caller's and the \a other's respective components are inequal.
@@ -262,10 +260,10 @@ namespace ae
 
 		 \sa operator==()
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator!=(const Color& other) const noexcept;
-	public:
+		[[nodiscard]] bool operator!=(const Color& other) const noexcept;
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the ae::Color in hexadecimal.
@@ -278,15 +276,33 @@ namespace ae
 		 uint32_t yellowHexcode = yellow.toHexcode();
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD uint32_t toHexcode() const noexcept;
+		[[nodiscard]] uint32_t toHexcode() const noexcept;
+		/*!
+		 \brief Converts the ae::Color in RGB to HSV.
+
+		 \param[out] hue The hue in degrees in the range [0;360]
+		 \param[out] saturation The saturation as a percentage [0%;100%]
+		 \param[out] value The value as a percentage [0%;100%]
+		 \param[out] alpha The opacity component [0;255]
+
+		 \par Example:
+		 \code
+		 float hue, saturation, value;
+		 uint8_t alpha;
+		 ae::Color::Red.toHSV(hue, saturation, value, alpha);
+		 \endcode
+
+		 \since v0.7.0
+		*/
+		[[nodiscard]] void toHSV(float& hue, float& saturation, float& value, uint8_t& alpha) const noexcept;
 		/*!
 		 \brief Retrieves the normalized color of the ae::Color.
-		 \details The ae::Color's components will be normalized from integers in the range [0,255] to floating-point values in the range [0,1].\n
+		 \details The ae::Color's components will be normalized from integers in the range [0;255] to floating-point values in the range [0,1].\n
 		 This method is primarily used internally to send the color to the shaders.
 
-		 \return A 4-dimensional ae::Vector containing the normalized components of the ae::Color situated in the range [0,1]
+		 \return A 4-dimensional ae::Vector containing the normalized components of the ae::Color situated in the range [0;1]
 
 		 \par Example:
 		 \code
@@ -294,12 +310,31 @@ namespace ae
 		 ae::Vector4f yellowVec4f = yellow.normalize(); // (1.f, 1.f, 0.f, 1.f)
 		 \endcode
 
-		 \since v0.3.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Vector4f normalize() const noexcept;
+		[[nodiscard]] Vector4f normalize() const noexcept;
+
+		// Public static method(s)
+		/*!
+		 \brief Constructs a ae::Color by providing a HSV color.
+
+		 \param[in] hue The hue in degrees in the range [0;360]
+		 \param[in] saturation The saturation as a percentage [0%;100%]
+		 \param[in] value The value as a percentage [0%;100%]
+		 \param[in] alpha The optional opacity component in the range [0;255], 255 by default
+
+		 \return The RGBA ae::Color from a HSV color
+
+		 \par Example:
+		 \code
+		 ae::Color darkRed = ae::Color::fromHSV(360.f, 68.f, 37.f);
+		 \endcode
+
+		 \since v0.7.0
+		*/
+		[[nodiscard]] static Color fromHSV(float hue, float saturation, float value, uint8_t alpha = 255) noexcept;
 	};
 }
-#endif // Aeon_Graphics_Color_H_
 
 /*!
  \class ae::Color
@@ -311,7 +346,7 @@ namespace ae
  \li b (Blue)
  \li a (Alpha - Opacity)
 
- Each component is a public member situated in the range [0,255].
+ Each component is a public member situated in the range [0;255].
  Therefore, all colors can very easily be constructed and manipulated.
 
  The 4th color components which is the 'alpha' component represents the opacity
@@ -335,7 +370,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.3.0
- \date 2019.07.14
+ \version v0.7.0
+ \date 2022.02.22
  \copyright MIT License
 */

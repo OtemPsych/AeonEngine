@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -25,6 +25,7 @@
 
 #include <AEON/Graphics/GUI/internal/Widget.h>
 #include <AEON/Graphics/RectangleShape.h>
+#include <AEON/Graphics/RenderTexture.h>
 
 namespace ae
 {
@@ -36,21 +37,54 @@ namespace ae
 	 \brief Class representing a GUI textbox.
 	 \details The Idle, Hover and Click states need to be configured.
 	*/
-	class _NODISCARD AEON_API Textbox : public Widget<RectangleShape>
+	class AEON_API Textbox : public Widget<RectangleShape>
 	{
 	public:
+		// Public constructor(s)
 		Textbox();
 	public:
-		Text& getText() noexcept;
-		Text& getPlaceholder() noexcept;
+		// Public method(s)
+		void focus();
+		inline RectangleShape& getSelectionRegion() noexcept { return *mSelectedRegion; }
+		inline Text& getText() noexcept { return *mText; }
+		inline Text& getPlaceholder() noexcept { return *mPlaceholder; }
+		inline void setCharacterCount(int count) noexcept { mCharacterCount = count; }
+		inline RectangleShape& getCaret() noexcept { return *mCaret.first; }
+
+		// Public static method(s)
+		static void enableIBeamCursor(bool flag);
 	private:
-		virtual void enableState(State state) override final;
+		// Private method(s)
+		bool addCharacters(const std::string& str);
+		bool removeCharacters();
+		bool removeCharacter(bool backwards);
+		size_t findClosestCharacterIndex();
+		void updateCaretPosition();
+		void updateSelectedRegion();
+		void updateSelectedRegionOnMouseMove();
+		void updateCaretIndexOnMouseClick();
+		void updateCaretFade(bool forceShow);
+
+		// Private virtual method(s)
+		virtual void enableState(uint32_t state) override final;
 		virtual void updateSelf(const Time& dt) override final;
 		virtual void handleEventSelf(Event* const event) override final;
 		
 	private:
-		Text* mText;
-		Text* mPlaceholder;
+		// Private member(s)
+		RectangleShape*                        mSelectedRegion;
+		bool                                   mSelectingText;
+		size_t                                 mSelectionEndIndex;
+		Text*                                  mText;
+		Text*                                  mPlaceholder;
+		std::pair<ae::RectangleShape*, size_t> mCaret;
+		Time                                   mCaretFadeTime;
+		Time                                   mCaretFadeElapsedTime;
+		int                                    mCharacterCount;
+
+		// Private static member(s)
+		static bool                            mEnableIBeamCursor;
+		static std::pair<bool, bool>           mShowIBeamCursor;
 	};
 }
 #endif // Aeon_Graphics_GUI_Textbox_H_
@@ -63,7 +97,7 @@ namespace ae
  typing text
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.17
+ \version v0.7.0
+ \date 2021.07.18
  \copyright MIT License
 */

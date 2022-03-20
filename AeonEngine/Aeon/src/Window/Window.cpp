@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,14 +22,11 @@
 
 #include <AEON/Window/Window.h>
 
-#include <string>
-
 #include <GLFW/glfw3.h>
 
-#include <AEON/Graphics/internal/GLCommon.h>
-#include <AEON/Window/MonitorManager.h>
-#include <AEON/Window/Monitor.h>
 #include <AEON/Window/internal/InputManager.h>
+#include <AEON/Window/MonitorManager.h>
+#include <AEON/Graphics/internal/GLCommon.h>
 
 namespace ae
 {
@@ -40,6 +37,7 @@ namespace ae
 		, mTitle(title)
 		, mVideoMode(vidMode)
 		, mContextSettings(settings)
+		, mStandardCursors()
 		, mSizeLimits(-1, -1, -1, -1)
 		, mAspectRatio(-1, -1)
 		, mPosition()
@@ -47,6 +45,7 @@ namespace ae
 		, mStyle(style)
 		, mMonitor(MonitorManager::getInstance().getPrimaryMonitor())
 		, mHandle(nullptr)
+		, mVerticalSyncEnabled(false)
 	{
 		// Apply the OpenGL context hints and create the GLFW window
 		mContextSettings.apply();
@@ -87,24 +86,21 @@ namespace ae
 		}
 
 		// Set the video mode hints
-		const int RED_BITS = mVideoMode.getRedBits();
-		const int GREEN_BITS = mVideoMode.getGreenBits();
-		const int BLUE_BITS = mVideoMode.getBlueBits();
-		const int ALPHA_BITS = Math::min(RED_BITS, Math::min(GREEN_BITS, BLUE_BITS));
+		const int32_t RED_BITS = mVideoMode.getRedBits();
+		const int32_t GREEN_BITS = mVideoMode.getGreenBits();
+		const int32_t BLUE_BITS = mVideoMode.getBlueBits();
+		const int32_t ALPHA_BITS = Math::min(RED_BITS, Math::min(GREEN_BITS, BLUE_BITS));
 
 		glfwWindowHint(GLFW_RED_BITS, RED_BITS);
 		glfwWindowHint(GLFW_GREEN_BITS, GREEN_BITS);
 		glfwWindowHint(GLFW_BLUE_BITS, BLUE_BITS);
 		glfwWindowHint(GLFW_ALPHA_BITS, ALPHA_BITS);
 
-		// Create the GLFW window based on the selected style and check if it was successfully created
+		// Create the GLFW window based on the selected style
 		mHandle = glfwCreateWindow(mVideoMode.getWidth(), mVideoMode.getHeight(), mTitle.c_str(), monitorHandle, nullptr);
 		if (!mHandle) {
 			AEON_LOG_ERROR("Window creation failed", "Failed to create the GLFW window.\nThe OpenGL context wasn't made current.");
 			return;
-		}
-		else {
-			AEON_LOG_INFO("Window creation succeeded", "The GLFW window was successfully created.");
 		}
 
 		// Set the GLFW input event callbacks
@@ -152,41 +148,39 @@ namespace ae
 
 	void Window::handleEvent(Event* const event)
 	{
-		if (event->type == Event::Type::FramebufferResized) {
-			FramebufferResizeEvent* const framebufferResizeEvent = event->as<FramebufferResizeEvent>();
-			mFramebufferSize = framebufferResizeEvent->size;
-			GLCall(glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y));
-			framebufferResizeEvent->handled = true;
-		}
-		else if (event->type == Event::Type::WindowResized) {
+		if (event->type == Event::Type::WindowResized) {
 			WindowResizeEvent* const windowResizeEvent = event->as<WindowResizeEvent>();
 			mVideoMode = VideoMode(windowResizeEvent->size.x, windowResizeEvent->size.y, mVideoMode.getRefreshRate(), mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
 			windowResizeEvent->handled = true;
 		}
-		else if (event->type == Event::Type::MonitorDisconnected) {
-			if (!mMonitor) {
-				mMonitor = MonitorManager::getInstance().getPrimaryMonitor();
-				mVideoMode = VideoMode(mVideoMode.getResolution(), mVideoMode.getRefreshRate(), mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
-				if (mStyle == Style::Fullscreen || mStyle == Style::WindowedFullscreen) {
-					if (!mVideoMode.isValid()) {
-						mVideoMode = mMonitor->getDesktopMode();
-					}
-					glfwSetWindowMonitor(mHandle, mMonitor->getHandle(), 0, 0, mVideoMode.getWidth(), mVideoMode.getHeight(), mVideoMode.getRefreshRate());
-				}
+		else if (event->type == Event::Type::FramebufferResized) {
+			FramebufferResizeEvent* const framebufferResizeEvent = event->as<FramebufferResizeEvent>();
+			if (framebufferResizeEvent->handle == 0) {
+				mFramebufferSize = framebufferResizeEvent->size;
+				GLCall(glViewport(0, 0, mFramebufferSize.x, mFramebufferSize.y));
+				framebufferResizeEvent->handled = true;
 			}
 		}
-		else if (event->type == Event::Type::WindowDamaged) {
-			glfwSwapBuffers(mHandle);
+		else if (event->type == Event::Type::WindowMoved) {
+			WindowMoveEvent* const windowMoveEvent = event->as<WindowMoveEvent>();
+			mPosition = windowMoveEvent->position;
+			windowMoveEvent->handled = true;
 		}
 		else if (event->type == Event::Type::WindowContentScaleChanged) {
 			WindowContentScaleEvent* const windowContentScaleEvent = event->as<WindowContentScaleEvent>();
 			mContentScale = windowContentScaleEvent->scale;
 			windowContentScaleEvent->handled = true;
 		}
-		else if (event->type == Event::Type::WindowMoved) {
-			WindowMoveEvent* const windowMoveEvent = event->as<WindowMoveEvent>();
-			mPosition = windowMoveEvent->position;
-			windowMoveEvent->handled = true;
+		else if (event->type == Event::Type::MonitorDisconnected && !mMonitor) {
+			mMonitor = MonitorManager::getInstance().getPrimaryMonitor();
+			mVideoMode = VideoMode(mVideoMode.getResolution(), mVideoMode.getRefreshRate(), mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
+			if (mStyle == Style::Fullscreen || mStyle == Style::WindowedFullscreen) {
+				if (!mVideoMode.isValid()) {
+					mVideoMode = mMonitor->getDesktopMode();
+				}
+				glfwSetWindowMonitor(mHandle, mMonitor->getHandle(), 0, 0, mVideoMode.getWidth(), mVideoMode.getHeight(), mVideoMode.getRefreshRate());
+			}
+			event->handled = true;
 		}
 	}
 
@@ -220,8 +214,9 @@ namespace ae
 		return !glfwWindowShouldClose(mHandle);
 	}
 
-	void Window::enableVerticalSync(bool flag) const
+	void Window::enableVerticalSync(bool flag)
 	{
+		mVerticalSyncEnabled = flag;
 		glfwSwapInterval(flag);
 	}
 
@@ -235,66 +230,31 @@ namespace ae
 
 	void Window::setSize(const Vector2i& size)
 	{
-		if (mVideoMode.getResolution() != size) {
-			// Verify that the size provided is valid (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (size.x <= 0 || size.y <= 0) {
-					AEON_LOG_ERROR("Invalid size", "The size values (" + std::to_string(size.x) + "x" + std::to_string(size.y) + ") are invalid.\nAborting operation.");
-					return;
-				}
-			}
+		assert(size.x > 0 && size.y > 0);
 
-			// Set the new size/resolution
+		if (mVideoMode.getResolution() != size) {
 			mVideoMode = VideoMode(size.x, size.y, mVideoMode.getRefreshRate(), mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
 			glfwSetWindowSize(mHandle, size.x, size.y);
-
-			// Check that the new size if compatible for the monitor if the window is in fullscreen mode (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if ((mStyle == Style::Fullscreen || mStyle == Style::WindowedFullscreen) && !mVideoMode.isValid()) {
-					AEON_LOG_WARNING("Invalid resolution", "The resolution values (" + std::to_string(size.x) + "x" + std::to_string(size.y) + ") are invalid.");
-				}
-			}
 		}
 	}
 
-	void Window::setRefreshRate(int refreshRate)
+	void Window::setRefreshRate(int32_t refreshRate)
 	{
-		if (mVideoMode.getRefreshRate() != refreshRate) {
-			// Verify that the refresh rate provided is valid (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (refreshRate <= 0) {
-					AEON_LOG_ERROR("Invalid refresh rate", "The refresh rate \"" + std::to_string(refreshRate) + "\" is invalid.\nAborting operation.");
-					return;
-				}
-			}
+		assert(refreshRate > 0);
 
-			// Only modify the refresh rate if the window's in fullscreen mode
-			if (mStyle == Style::Fullscreen || mStyle == Style::WindowedFullscreen) {
-				// Set the new refresh rate
-				const int WIDTH = mVideoMode.getWidth();
-				const int HEIGHT = mVideoMode.getHeight();
-				mVideoMode = VideoMode(WIDTH, HEIGHT, refreshRate, mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
-				glfwSetWindowMonitor(mHandle, mMonitor->getHandle(), 0, 0, WIDTH, HEIGHT, refreshRate);
+		if (getRefreshRate() != refreshRate && (mStyle == Style::Fullscreen || mStyle == Style::WindowedFullscreen)) {
+			const int32_t WIDTH = mVideoMode.getWidth();
+			const int32_t HEIGHT = mVideoMode.getHeight();
+			mVideoMode = VideoMode(WIDTH, HEIGHT, refreshRate, mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
+			assert(mVideoMode.isValid());
 
-				// Check that the new refresh rate is native to the monitor (ignored in Release mode)
-				if _CONSTEXPR_IF (AEON_DEBUG) {
-					if (!mVideoMode.isValid()) {
-						AEON_LOG_WARNING("Invalid refresh rate", "The refresh rate \"" + std::to_string(refreshRate) + "\" is not native to the monitor.");
-					}
-				}
-			}
+			glfwSetWindowMonitor(mHandle, mMonitor->getHandle(), 0, 0, WIDTH, HEIGHT, refreshRate);
 		}
 	}
 
 	void Window::setSizeLimits(const Box2i& limits)
 	{
-		// Check if the limits provided are valid (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (limits.min.x < -1 || limits.min.y < -1 || limits.max.x < -1 || limits.max.y < -1) {
-				AEON_LOG_ERROR("Invalid size limits", "The size limits provided are invalid as at least one of them is less than -1.\nNo effect.");
-				return;
-			}
-		}
+		assert(limits.min.x >= -1 && limits.min.y >= -1 && limits.max.x >= -1 && limits.max.y >= -1);
 
 		mSizeLimits = limits;
 		glfwSetWindowSizeLimits(mHandle, limits.min.x, limits.min.y, limits.max.x, limits.max.y);
@@ -302,13 +262,7 @@ namespace ae
 
 	void Window::setAspectRatio(const Vector2i& ratio)
 	{
-		// Check if the ratios provided are valid (ignored in Release mode)
-		if _CONSTEXPR_IF(AEON_DEBUG) {
-			if (ratio.x < -1 || ratio.y < -1) {
-				AEON_LOG_ERROR("Invalid aspect ratio", "The aspect ratio limits provided are invalid as at least one of them is less than -1.\nNo effect.");
-				return;
-			}
-		}
+		assert(ratio.x >= -1 && ratio.y >= -1);
 
 		mAspectRatio = ratio;
 		glfwSetWindowAspectRatio(mHandle, ratio.x, ratio.y);
@@ -331,7 +285,6 @@ namespace ae
 				// Check if the current video mode is compatible for the monitor and replace it with the desktop mode if it isn't
 				if (!mVideoMode.isValid()) {
 					mVideoMode = mMonitor->getDesktopMode();
-					AEON_LOG_WARNING("Incompatible video mode", "The current video mode was incompatible and was replaced with the monitor's desktop mode.");
 				}
 
 				// Make the window fullscreen
@@ -351,7 +304,7 @@ namespace ae
 				const Vector2i CENTER = workarea.position + (workarea.size - windowSize) / 2;
 				glfwSetWindowMonitor(mHandle, nullptr, CENTER.x, CENTER.y, windowSize.x, windowSize.y, 0);
 
-				// Remove the undesired window attributs and enable the desired ones
+				// Remove the undesired window attributes and enable the desired ones
 				glfwSetWindowAttrib(mHandle, GLFW_DECORATED, mStyle & Style::Decorated);
 				glfwSetWindowAttrib(mHandle, GLFW_RESIZABLE, mStyle & Style::Resizable);
 			}
@@ -365,14 +318,13 @@ namespace ae
 			mMonitor = &newMonitor;
 
 			// Modify the associated monitor of the video mode
-			const Vector2i& RESOLUTION = mVideoMode.getResolution();
-			const int REFRESH_RATE = mVideoMode.getRefreshRate();
+			const Vector2i RESOLUTION = mVideoMode.getResolution();
+			const int32_t REFRESH_RATE = mVideoMode.getRefreshRate();
 			mVideoMode = VideoMode(RESOLUTION.x, RESOLUTION.y, REFRESH_RATE, mVideoMode.getRedBits(), mVideoMode.getGreenBits(), mVideoMode.getBlueBits(), mMonitor);
 
 			// Check that the new monitor is compatible with the current video mode and replace it with the desktop mode if it isn't
 			if (!mVideoMode.isValid()) {
 				mVideoMode = mMonitor->getDesktopMode();
-				AEON_LOG_WARNING("Incompatible video mode", "The current video mode was incompatible and was replaced with the new monitor's desktop mode.");
 			}
 
 			// Set the new monitor
@@ -380,63 +332,22 @@ namespace ae
 		}
 	}
 
-	const std::string& Window::getTitle() const noexcept
+	void Window::setCursor(const Cursor& cursor) const
 	{
-		return mTitle;
+		GLFWcursor* const cursorHandle = cursor.getHandle();
+		assert(cursorHandle);
+
+		glfwSetCursor(mHandle, cursorHandle);
 	}
 
-	const VideoMode& Window::getVideoMode() const noexcept
+	void Window::setCursor(Cursor::Type type)
 	{
-		return mVideoMode;
-	}
+		auto cursorEmplacement = mStandardCursors.try_emplace(type, type);
+		assert(cursorEmplacement.second);
 
-	const Vector2i& Window::getSize() const noexcept
-	{
-		return mVideoMode.getResolution();
-	}
+		GLFWcursor* const cursorHandle = cursorEmplacement.first->second.getHandle();
+		assert(cursorHandle);
 
-	int Window::getRefreshRate() const noexcept
-	{
-		return mVideoMode.getRefreshRate();
-	}
-
-	const ContextSettings& Window::getContextSettings() const noexcept
-	{
-		return mContextSettings;
-	}
-
-	const Box2i& Window::getSizeLimits() const noexcept
-	{
-		return mSizeLimits;
-	}
-
-	const Vector2i& Window::getAspectRatio() const noexcept
-	{
-		return mAspectRatio;
-	}
-
-	const Vector2i& Window::getPosition() const noexcept
-	{
-		return mPosition;
-	}
-
-	const Vector2f& Window::getContentScale() const noexcept
-	{
-		return mContentScale;
-	}
-
-	uint32_t Window::getStyle() const noexcept
-	{
-		return mStyle;
-	}
-
-	const Monitor* const Window::getMonitor() const noexcept
-	{
-		return mMonitor;
-	}
-
-	GLFWwindow* const Window::getHandle() const noexcept
-	{
-		return mHandle;
+		glfwSetCursor(mHandle, cursorHandle);
 	}
 }

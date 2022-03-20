@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_UniformBuffer_H_
-#define Aeon_Graphics_UniformBuffer_H_
+#pragma once
 
-#include <map>
+#include <unordered_map>
 #include <queue>
+#include <string>
 
 #include <AEON/Graphics/internal/Buffer.h>
 
@@ -37,7 +37,7 @@ namespace ae
 	 \brief The class representing an OpenGL buffer used to supply uniform data to shaders.
 	 \note This class is considered to be internal but may still be used by the API user.
 	*/
-	class _NODISCARD AEON_API UniformBuffer : public Buffer
+	class AEON_API UniformBuffer : public Buffer
 	{
 	public:
 		// Public constructor(s)
@@ -57,12 +57,10 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::UniformBuffer that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		UniformBuffer(UniformBuffer&& rvalue) noexcept;
-	public:
+		UniformBuffer(UniformBuffer&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -73,14 +71,12 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::UniformBuffer that will be moved
-
 		 \return The caller ae::UniformBuffer
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		UniformBuffer& operator=(UniformBuffer&& rvalue) noexcept;
-	public:
+		UniformBuffer& operator=(UniformBuffer&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Queries the \a shader's layout to retrieve information about the uniform block.
@@ -106,7 +102,7 @@ namespace ae
 		 ubo->queryLayout(*shader, "uTransformBlock", { "model", "view", "projection" });
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void queryLayout(const Shader& shader, const std::string& blockName, std::initializer_list<std::string> uniformNames);
 
@@ -175,7 +171,7 @@ namespace ae
 
 		 \sa queueUniformUpload()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void uploadQueuedUniforms();
 
@@ -200,9 +196,9 @@ namespace ae
 		 const std::string& uboBlockName = ubo->getBlockName();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const std::string& getBlockName() const noexcept;
+		[[nodiscard]] inline const std::string& getBlockName() const noexcept { return mBlockName; }
 		/*!
 		 \brief Retrieves the ae::UniformBuffer's automatically-generated binding point.
 		 \details Each ae::UniformBuffer instance possesses a unique binding point to which they will be bound.
@@ -219,9 +215,9 @@ namespace ae
 		 int uboBindingPoint = ubo->getBindingPoint();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD int getBindingPoint() const noexcept;
+		[[nodiscard]] inline uint32_t getBindingPoint() const noexcept { return mBindingPoint; }
 
 	private:
 		// Private method(s)
@@ -234,10 +230,10 @@ namespace ae
 
 		 \sa initUniformBlock()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		void initUniforms(const std::initializer_list<std::string>& uniformNames,
-		                  const std::string& blockName, unsigned int shaderID);
+		                  const std::string& blockName, uint32_t shaderID);
 		/*!
 		 \brief Initializes the ae::UniformBuffer's OpenGL buffer based on the uniform data retrieved.
 
@@ -245,19 +241,18 @@ namespace ae
 		 
 		 \sa initUniforms()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		void initUniformBlock(unsigned int shaderID);
+		void initUniformBlock(uint32_t shaderID);
 
-	private:
 		// Private nested struct(s)
 		/*!
 		 \brief Struct representing the data of a shader uniform.
 		*/
 		struct Uniform 
 		{
-			std::map<uint32_t, int> metadata; //!< The uniform's metadata
-			unsigned int            index;    //!< The uniform's index in the uniform block
+			std::unordered_map<uint32_t, int32_t> metadata; //!< The uniform's metadata
+			uint32_t                              index;    //!< The uniform's index in the uniform block
 
 			/*!
 			 \brief Constructs the ae::UniformBuffer::Uniform by providing the necessary elements.
@@ -276,19 +271,18 @@ namespace ae
 		*/
 		struct UniformUpload
 		{
-			const std::map<std::string, Uniform>::iterator uniform; //!< The uniform in question
-			const void*                                    data;    //!< The uniform's new data
-			size_t                                         size;    //!< The size of the uniform's new data in bytes
+			const std::unordered_map<std::string, Uniform>::iterator uniform; //!< The uniform in question
+			const void*                                              data;    //!< The uniform's new data
+			size_t                                                   size;    //!< The size of the uniform's new data in bytes
 		};
-	private:
+
 		// Private member(s)
-		std::map<std::string, Uniform> mUniforms;     //!< The list of all the uniform block's uniforms
-		std::queue<UniformUpload>      mUploadQueue;  //!< The queue of enqueued uniform uploads
-		std::string                    mBlockName;    //!< The name of the uniform block
-		int                            mBindingPoint; //!< The uniform buffer's assigned binding point
+		std::unordered_map<std::string, Uniform> mUniforms;     //!< The list of all the uniform block's uniforms
+		std::queue<UniformUpload>                mUploadQueue;  //!< The enqueued uniform uploads
+		std::string                              mBlockName;    //!< The name of the uniform block
+		uint32_t                                 mBindingPoint; //!< The uniform buffer's assigned binding point
 	};
 }
-#endif // Aeon_Graphics_UniformBuffer_H_
 
 /*!
  \class ae::UniformBuffer
@@ -300,7 +294,7 @@ namespace ae
  this class will query said layout.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

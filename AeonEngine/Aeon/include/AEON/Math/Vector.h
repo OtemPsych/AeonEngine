@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Math_Vector_H_
-#define Aeon_Math_Vector_H_
+#pragma once
 
 #include <array>
 
@@ -38,7 +37,7 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.) and the minimum number of dimensions is 2.
 	*/
 	template <typename T, size_t n, typename = VECTOR_POLICY<T, n>>
-	struct Vector
+	struct AEON_API Vector
 	{
 		// Member(s)
 		std::array<T, n> elements; //!< The array of elements
@@ -48,12 +47,13 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector() noexcept
+		constexpr Vector() noexcept
 			: elements()
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a \a scalar value of the appropriate type.
 		 \details Sets the elements to the value of the \a scalar.
@@ -65,17 +65,19 @@ namespace ae
 		 ae::Vector<float, 6> vec6f(0.5f); // all elements set to 0.5f
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		explicit inline _CONSTEXPR17 Vector(T scalar)
+		explicit constexpr Vector(T scalar) noexcept
 			: elements()
 		{
-			elements.fill(scalar);
+			for (T& element : elements) {
+				element = scalar;
+			}
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing specific coordinates.
 		 \details Sets the ae::Vector's elements to the coordinates provided.
-		 \note It's up to the user to provide the correct number of coordinates and of the right type.
 
 		 \param[in] c1 The first coordinate to pass to the ae::Vector
 		 \param[in] c2 The second coordinate to pass to the ae::Vector
@@ -89,80 +91,21 @@ namespace ae
 		 ae::Vector<float, 5> vec5f(0.5f, 0.3f, -1.f, 1.f, 10.f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		template <typename... Coords>
-		inline _CONSTEXPR17 Vector(T c1, T c2, T c3, T c4, T c5, Coords... coordinates)
-			: elements({ c1, c2, c3, c4, c5, coordinates... })
+		constexpr Vector(T c1, T c2, T c3, T c4, T c5, Coords... cN)
+			: elements({ c1, c2, c3, c4, c5, cN... })
 		{
+			static_assert(std::conjunction_v<std::bool_constant<std::is_same_v<Coords, T>>...>, "'Vector(T, T, T, T, T, Coords...)' - Coords... parameters provided were not of type T");
+			static_assert(sizeof...(Coords) == n - 5, "'Vector(T, T, T, T, T, Coords...)' - more than n parameters were provided");
 		}
+
 		/*!
-		 \brief Constructs the ae::Vector by providing specific \a coordinates.
-		 \details Sets the ae::Vector's elements to the \a coordinates provided.
-		 \note It's up to the user to provide the correct number of elements.
+		 \brief Constructs the ae::Vector by providing an ae::Vector of another type and/or a different number of elements.
+		 \details As many elements as both vectors hold are copied.
 
-		 \param[in] coordinates The initializer list of elements
-
-		 \par Example:
-		 \code
-		 ae::Vector<float, 5> vec5f({ 0.5f, 0.3f, -1.f, 1.f, 10.f });
-		 // or
-		 ae::Vector<float, 5> vec5f = { 0.5f, 0.3f, -1.f, 1.f, 10.f };
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		inline Vector(std::initializer_list<T> coordinates)
-			: elements()
-		{
-			// Copy the maximum number of elements that both the vector and the list hold
-			const size_t MIN_COUNT = Math::min(n, coordinates.size());
-			std::memcpy(elements.data(), coordinates.begin(), MIN_COUNT * sizeof(T));
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing an std::array of coordinates.
-		 \details Sets the ae::Vector's elements to the std::array of \a coordinates provided.
-
-		 \param[in] coordinates The C++11 array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 std::array<float, 5> COORDINATES = { 0.5f, 0.3f, -1.f, 1.f, 10.f };
-		 ae::Vector<float, 5> VEC5F(COORDINATES);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline _CONSTEXPR17 Vector(const std::array<T, n>& coordinates) noexcept
-			: elements(coordinates)
-		{
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing a C-style array of coordinates.
-		 \details Sets the ae::Vector's elements to the C-style array of \a coordinates provided.
-
-		 \param[in] coordinates The C-style array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 float coordinates[5] = { 0.5f, 0.3f, -1.f, 1.f, 10.f };
-		 ae::Vector<float, 5> vec5f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline Vector(const T(&coordinates)[n])
-			: elements()
-		{
-			// Copy the values of the C-style array to the vector's elements
-			std::memcpy(elements.data(), coordinates, n * sizeof(T));
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing an ae::Vector of another type and/or with a different number of elements.
-		 \details Sets the ae::Vector's elements to the \a vecUN's elements, up to the maximum number of elements that both vectors hold.\n
-		 If the \a vecUN possesses less elements, the ae::Vector's remaining elements will be set to 0.
-
-		 \param[in] vecUN The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
+		 \param[in] other The ae::Vector of another type and/or a different number of elements
 
 		 \par Example:
 		 \code
@@ -179,23 +122,18 @@ namespace ae
 		 ae::Vector<double, 7> vec7d(vec5i); // last two elements set to 0.0
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename U, size_t n2>
-		inline Vector(const Vector<U, n2>& vecUN)
+		template <typename U, size_t m>
+		constexpr Vector(const Vector<U, m>& other) noexcept
 			: elements()
 		{
-			// Avoid the casts if the T type is equal to the U type during compilation
-			_CONSTEXPR17 const size_t MIN_N = Math::min(n, n2);
-			if _CONSTEXPR_IF (std::is_same_v<T, U>) {
-				std::memcpy(elements.data(), vecUN.elements.data(), MIN_N * sizeof(T));
-			}
-			else {
-				for (size_t i = static_cast<size_t>(0); i < MIN_N; ++i) {
-					elements[i] = static_cast<T>(vecUN.elements[i]);
-				}
+			constexpr size_t MIN_COUNT = Math::min(n, m);
+			for (size_t i = 0; i < MIN_COUNT; ++i) {
+				elements[i] = static_cast<T>(other.elements[i]);
 			}
 		}
+
 		/*!
 		 \brief Copy constructor.
 		 \details Sets the ae::Vector's elements to the \a copy's elements.
@@ -210,12 +148,13 @@ namespace ae
 		 ae::Vector<float, 5> vec5f_2 = vec5f_1;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(const Vector<T, n>& copy) noexcept
+		constexpr Vector(const Vector<T, n>& copy) noexcept
 			: elements(copy.elements)
 		{
 		}
+
 		/*!
 		 \brief Move constructor.
 		 \details Performs a move operation on the \a rvalue's elements to the lvalue ae::Vector's elements.
@@ -231,9 +170,9 @@ namespace ae
 		 ae::Vector<float, 5> vec5f_3 = vec5f_1 + vec5f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(Vector<T, n>&& rvalue) noexcept
+		constexpr Vector(Vector<T, n>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -255,21 +194,16 @@ namespace ae
 		 vec5f_1 = vec5f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		inline Vector<T, n>& operator=(const Vector<T, n>& other) noexcept
 		{
-			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (this == &other) {
-					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
-					return *this;
-				}
-			}
+			assert(this != &other);
 
 			elements = other.elements;
 			return *this;
 		}
+
 		/*!
 		 \brief Move assignment operator.
 		 \details Performs a memberwise move assignment from the \a rvalue's elements to the caller ae::Vector's ones.
@@ -294,6 +228,7 @@ namespace ae
 			elements = std::move(rvalue.elements);
 			return *this;
 		}
+
 		/*!
 		 \brief Element access operator.
 		 \details Retrieves the element situated at the \a index provided.
@@ -309,22 +244,14 @@ namespace ae
 		 float& firstElement = vec5f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline T& operator[](size_t index) noexcept
+		[[nodiscard]] constexpr T& operator[](size_t index)
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (index >= n) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
-					return elements[0];
-				}
-			}
-
+			assert(index < n);
 			return elements[index];
 		}
+
 		/*!
 		 \brief Element access operator.
 		 \details Retrieves the element situated at the \a index provided.
@@ -340,81 +267,15 @@ namespace ae
 		 const float& firstElement = vec5f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline const T& operator[](size_t index) const noexcept
+		[[nodiscard]] constexpr const T& operator[](size_t index) const
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (index >= n) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
-					return elements[0];
-				}
-			}
-
+			assert(index < n);
 			return elements[index];
 		}
 
 		// Method(s)
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector<float, 5> vec5f(0.5f, 0.3f, 0.f, -1.f, 1.f);
-		 float& firstElement = vec5f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline T& at(size_t index) noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= n) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
-				return elements[0];
-			}
-
-			return elements.at(index);
-		}
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector<float, 5> vec5f(0.5f, 0.3f, 0.f, -1.f, 1.f);
-		 const float& firstElement = vec5f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline const T& at(size_t index) const noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= n) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's first element.");
-				return elements[0];
-			}
-
-			return elements.at(index);
-		}
-
 		/*!
 		 \brief Calculates and retrieves the ae::Vector's magnitude (or length).
 
@@ -426,24 +287,23 @@ namespace ae
 		 float magnitude = vec5f.magnitude();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline T magnitude() const
+		[[nodiscard]] inline T magnitude() const
 		{
-			// Calculate the sum of the elements squared
 			T sum = static_cast<T>(0);
 			for (const T& element : elements) {
 				sum += element * element;
 			}
 
-			// Return the square root of the sum
 			return Math::sqrt(sum);
 		}
+
 		/*!
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
 		 Unit vectors are used when we only need to represent a direction and not a magnitude.
-		 \note Only floating point types are allowed (float, double, long double).
+		 \note Only vectors of floating point types are allowed: float, double, long double.
 
 		 \return The ae::Vector's unit vector (or normalized vector)
 
@@ -453,11 +313,11 @@ namespace ae
 		 ae::Vector<float, 5> unitVec5 = vec5f.normalize();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename = Math::FLOATING_POINT_POLICY<T>>
-		_NODISCARD inline Vector<T, n> normalize() const
+		[[nodiscard]] inline Vector<T, n> normalize() const
 		{
+			static_assert(std::is_floating_point_v<T>, "'normalize' only accepts floating point types");
 			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
@@ -468,7 +328,7 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.).
 	*/
 	template <typename T>
-	struct Vector<T, 2>
+	struct AEON_API Vector<T, 2>
 	{
 		// Member(s)
 		union {
@@ -479,18 +339,27 @@ namespace ae
 			};
 		};
 
+		// Static member(s)
+		static const Vector<float, 2> Up;    //!< The global upward vector
+		static const Vector<float, 2> Down;  //!< The global downward vector
+		static const Vector<float, 2> Left;  //!< The global leftward vector
+		static const Vector<float, 2> Right; //!< The global rightward vector
+
+		static const Vector<float, 2> XAxis; //!< The global X axis vector
+		static const Vector<float, 2> YAxis; //!< The global Y axis vector
+
 		// Constructor(s)
 		/*!
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename = VECTOR_POLICY<T, 2>>
-		inline _CONSTEXPR17 Vector() noexcept
+		constexpr Vector() noexcept
 			: elements()
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a \a scalar value of the appropriate type.
 		 \details Sets the elements to the value of the \a scalar.
@@ -502,13 +371,14 @@ namespace ae
 		 ae::Vector2f vec2f(5.f); // the elements x and y are set to 5.f
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		explicit inline _CONSTEXPR17 Vector(T scalar) noexcept
+		explicit constexpr Vector(T scalar) noexcept
 			: x(scalar)
 			, y(scalar)
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector providing specific \a x and \a y elements.
 		 \details Sets the ae::Vector's elements to the elements provided.
@@ -521,79 +391,19 @@ namespace ae
 		 ae::Vector2f vec2f(0.5f, 0.3f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(T x, T y) noexcept
+		constexpr Vector(T x, T y) noexcept
 			: x(x)
 			, y(y)
 		{
 		}
-		/*!
-		 \brief Constructs the ae::Vector by providing specific \a coordinates.
-		 \details Sets the ae::Vector's elements to the \a coordinates provided.
-		 \note It's up to the user to provide the correct number of elements.
 
-		 \param[in] coordinates The initializer list of elements
-
-		 \par Example:
-		 \code
-		 ae::Vector2f vec2f({ 3.f, 2.f });
-		 // or
-		 ae::Vector2f vec2f = { 3.f, 2.f };
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		inline Vector(std::initializer_list<T> coordinates) noexcept
-			: elements()
-		{
-			// Copy the maximum number of elements that both the vector and the list hold
-			const size_t MIN_COUNT = Math::min(elements.size(), coordinates.size());
-			std::memcpy(elements.data(), coordinates.begin(), MIN_COUNT * sizeof(T));
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing an std::array of coordinates.
-		 \details Set the ae::Vector's elements to the std::array of \a coordinates provided.
-
-		 \param[in] coordinates The C++11 array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 std::array<float, 2> coordinates = { 5.f, 8.f };
-		 ae::Vector2f vec2f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline _CONSTEXPR17 Vector(const std::array<T, 2>& coordinates) noexcept
-			: elements(coordinates)
-		{
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing a C-style array of coordinates.
-		 \details Sets the ae::Vector's elements to the C-style array of \a coordinates provided.
-
-		 \param[in] coordinates The C-style array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 float coordinates[2] = { 2.f, 1.f };
-		 ae::Vector2f vec2f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline Vector(const T(&coordinates)[2]) noexcept
-			: elements()
-		{
-			// Copy the values of the C-style array to the vector's elements
-			std::memcpy(elements.data(), coordinates, 2 * sizeof(T));
-		}
 		/*!
 		 \brief Constructs the ae::Vector by providing an ae::Vector of another type and/or with a different number of elements.
 		 \details Sets the ae::Vector's elements to the \a vecUN's elements, up to 2 elements.
 
-		 \param[in] vecUN The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
+		 \param[in] other The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
 
 		 \par Example:
 		 \code
@@ -610,12 +420,12 @@ namespace ae
 		 ae::Vector2f vec2f_3 = vec3i;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename U, size_t n2>
-		inline _CONSTEXPR17 Vector(const Vector<U, n2>& vecUN) noexcept
-			: x(static_cast<T>(vecUN[0]))
-			, y(static_cast<T>(vecUN[1]))
+		template <typename U, size_t m>
+		constexpr Vector(const Vector<U, m>& other) noexcept
+			: x(static_cast<T>(other[0]))
+			, y(static_cast<T>(other[1]))
 		{
 		}
 		/*!
@@ -632,9 +442,9 @@ namespace ae
 		 ae::Vector2f vec2f_2 = vec2f_1;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(const Vector<T, 2>& copy) noexcept
+		constexpr Vector(const Vector<T, 2>& copy) noexcept
 			: elements(copy.elements)
 		{
 		}
@@ -653,9 +463,9 @@ namespace ae
 		 ae::Vector2f vec2f_3 = vec2f_1 + vec2f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(Vector<T, 2>&& rvalue) noexcept
+		constexpr Vector(Vector<T, 2>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -677,17 +487,11 @@ namespace ae
 		 vec2f_1 = vec2f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		inline Vector<T, 2>& operator=(const Vector<T, 2>& other) noexcept
 		{
-			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (this == &other) {
-					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
-					return *this;
-				}
-			}
+			assert(this != &other);
 
 			elements = other.elements;
 			return *this;
@@ -731,20 +535,11 @@ namespace ae
 		 float& firstElement = vec2f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline _CONSTEXPR17 T& operator[](size_t index) noexcept
+		[[nodiscard]] constexpr T& operator[](size_t index) noexcept
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF(AEON_DEBUG) {
-				if (index >= elements.size()) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-					return x;
-				}
-			}
-
+			assert(index < elements.size());
 			return elements[index];
 		}
 		/*!
@@ -762,81 +557,15 @@ namespace ae
 		 const float& firstElement = vec2f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline _CONSTEXPR17 const T& operator[](size_t index) const noexcept
+		[[nodiscard]] constexpr const T& operator[](size_t index) const noexcept
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (index >= elements.size()) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-					return x;
-				}
-			}
-
+			assert(index < elements.size());
 			return elements[index];
 		}
 
 		// Method(s)
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector2f vec2f(0.5f, 0.3f);
-		 float& firstElement = vec2f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline _CONSTEXPR17 T& at(size_t index) noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= elements.size()) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-				return x;
-			}
-
-			return elements.at(index);
-		}
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector2f vec2f(0.5f, 0.3f);
-		 const float& firstElement = vec2f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline _CONSTEXPR17 const T& at(size_t index) const noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= elements.size()) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-				return x;
-			}
-
-			return elements.at(index);
-		}
-
 		/*!
 		 \brief Calculates and retrieves the ae::Vector's magnitude (or length).
 		 \details The magnitude is calculated using the Pythagorean theorem: \f$ \| \overrightarrow{V} \| = \sqrt{x^2 + y^2} \f$.
@@ -849,9 +578,9 @@ namespace ae
 		 float magnitude = vec2f.magnitude();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline T magnitude() const
+		[[nodiscard]] inline T magnitude() const
 		{
 			return Math::sqrt(x * x + y * y);
 		}
@@ -859,7 +588,7 @@ namespace ae
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
 		 Unit vectors are used when we only need to represent a direction and not a magnitude.
-		 \note Only floating point types are allowed (float, double, long double).
+		 \note Only vectors of floating point types are allowed: float, double, long double.
 
 		 \return The ae::Vector's unit vector (or normalized vector)
 
@@ -869,11 +598,11 @@ namespace ae
 		 ae::Vector2f unitVec2f = vec2f.normalize();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename = Math::FLOATING_POINT_POLICY<T>>
-		_NODISCARD inline Vector<T, 2> normalize() const
+		[[nodiscard]] inline Vector<T, 2> normalize() const
 		{
+			static_assert(std::is_floating_point_v<T>, "'normalize' only accepts floating point types");
 			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
@@ -884,9 +613,9 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.).
 	*/
 	template <typename T>
-	struct Vector<T, 3>
+	struct AEON_API Vector<T, 3>
 	{
-		// Member data
+		// Member(s)
 		union {
 			std::array<T, 3> elements; //!< The array of elements
 			struct {
@@ -897,7 +626,7 @@ namespace ae
 			Vector<T, 2>     xy;       //!< The x and y elements
 		};
 
-		// Static member data
+		// Static member(s)
 		static const Vector<float, 3> Up;       //!< The global upward vector
 		static const Vector<float, 3> Down;     //!< The global downward vector
 		static const Vector<float, 3> Left;     //!< The global leftward vector
@@ -914,12 +643,13 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector() noexcept
+		constexpr Vector() noexcept
 			: elements()
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a \a scalar value of the appropriate type.
 		 \details Sets the elements to the value of the \a scalar.
@@ -931,14 +661,15 @@ namespace ae
 		 ae::Vector3f vec3f(5.f); // the elements x, y and z are set to 5.f
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		explicit inline _CONSTEXPR17 Vector(T scalar) noexcept
+		explicit constexpr Vector(T scalar) noexcept
 			: x(scalar)
 			, y(scalar)
 			, z(scalar)
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector providing specific \a x, \a y and \a z elements.
 		 \details Sets the ae::Vector's elements to the elements provided.
@@ -952,80 +683,20 @@ namespace ae
 		 ae::Vector3f vec3f(0.5f, 0.3f, 2.f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(T x, T y, T z) noexcept
+		constexpr Vector(T x, T y, T z) noexcept
 			: x(x)
 			, y(y)
 			, z(z)
 		{
 		}
-		/*!
-		 \brief Constructs the ae::Vector by providing specific \a coordinates.
-		 \details Sets the ae::Vector's elements to the \a coordinates provided.
-		 \note It's up to the user to provide the correct number of elements.
 
-		 \param[in] coordinates The initializer list of elements
-
-		 \par Example:
-		 \code
-		 ae::Vector3f vec3f({ 3.f, 2.f, 5.f });
-		 // or
-		 ae::Vector3f vec3f = { 3.f, 2.f, 5.f };
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		inline Vector(std::initializer_list<T> coordinates) noexcept
-			: elements()
-		{
-			// Copy the maximum number of elements that both the vector and the list hold
-			const size_t MIN_COUNT = Math::min(elements.size(), coordinates.size());
-			std::memcpy(elements.data(), coordinates.begin(), MIN_COUNT * sizeof(T));
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing an std::array of coordinates.
-		 \details Set the ae::Vector's elements to the std::array of \a coordinates provided.
-
-		 \param[in] coordinates The C++11 array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 std::array<float, 3> coordinates = { 5.f, 8.f, 2.f };
-		 ae::Vector3f vec3f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline _CONSTEXPR17 Vector(const std::array<T, 3>& coordinates) noexcept
-			: elements(coordinates)
-		{
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing a C-style array of coordinates.
-		 \details Sets the ae::Vector's elements to the C-style array of \a coordinates provided.
-
-		 \param[in] coordinates The C-style array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 float coordinates[3] = { 2.f, 1.f, -4.f };
-		 ae::Vector3f vec3f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline Vector(const T(&coordinates)[3]) noexcept
-			: elements()
-		{
-			// Copy the values of the C-style array to the vector's elements
-			std::memcpy(elements.data(), coordinates, 3 * sizeof(T));
-		}
 		/*!
 		 \brief Constructs the ae::Vector by providing an ae::Vector of another type and/or with a different number of elements.
-		 \details Sets the ae::Vector's elements to the \a vecUN's elements, up to 3 elements.
+		 \details Sets the ae::Vector's elements to the \a vecUN's elements, up to either vector's least amount of elements.
 
-		 \param[in] vecUN The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
+		 \param[in] other The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
 
 		 \par Example:
 		 \code
@@ -1042,28 +713,21 @@ namespace ae
 		 ae::Vector3f vec3f_3 = vec2i;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename U, size_t n2>
-		inline Vector(const Vector<U, n2>& vecUN) noexcept
+		template <typename U, size_t m>
+		constexpr Vector(const Vector<U, m>& other) noexcept
 			: elements()
 		{
-			const size_t MIN_N = Math::min(elements.size(), n2);
-
-			// Avoid the casts if the T type is equal to the U type during compilation
-			if _CONSTEXPR_IF (std::is_same_v<T, U>) {
-				std::memcpy(elements.data(), vecUN.elements.data(), MIN_N * sizeof(T));
-			}
-			else {
-				for (size_t i = 0; i < MIN_N; ++i) {
-					elements[i] = static_cast<T>(vecUN.elements[i]);
-				}
+			const size_t MIN_COUNT = Math::min(elements.size(), m);
+			for (size_t i = 0; i < MIN_COUNT; ++i) {
+				elements[i] = static_cast<T>(other.elements[i]);
 			}
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a 2-dimensional ae::Vector and a \a z element.
 		 \details The \a vecU can be of the same type as the ae::Vector to be constructed or of a different type.
-		 \note The cast condition won't have any impact on performance during runtime.
 
 		 \param[in] vecU The 2-dimensional ae::Vector to assign to the ae::Vector
 		 \param[in] z The element that will be attributed to the z element
@@ -1079,15 +743,16 @@ namespace ae
 		 ae::Vector3f vec3f_2(vec2i_1, -1.f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		template <typename U>
-		inline _CONSTEXPR17 Vector(const Vector<U, 2>& vecU, T z) noexcept
+		constexpr Vector(const Vector<U, 2>& vecU, T z) noexcept
 			: x(static_cast<T>(vecU.x))
 			, y(static_cast<T>(vecU.y))
 			, z(z)
 		{
 		}
+
 		/*!
 		 \brief Copy constructor.
 		 \details Sets the ae::Vector's elements to the \a copy's elements.
@@ -1102,12 +767,13 @@ namespace ae
 		 ae::Vector3f vec3f_2 = vec3f_1;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(const Vector<T, 3>& copy)
+		constexpr Vector(const Vector<T, 3>& copy)
 			: elements(copy.elements)
 		{
 		}
+
 		/*!
 		 \brief Move constructor.
 		 \details Performs a move operation on the \a rvalue's elements to the lvalue ae::Vector's elements.
@@ -1123,9 +789,9 @@ namespace ae
 		 ae::Vector3f vec3f_3 = vec3f_1 + vec3f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(Vector<T, 3>&& rvalue) noexcept
+		constexpr Vector(Vector<T, 3>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -1147,21 +813,16 @@ namespace ae
 		 vec3f_1 = vec3f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		inline Vector<T, 3>& operator=(const Vector<T, 3>& other)
 		{
-			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if _CONSTEXPR_IF(AEON_DEBUG) {
-				if (this == &other) {
-					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
-					return *this;
-				}
-			}
+			assert(this != &other);
 
 			elements = other.elements;
 			return *this;
 		}
+
 		/*!
 		 \brief Move assignment operator.
 		 \details Performs a memberwise move assignment from the \a rvalue's elements to the caller ae::Vector's ones.
@@ -1186,6 +847,7 @@ namespace ae
 			elements = std::move(rvalue.elements);
 			return *this;
 		}
+
 		/*!
 		 \brief Element access operator.
 		 \details Retrieves the element situated at the \a index provided.
@@ -1201,22 +863,14 @@ namespace ae
 		 float& firstElement = vec3f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline _CONSTEXPR17 T& operator[](size_t index) noexcept
+		[[nodiscard]] constexpr T& operator[](size_t index) noexcept
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (index >= elements.size()) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-					return x;
-				}
-			}
-
+			assert(index < elements.size());
 			return elements[index];
 		}
+
 		/*!
 		 \brief Element access operator.
 		 \details Retrieves the element situated at the \a index provided.
@@ -1232,81 +886,15 @@ namespace ae
 		 const float& firstElement = vec3f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline _CONSTEXPR17 const T& operator[](size_t index) const noexcept
+		[[nodiscard]] constexpr const T& operator[](size_t index) const noexcept
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF (AEON_DEBUG) {
-				if (index >= elements.size()) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-					return x;
-				}
-			}
-
+			assert(index < elements.size());
 			return elements[index];
 		}
 
 		// Method(s)
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector3f vec3f(0.5f, 0.3f, -1.f);
-		 float& firstElement = vec3f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline _CONSTEXPR17 T& at(size_t index) noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= elements.size()) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-				return x;
-			}
-
-			return elements.at(index);
-		}
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector3f vec3f(0.5f, 0.3f, -1.f);
-		 const float& firstElement = vec3f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline _CONSTEXPR17 const T& at(size_t index) const noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= elements.size()) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-				return x;
-			}
-
-			return elements.at(index);
-		}
-
 		/*!
 		 \brief Calculates and retrieves the ae::Vector's magnitude (or length).
 		 \details The magnitude is calculated using the Pythagorean theorem: \f$ \| \overrightarrow{V} \| = \sqrt{x^2 + y^2 + z^2} \f$.
@@ -1319,17 +907,18 @@ namespace ae
 		 float magnitude = vec3f.magnitude();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline T magnitude() const
+		[[nodiscard]] inline T magnitude() const
 		{
 			return Math::sqrt(x * x + y * y + z * z);
 		}
+
 		/*!
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
 		 Unit vectors are used when we only need to represent a direction and not a magnitude.
-		 \note Only floating point types are allowed (float, double, long double).
+		 \note Only vectors of floating point types are allowed: float, double, long double.
 
 		 \return The ae::Vector's unit vector (or normalized vector)
 
@@ -1339,11 +928,11 @@ namespace ae
 		 ae::Vector3f unitVec3f = vec3f.normalize();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename = Math::FLOATING_POINT_POLICY<T>>
-		_NODISCARD inline Vector<T, 3> normalize() const
+		[[nodiscard]] inline Vector<T, 3> normalize() const
 		{
+			static_assert(std::is_floating_point_v<T>, "'normalize' only accepts floating point types");
 			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
@@ -1354,9 +943,9 @@ namespace ae
 	 \note Only arithmetic types are allowed (float, int, etc.).
 	*/
 	template <typename T>
-	struct Vector<T, 4>
+	struct AEON_API Vector<T, 4>
 	{
-		// Member data
+		// Member(s)
 		union {
 			std::array<T, 4> elements; //!< The array of elements
 			struct {
@@ -1374,12 +963,13 @@ namespace ae
 		 \brief Default constructor.
 		 \details Sets the elements to the value 0 of the type provided.
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector() noexcept
+		constexpr Vector() noexcept
 			: elements()
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a \a scalar value of the appropriate type.
 		 \details Sets the elements to the value of the \a scalar.
@@ -1391,15 +981,16 @@ namespace ae
 		 ae::Vector4f vec4f(5.f); // the elements x, y, z and w are set to 5.f
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		explicit inline _CONSTEXPR17 Vector(T scalar) noexcept
+		explicit constexpr Vector(T scalar) noexcept
 			: x(scalar)
 			, y(scalar)
 			, z(scalar)
 			, w(scalar)
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector providing specific \a x, \a y, \a z and \a w elements.
 		 \details Sets the ae::Vector's elements to the elements provided.
@@ -1414,81 +1005,21 @@ namespace ae
 		 ae::Vector4f vec4f(0.5f, 0.3f, 2.f, 1.f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(T x, T y, T z, T w) noexcept
+		constexpr Vector(T x, T y, T z, T w) noexcept
 			: x(x)
 			, y(y)
 			, z(z)
 			, w(w)
 		{
 		}
-		/*!
-		 \brief Constructs the ae::Vector by providing specific \a coordinates.
-		 \details Sets the ae::Vector's elements to the \a coordinates provided.
-		 \note It's up to the user to provide the correct number of elements.
 
-		 \param[in] coordinates The initializer list of elements
-
-		 \par Example:
-		 \code
-		 ae::Vector4f vec4f({ 3.f, 2.f, 5.f, 1.f });
-		 // or
-		 ae::Vector4f vec4f = { 3.f, 2.f, 5.f, 1.f };
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		inline Vector(std::initializer_list<T> coordinates) noexcept
-			: elements()
-		{
-			// Copy the maximum number of elements that both the vector and the list hold
-			const size_t MIN_COUNT = Math::min(elements.size(), coordinates.size());
-			std::memcpy(elements.data(), coordinates.begin(), MIN_COUNT * sizeof(T));
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing an std::array of coordinates.
-		 \details Set the ae::Vector's elements to the std::array of \a coordinates provided.
-
-		 \param[in] coordinates The C++11 array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 std::array<float, 4> coordinates = { 5.f, 8.f, 2.f, 1.f };
-		 ae::Vector4f vec4f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline _CONSTEXPR17 Vector(const std::array<T, 4>& coordinates) noexcept
-			: elements(coordinates)
-		{
-		}
-		/*!
-		 \brief Constructs the ae::Vector by providing a C-style array of coordinates.
-		 \details Sets the ae::Vector's elements to the C-style array of \a coordinates provided.
-
-		 \param[in] coordinates The C-style array of coordinates to assign to the ae::Vector
-
-		 \par Example:
-		 \code
-		 float coordinates[4] = { 2.f, 1.f, -4.f, 1.f };
-		 ae::Vector4f vec4f(coordinates);
-		 \endcode
-
-		 \since v0.6.0
-		*/
-		explicit inline Vector(const T(&coordinates)[4]) noexcept
-			: elements()
-		{
-			// Copy the values of the C-style array to the vector's elements
-			std::memcpy(elements.data(), coordinates, 4 * sizeof(T));
-		}
 		/*!
 		 \brief Constructs the ae::Vector by providing an ae::Vector of another type and/or with a different number of elements.
 		 \details Sets the ae::Vector's elements to the \a vecUN's elements, up to 4 elements.
 
-		 \param[in] vecUN The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
+		 \param[in] other The ae::Vector of another type and/or with a different number of elements to assign to the ae::Vector
 
 		 \par Example:
 		 \code
@@ -1505,24 +1036,18 @@ namespace ae
 		 ae::Vector4f vec4f_3 = vec2i;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename U, size_t n2>
-		inline Vector(const Vector<U, n2>& vecUN) noexcept
+		template <typename U, size_t m>
+		constexpr Vector(const Vector<U, m>& other) noexcept
 			: elements()
 		{
-			const size_t MIN_N = Math::min(elements.size(), n2);
-
-			// Avoid the casts and the loop if the T type is equal to the U type during compilation
-			if _CONSTEXPR_IF(std::is_same_v<T, U>) {
-				std::memcpy(elements.data(), vecUN.elements.data(), MIN_N * sizeof(T));
-			}
-			else {
-				for (size_t i = 0; i < MIN_N; ++i) {
-					elements[i] = static_cast<T>(vecUN.elements[i]);
-				}
+			const size_t MIN_COUNT = Math::min(elements.size(), m);
+			for (size_t i = 0; i < MIN_COUNT; ++i) {
+				elements[i] = static_cast<T>(other.elements[i]);
 			}
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a 2-dimensional ae::Vector, a \a z element and a \a w element.
 		 \details The \a vecU can be of the same type as the ae::Vector to be constructed or of a different type.
@@ -1543,16 +1068,17 @@ namespace ae
 		 ae::Vector4f vec4f_2(vec2i_1, -1.f, 1.f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		template <typename U>
-		inline _CONSTEXPR17 Vector(const Vector<U, 2>& vecU, T z, T w) noexcept
+		constexpr Vector(const Vector<U, 2>& vecU, T z, T w) noexcept
 			: x(static_cast<T>(vecU.x))
 			, y(static_cast<T>(vecU.y))
 			, z(z)
 			, w(w)
 		{
 		}
+
 		/*!
 		 \brief Constructs the ae::Vector by providing a 3-dimensional ae::Vector and a \a w element.
 		 \details The \a vecU can be of the same type as the ae::Vector to be constructed or of a different type.
@@ -1572,16 +1098,17 @@ namespace ae
 		 ae::Vector4f vec4f_2(vec3i_1, 1.f);
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		template <typename U>
-		inline _CONSTEXPR17 Vector(const Vector<U, 3>& vecU, T w) noexcept
+		constexpr Vector(const Vector<U, 3>& vecU, T w) noexcept
 			: x(static_cast<T>(vecU.x))
 			, y(static_cast<T>(vecU.y))
 			, z(static_cast<T>(vecU.z))
 			, w(w)
 		{
 		}
+
 		/*!
 		 \brief Copy constructor.
 		 \details Sets the ae::Vector's elements to the \a copy's elements.
@@ -1596,12 +1123,13 @@ namespace ae
 		 ae::Vector4f vec4f_2 = vec4f_1;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(const Vector<T, 4>& copy)
+		constexpr Vector(const Vector<T, 4>& copy)
 			: elements(copy.elements)
 		{
 		}
+
 		/*!
 		 \brief Move constructor.
 		 \details Performs a move operation on the \a rvalue's elements to the lvalue ae::Vector's elements.
@@ -1617,9 +1145,9 @@ namespace ae
 		 ae::Vector4f vec4f_3 = vec4f_1 + vec4f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		inline _CONSTEXPR17 Vector(Vector<T, 4>&& rvalue) noexcept
+		constexpr Vector(Vector<T, 4>&& rvalue) noexcept
 			: elements(std::move(rvalue.elements))
 		{
 		}
@@ -1641,21 +1169,16 @@ namespace ae
 		 vec4f_1 = vec4f_2;
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		inline Vector<T, 4>& operator=(const Vector<T, 4>& other)
 		{
-			// Check that the caller object won't be assigned to itself (ignored in Release mode)
-			if _CONSTEXPR_IF(AEON_DEBUG) {
-				if (this == &other) {
-					AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
-					return *this;
-				}
-			}
+			assert(this != &other);
 
 			elements = other.elements;
 			return *this;
 		}
+
 		/*!
 		 \brief Move assignment operator.
 		 \details Performs a memberwise move assignment from the \a rvalue's elements to the caller ae::Vector's ones.
@@ -1680,6 +1203,7 @@ namespace ae
 			elements = std::move(rvalue.elements);
 			return *this;
 		}
+
 		/*!
 		 \brief Element access operator.
 		 \details Retrieves the element situated at the \a index provided.
@@ -1695,22 +1219,14 @@ namespace ae
 		 float& firstElement = vec4f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline _CONSTEXPR17 T& operator[](size_t index) noexcept
+		[[nodiscard]] constexpr T& operator[](size_t index) noexcept
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF(AEON_DEBUG) {
-				if (index >= elements.size()) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-					return x;
-				}
-			}
-
+			assert(index < elements.size());
 			return elements[index];
 		}
+
 		/*!
 		 \brief Element access operator.
 		 \details Retrieves the element situated at the \a index provided.
@@ -1726,81 +1242,15 @@ namespace ae
 		 const float& firstElement = vec4f[0]; // 0.5f
 		 \endcode
 
-		 \sa at()
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline _CONSTEXPR17 const T& operator[](size_t index) const noexcept
+		[[nodiscard]] constexpr const T& operator[](size_t index) const noexcept
 		{
-			// Log an error message if the index isn't within the array's limits (ignored in Release mode)
-			if _CONSTEXPR_IF(AEON_DEBUG) {
-				if (index >= elements.size()) {
-					AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-					return x;
-				}
-			}
-
+			assert(index < elements.size());
 			return elements[index];
 		}
 
 		// Method(s)
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector4f vec4f(0.5f, 0.3f, -1.f, 1.f);
-		 float& firstElement = vec4f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline _CONSTEXPR17 T& at(size_t index) noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= elements.size()) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-				return x;
-			}
-
-			return elements.at(index);
-		}
-		/*!
-		 \brief Retrieves the element situated at the \a index provided.
-		 \details Unlike the [] operator, this method will verify that the \a index is situated within the array's limits.
-
-		 \param[in] index The position of the element to retrieve
-
-		 \return The element situated at the indication position or the first position if the \a index isn't within the array's limits
-
-		 \par Example:
-		 \code
-		 ae::Vector4f vec4f(0.5f, 0.3f, -1.f, 1.f);
-		 const float& firstElement = vec4f.at(0); // 0.5f
-		 \endcode
-
-		 \sa operator[]()
-
-		 \since v0.6.0
-		*/
-		_NODISCARD inline _CONSTEXPR17 const T& at(size_t index) const noexcept
-		{
-			// Log an error message if the index isn't within the array's limits
-			if (index >= elements.size()) {
-				AEON_LOG_ERROR("Invalid array index", "The index provided isn't situated within the array's limits.\nRetrieving the array's x element.");
-				return x;
-			}
-
-			return elements.at(index);
-		}
-
 		/*!
 		 \brief Calculates and retrieves the ae::Vector's magnitude (or length).
 		 \details The magnitude is calculated using the Pythagorean theorem: \f$ \| \overrightarrow{V} \| = \sqrt{x^2 + y^2 + z^2 + w^2} \f$.
@@ -1813,12 +1263,13 @@ namespace ae
 		 float magnitude = vec4f.magnitude();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD inline T magnitude() const
+		[[nodiscard]] inline T magnitude() const
 		{
 			return Math::sqrt(x * x + y * y + z * z + w * w);
 		}
+
 		/*!
 		 \brief Calculates and retrieves the unit vector of the ae::Vector.
 		 \details A unit vector (or a normalized vector) is a vector with a magnitude of 1.
@@ -1833,11 +1284,11 @@ namespace ae
 		 ae::Vector4f unitVec4f = vec4f.normalize();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		template <typename = Math::FLOATING_POINT_POLICY<T>>
-		_NODISCARD inline Vector<T, 4> normalize() const
+		[[nodiscard]] inline Vector<T, 4> normalize() const
 		{
+			static_assert(std::is_floating_point_v<T>, "'normalize' only accepts floating point types");
 			return *this * Math::rsqrt(dot(*this, *this));
 		}
 	};
@@ -1855,19 +1306,18 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1({ 0.5f, 0.3f });
-	 ae::Vector2f vec2f_2({ 0.2f, 0.7f });
+	 ae::Vector2f vec2f_1(0.5f, 0.3f);
+	 ae::Vector2f vec2f_2(0.2f, 0.7f);
 	 ae::Vector2f vec2f_3 = vec2f_1 + vec2f_2;
 	 \endcode
 
 	 \sa operator-(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator+(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator+(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		// Assign the sum of the two vectors to result
 		Vector<T, n> result = lhs;
 		for (size_t i = 0; i < n; ++i) {
 			result.elements[i] += rhs.elements[i];
@@ -1895,12 +1345,11 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator-(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator-(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		// Assign the difference of the two vectors to result
 		Vector<T, n> result = lhs;
 		for (size_t i = 0; i < n; ++i) {
 			result.elements[i] -= rhs.elements[i];
@@ -1908,6 +1357,7 @@ namespace ae
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Multiplication operator.
@@ -1920,19 +1370,18 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1({ 0.5f, 0.3f });
-	 ae::Vector2f vec2f_2({ 0.2f, 0.7f });
+	 ae::Vector2f vec2f_1(0.5f, 0.3f);
+	 ae::Vector2f vec2f_2(0.2f, 0.7f);
 	 ae::Vector2f vec2f_3 = vec2f_1 * vec2f_2;
 	 \endcode
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator-(const Vector<T, n>&, const Vector<T, n>&), operator/(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator*(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator*(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		// Assign the product of the two vectors to result
 		Vector<T, n> result = lhs;
 		for (size_t i = 0; i < n; ++i) {
 			result.elements[i] *= rhs.elements[i];
@@ -1940,6 +1389,7 @@ namespace ae
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Division operator.
@@ -1953,29 +1403,25 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1({ 0.5f, 0.3f });
-	 ae::Vector2f vec2f_2({ 0.2f, 0.7f });
+	 ae::Vector2f vec2f_1(0.5f, 0.3f);
+	 ae::Vector2f vec2f_2(0.2f, 0.7f);
 	 ae::Vector2f vec2f_3 = vec2f_1 / vec2f_2;
 	 \endcode
 
 	 \sa operator+(const Vector<T, n>&, const Vector<T, n>&), operator-(const Vector<T, n>&, const Vector<T, n>&), operator*(const Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator/(const Vector<T, n>& lhs, const Vector<T, n>& rhs)
+	[[nodiscard]] AEON_API inline Vector<T, n> operator/(const Vector<T, n>& lhs, const Vector<T, n>& rhs)
 	{
 		// Check if rhs's elements are equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
+		if constexpr (AEON_DEBUG) {
 			for (const T& element : rhs.elements) {
-				if (element == static_cast<T>(0)) {
-					AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning left-hand side vector.");
-					return lhs;
-				}
+				assert(element != static_cast<T>(0));
 			}
 		}
 
-		// Assign the quotient of the two vectors to result
 		Vector<T, n> result = lhs;
 		for (size_t i = 0; i < n; ++i) {
 			result.elements[i] /= rhs.elements[i];
@@ -1996,18 +1442,17 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1 = { 0.5f, 0.7f };
+	 ae::Vector2f vec2f_1(0.5f, 0.7f);
 	 ae::Vector2f vec2f_2 = vec2f_1 + 0.2f;
 	 \endcode
 
 	 \sa operator-(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator+(const Vector<T, n>& vec, T scalar) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator+(const Vector<T, n>& vec, T scalar) noexcept
 	{
-		// Assign the sum of the vector and of the scalar to result
 		Vector<T, n> result = vec;
 		for (T& element : result.elements) {
 			element += scalar;
@@ -2028,18 +1473,17 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1 = { 0.5f, 0.7f };
+	 ae::Vector2f vec2f_1(0.5f, 0.7f);
 	 ae::Vector2f vec2f_2 = vec2f_1 - 0.2f;
 	 \endcode
 
 	 \sa operator+(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator-(const Vector<T, n>& vec, T scalar) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator-(const Vector<T, n>& vec, T scalar) noexcept
 	{
-		// Assign the difference of the vector and of the scalar to result
 		Vector<T, n> result = vec;
 		for (T& element : result.elements) {
 			element -= scalar;
@@ -2047,6 +1491,7 @@ namespace ae
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Multiplication operator.
@@ -2065,12 +1510,11 @@ namespace ae
 
 	 \sa operator+(const Vector<T, n>&, T), operator-(const Vector<T, n>&, T), operator/(const Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator*(const Vector<T, n>& vec, T scalar) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator*(const Vector<T, n>& vec, T scalar) noexcept
 	{
-		// Assign the product of the vector and of the scalar to result
 		Vector<T, n> result = vec;
 		for (T& element : result.elements) {
 			element *= scalar;
@@ -2078,6 +1522,7 @@ namespace ae
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Division operator.
@@ -2091,26 +1536,19 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1 = { 0.5f, 0.7f };
+	 ae::Vector2f vec2f_1(0.5f, 0.7f);
 	 ae::Vector2f vec2f_2 = vec2f_1 / 0.2f;
 	 \endcode
 
 	 \sa operator+(const Vector<T, n>&, T), operator-(const Vector<T, n>&, T), operator*(const Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator/(const Vector<T, n>& vec, T scalar)
+	[[nodiscard]] AEON_API inline Vector<T, n> operator/(const Vector<T, n>& vec, T scalar)
 	{
-		// Check if scalar is equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (scalar == static_cast<T>(0)) {
-				AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning vector.");
-				return vec;
-			}
-		}
+		assert(scalar != static_cast<T>(0));
 		
-		// Assign the quotient of the vector and of the scalar to result
 		Vector<T, n> result = vec;
 		for (T& element : result.elements) {
 			element /= scalar;
@@ -2131,26 +1569,26 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1 = { 0.2f, 0.5f };
-	 ae::Vector2f vec2f_2 = { 0.3f, 0.1f };
+	 ae::Vector2f vec2f_1(0.2f, 0.5f);
+	 ae::Vector2f vec2f_2(0.3f, 0.1f);
 	 ...
 	 vec2f_1 += vec2f_2;
 	 \endcode
 
 	 \sa operator-=(Vector<T, n>&, const Vector<T, n>&), operator*=(Vector<T, n>&, const Vector<T, n>&), operator/=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator+=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	AEON_API inline Vector<T, n>& operator+=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		// Assign the sum of the two vectors to lhs
 		for (size_t i = 0; i < n; ++i) {
 			lhs.elements[i] += rhs.elements[i];
 		}
 
 		return lhs;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Subtraction and assignment operator.
@@ -2163,26 +1601,26 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1 = { 0.2f, 0.5f };
-	 ae::Vector2f vec2f_2 = { 0.3f, 0.1f };
+	 ae::Vector2f vec2f_1(0.2f, 0.5f);
+	 ae::Vector2f vec2f_2(0.3f, 0.1f);
 	 ...
 	 vec2f_1 -= vec2f_2;
 	 \endcode
 
 	 \sa operator+=(Vector<T, n>&, const Vector<T, n>&), operator*=(Vector<T, n>&, const Vector<T, n>&), operator/=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator-=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	AEON_API inline Vector<T, n>& operator-=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		// Assign the difference of the two vectors to lhs
 		for (size_t i = 0; i < n; ++i) {
 			lhs.elements[i] -= rhs.elements[i];
 		}
 
 		return lhs;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Multiplication and assignment operator.
@@ -2195,26 +1633,26 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1 = { 0.2f, 0.5f };
-	 ae::Vector2f vec2f_2 = { 0.3f, 0.1f };
+	 ae::Vector2f vec2f_1(0.2f, 0.5f);
+	 ae::Vector2f vec2f_2(0.3f, 0.1f);
 	 ...
 	 vec2f_1 *= vec2f_2;
 	 \endcode
 
 	 \sa operator+=(Vector<T, n>&, const Vector<T, n>&), operator-=(Vector<T, n>&, const Vector<T, n>&), operator/=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator*=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	AEON_API inline Vector<T, n>& operator*=(Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		// Assign the product of the two vectors to lhs
 		for (size_t i = 0; i < n; ++i) {
 			lhs.elements[i] *= rhs.elements[i];
 		}
 
 		return lhs;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Division and assignment operator.
@@ -2236,22 +1674,18 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, const Vector<T, n>&), operator-=(Vector<T, n>&, const Vector<T, n>&), operator*=(Vector<T, n>&, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator/=(Vector<T, n>& lhs, const Vector<T, n>& rhs)
+	AEON_API inline Vector<T, n>& operator/=(Vector<T, n>& lhs, const Vector<T, n>& rhs)
 	{
 		// Check if rhs's elements are equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			for (const T& element : rhs.elements) {
-				if (element == static_cast<T>(0)) {
-					AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning left-hand side vector.");
-					return lhs;
-				}
+		if constexpr (AEON_DEBUG) {
+			for (T& element : rhs.elements) {
+				assert(element != static_cast<T>(0));
 			}
 		}
 
-		// Assign the quotient of the two vectors to lhs
 		for (size_t i = 0; i < n; ++i) {
 			lhs.elements[i] /= rhs.elements[i];
 		}
@@ -2278,18 +1712,18 @@ namespace ae
 
 	 \sa operator-=(Vector<T, n>&, T), operator*=(Vector<T, n>&, T), operator/=(Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator+=(Vector<T, n>& vec, T scalar) noexcept
+	AEON_API inline Vector<T, n>& operator+=(Vector<T, n>& vec, T scalar) noexcept
 	{
-		// Add the scalar value to the vec's elements
 		for (T& element : vec.elements) {
 			element += scalar;
 		}
 
 		return vec;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Subtraction and assignment operator.
@@ -2309,18 +1743,18 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, T), operator*=(Vector<T, n>&, T), operator/=(Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator-=(Vector<T, n>& vec, T scalar) noexcept
+	AEON_API inline Vector<T, n>& operator-=(Vector<T, n>& vec, T scalar) noexcept
 	{
-		// Subtract the scalar value from the vec's elements
 		for (T& element : vec.elements) {
 			element -= scalar;
 		}
 
 		return vec;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Multiplication and assignment operator.
@@ -2340,18 +1774,18 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, T), operator-=(Vector<T, n>&, T), operator/=(Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator*=(Vector<T, n>& vec, T scalar) noexcept
+	AEON_API inline Vector<T, n>& operator*=(Vector<T, n>& vec, T scalar) noexcept
 	{
-		// Multiply the scalar value with the vec's elements
 		for (T& element : vec.elements) {
 			element *= scalar;
 		}
 
 		return vec;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Division and assignment operator.
@@ -2372,20 +1806,13 @@ namespace ae
 
 	 \sa operator+=(Vector<T, n>&, T), operator-=(Vector<T, n>&, T), operator*=(Vector<T, n>&, T)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	inline Vector<T, n>& operator/=(Vector<T, n>& vec, T scalar)
+	AEON_API inline Vector<T, n>& operator/=(Vector<T, n>& vec, T scalar)
 	{
-		// Check if scalar is equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (scalar == static_cast<T>(0)) {
-				AEON_LOG_ERROR("Division by zero", "Attempt to divide vector by 0\nReturning vector.");
-				return vec;
-			}
-		}
+		assert(scalar != static_cast<T>(0));
 		
-		// Divide the vec's elements by the scalar value
 		for (T& element : vec.elements) {
 			element /= scalar;
 		}
@@ -2414,15 +1841,20 @@ namespace ae
 
 	 \sa operator!=()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline bool operator==(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline bool operator==(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> bool { return lhsElement == rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			if (lhs[i] != rhs[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Inequality operator.
@@ -2444,13 +1876,14 @@ namespace ae
 
 	 \sa operator==()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline bool operator!=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline bool operator!=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
 		return !(lhs == rhs);
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Less than operator.
@@ -2472,15 +1905,20 @@ namespace ae
 
 	 \sa operator<=(), operator>(), operator>=()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline bool operator<(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline bool operator<(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> bool { return lhsElement < rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			if (lhs[i] >= rhs[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Less than or equal to operator.
@@ -2502,15 +1940,20 @@ namespace ae
 
 	 \sa operator<(), operator>(), operator>=()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline bool operator<=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline bool operator<=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> bool { return lhsElement <= rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			if (lhs[i] > rhs[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Greater than operator.
@@ -2532,15 +1975,20 @@ namespace ae
 
 	 \sa operator>=(), operator<(), operator<=()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline bool operator>(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline bool operator>(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> bool { return lhsElement > rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			if (lhs[i] <= rhs[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Greater than or equal to operator.
@@ -2562,14 +2010,18 @@ namespace ae
 
 	 \sa operator>(), operator<=(), operator<()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline bool operator>=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
+	[[nodiscard]] AEON_API inline bool operator>=(const Vector<T, n>& lhs, const Vector<T, n>& rhs) noexcept
 	{
-		return std::equal(lhs.elements.begin(), lhs.elements.end(), rhs.elements.begin(),
-			[](T lhsElement, T rhsElement) -> bool { return lhsElement >= rhsElement; }
-		);
+		for (size_t i = 0; i < n; ++i) {
+			if (lhs[i] < rhs[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/*!
@@ -2584,19 +2036,20 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1({ 0.5f, 0.7f });
+	 ae::Vector2f vec2f_1(0.5f, 0.7f);
 	 ae::Vector2f vec2f_2 = 0.8f * vec2f_1;
 	 \endcode
 
 	 \sa operator*(const Vector<T, n>&, T), operator/(T, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator*(T scalar, const Vector<T, n>& vec) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> operator*(T scalar, const Vector<T, n>& vec) noexcept
 	{
 		return vec * scalar;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Division operator.
@@ -2610,28 +2063,24 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1({ 0.5f, 0.7f });
+	 ae::Vector2f vec2f_1(0.5f, 0.7f);
 	 ae::Vector2f vec2f_2 = 0.8f / vec2f_1;
 	 \endcode
 
 	 \sa operator/(const Vector<T, n>&, T), operator*(T, const Vector<T, n>&)
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> operator/(T scalar, const Vector<T, n>& vec)
+	[[nodiscard]] AEON_API inline Vector<T, n> operator/(T scalar, const Vector<T, n>& vec)
 	{
 		// Check if vec's elements are equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
+		if constexpr (AEON_DEBUG) {
 			for (const T& element : vec.elements) {
-				if (element == static_cast<T>(0)) {
-					AEON_LOG_ERROR("Division by zero", "Attempt to divide scalar by 0\nReturning vector.");
-					return vec;
-				}
+				assert(element != static_cast<T>(0));
 			}
 		}
 
-		// Divide the scalar value by the vec's elements
 		Vector<T, n> result(scalar);
 		for (size_t i = 0; i < n; ++i) {
 			result.elements[i] /= vec.elements[i];
@@ -2656,12 +2105,13 @@ namespace ae
 	 ae::Vector2f vec2f_2 = -vec2f_1; // (-0.5f, 0.7f)
 	 \endcode
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
-	template <typename T, size_t n, typename = std::enable_if_t<std::is_signed_v<T>>>
-	_NODISCARD inline Vector<T, n> operator-(const Vector<T, n>& vec) noexcept
+	template <typename T, size_t n>
+	[[nodiscard]] AEON_API inline Vector<T, n> operator-(const Vector<T, n>& vec) noexcept
 	{
-		// Assign the inverted signs of the vec to result
+		static_assert(std::is_signed_v<T>, "'unary operator' only accepts signed types or floating point types");
+
 		Vector<T, n> result;
 		for (size_t i = 0; i < n; ++i) {
 			result.elements[i] = -vec.elements[i];
@@ -2689,13 +2139,14 @@ namespace ae
 
 	 \sa refract()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline _CONSTEXPR17 Vector<T, n> reflect(const Vector<T, n>& vec, const Vector<T, n>& normal) noexcept
+	[[nodiscard]] AEON_API constexpr Vector<T, n> reflect(const Vector<T, n>& vec, const Vector<T, n>& normal) noexcept
 	{
-		return (vec - static_cast<T>(2) * dot(vec, normal) * normal);
+		return vec - static_cast<T>(2) * dot(vec, normal) * normal;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Calculates and retrieves the refraction vector of the \a vec, of a \a normal to a surface and of a refraction index \a eta.
@@ -2716,10 +2167,10 @@ namespace ae
 
 	 \sa reflect()
 	 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> refract(const Vector<T, n>& vec, const Vector<T, n>& normal, T eta)
+	[[nodiscard]] AEON_API inline Vector<T, n> refract(const Vector<T, n>& vec, const Vector<T, n>& normal, T eta)
 	{
 		const T D = dot(vec, normal);
 		const T K = static_cast<T>(1) - eta * eta * (static_cast<T>(1) - D * D);
@@ -2728,7 +2179,7 @@ namespace ae
 			return Vector<T, n>();
 		}
 
-		return (eta * vec - (eta * D + Math::sqrt(K)) * normal);
+		return eta * vec - (eta * D + Math::sqrt(K)) * normal;
 	}
 
 	/*!
@@ -2747,13 +2198,14 @@ namespace ae
 	 float distance = ae::distance(vec2f_1, vec2f_2);
 	 \endcode
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline T distance(const Vector<T, n>& v1, const Vector<T, n>& v2)
+	[[nodiscard]] AEON_API inline T distance(const Vector<T, n>& v1, const Vector<T, n>& v2)
 	{
 		return (v2 - v1).magnitude();
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Calculates and retrieves the dot product of the \a v1 and the \a v2.
@@ -2767,8 +2219,8 @@ namespace ae
 
 	 \par Example:
 	 \code
-	 ae::Vector2f vec2f_1({ 10.f, 25.f });
-	 ae::Vector2f vec2f_2({ 5.f, -10.f });
+	 ae::Vector2f vec2f_1(10.f, 25.f);
+	 ae::Vector2f vec2f_2(5.f, -10.f);
 
 	 // The two ae::Vector have to be normalized in order to retrieve the unscaled dot product
 	 float dotProduct = ae::dot(vec2f_1.normalize(), vec2f_2.normalize()); // Result = cos(angle in radians)
@@ -2776,23 +2228,24 @@ namespace ae
 
 	 \sa normalize(), angle()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline _CONSTEXPR17 T dot(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
+	[[nodiscard]] AEON_API constexpr T dot(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		T dotProduct = static_cast<T>(0);
 		for (size_t i = 0; i < n; ++i) {
-			dotProduct += v1.elements[i] * v2.elements[i];
+			dotProduct += v1[i] * v2[i];
 		}
 
 		return dotProduct;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Calculates and retrieves the angle in radians between the \a v1 and the \a v2.
 	 \details This function normalizes the two ae::Vector and retrieves the inverse cosine of the angle between them.
-	 \note Only floating point types are allowed (float, double, long double).
+	 \note Only floating point types are allowed: float, double, long double.
 
 	 \param[in] v1 The first ae::Vector that will be used to calculate the angle in radians between itself and the \a v2 ae::Vector
 	 \param[in] v2 The second ae::Vector that will be used to calculate the angle in radians between the \a v1 ae::Vector and itself
@@ -2811,11 +2264,12 @@ namespace ae
 
 	 \sa normalize(), dot()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
-	template <typename T, size_t n, typename = Math::FLOATING_POINT_POLICY<T>>
-	_NODISCARD inline T angle(const Vector<T, n>& v1, const Vector<T, n>& v2)
+	template <typename T, size_t n>
+	[[nodiscard]] AEON_API inline T angle(const Vector<T, n>& v1, const Vector<T, n>& v2)
 	{
+		static_assert(std::is_floating_point_v<T>, "'angle' only accepts floating point types");
 		return Math::acos(dot(v1.normalize(), v2.normalize()));
 	}
 
@@ -2838,14 +2292,14 @@ namespace ae
 
 	 \sa max(), clamp()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> min(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> min(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		Vector<T, n> result;
 		for (size_t i = 0; i < n; ++i) {
-			result.elements[i] = Math::min(v1.elements[i], v2.elements[i]);
+			result[i] = Math::min(v1[i], v2[i]);
 		}
 
 		return result;
@@ -2870,18 +2324,19 @@ namespace ae
 
 	 \sa min(), clamp()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> max(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> max(const Vector<T, n>& v1, const Vector<T, n>& v2) noexcept
 	{
 		Vector<T, n> result;
 		for (size_t i = 0; i < n; ++i) {
-			result.elements[i] = Math::max(v1.elements[i], v2.elements[i]);
+			result[i] = Math::max(v1[i], v2[i]);
 		}
 
 		return result;
 	}
+
 	/*!
 	 \relates Vector
 	 \brief Retrieves an ae::Vector situated between the range [\a minVec,\a maxVec].
@@ -2905,47 +2360,12 @@ namespace ae
 
 	 \sa min(), max()
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> clamp(const Vector<T, n>& vec, const Vector<T, n>& minVec, const Vector<T, n>& maxVec) noexcept
+	[[nodiscard]] AEON_API inline Vector<T, n> clamp(const Vector<T, n>& vec, const Vector<T, n>& minVec, const Vector<T, n>& maxVec) noexcept
 	{
 		return min(max(vec, minVec), maxVec);
-	}
-
-	/*!
-	 \relates Vector
-	 \brief Smoothstep is a technique that will interpolate between two edges based on the \a vec provided.
-	 \details This technique will apply a curve function so the movement starts out slow, speeds up in the middle, then slows down again.\n
-	 The ae::Vector retrieved will contain the interpolation factors within the range [0,1].
-	 \note If the \a edge1 edge is greater than the \a edge0 edge, the behaviour will be considered undefined.
-
-	 \param[in] vec The ae::Vector that will be used as the target of interpolation
-	 \param[in] edge0 The ae::Vector that will be used as the first edge (the minimum point of interpolation)
-	 \param[in] edge1 The ae::Vector that will be used as the second edge (the maximum point of interpolation)
-
-	 \return An ae::Vector containing the factors of interpolation of the \a vec according to the edges provided
-
-	 \par Example:
-	 \code
-	 ae::Vector2f edge0(0.5f, 0.3f);
-	 ae::Vector2f edge1(0.65f, 0.7f);
-	 ae::Vector2f vec(0.5f, 0.5f);
-	 ae::Vector2f interpolationFactors = ae::smoothstep(vec, edge0, edge1); // ([0.f,1.f], [0.f,1.f])
-
-	 // In order to retrieve the interpolated vector between the two edges, the user will have to do the following:
-	 ae::Vector2f interpolatedVec = edge0 + ae::smoothstep(vec, edge0, edge1) * (edge1 - edge0); // ([0.5f,0.65f], [0.3f,0.7f])
-	 // or
-	 ae::Vector2f interpolatedVec = ae::lerp(edge0, edge1, ae::smoothstep(vec, edge0, edge1));
-	 \endcode
-
-	 \since v0.6.0
-	*/
-	template <typename T, size_t n>
-	_NODISCARD inline Vector<T, n> smoothstep(const Vector<T, n>& vec, const Vector<T, n>& edge0, const Vector<T, n>& edge1)
-	{
-		const Vector<T, n> INTERP = clamp((vec - edge0) / (edge1 - edge0), Vector<T, n>(static_cast<T>(0)), Vector<T, n>(static_cast<T>(1)));
-		return (INTERP * INTERP * (Vector<T, n>(static_cast<T>(3)) - Vector<T, n>(static_cast<T>(2)) * INTERP));
 	}
 
 	/*!
@@ -2956,27 +2376,69 @@ namespace ae
 	 If \a t is between 0 and 1, the interpolated vector will be situated between the range [\a A,\a B].\n
 	 If \a t is 1, the interpolated vector will be equal to the \a B vector.\n
 	 If \a t is greater than 1, the interpolated vector will be situated after the \a B vector.
-	 \note Only floating point types are allowed (float, double, long double).
+	 \note Only floating point types are allowed: float, double, long double.
 
 	 \param[in] A The ae::Vector indicating the first control point
 	 \param[in] B The ae::Vector indicating the second control point
-	 \param[in] t The value (in the range [0,1]) that will act as a percentage for the interpolation
+	 \param[in] t The value (in the range [0;1]) that will act as a percentage for the interpolation
 
-	 \return An interpolated ae::Vector situated between the range [\a A,\a B] based on the \a t percentage
+	 \return An interpolated ae::Vector situated between the range [\a A;\a B] based on the \a t percentage
 
 	 \par Example:
 	 \code
 	 ae::Vector2f A(5.f, 2.f);
 	 ae::Vector2f B(20.f, 15.f);
-	 ae::Vector2f LERP = ae::lerp(A, B, 0.5f);
+	 ae::Vector2f lerp = ae::lerp(A, B, 0.5f);
 	 \endcode
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
-	template <typename T, size_t n, typename = Math::FLOATING_POINT_POLICY<T>>
-	_NODISCARD inline Vector<T, n> lerp(const Vector<T, n>& A, const Vector<T, n>& B, T t) noexcept
+	template <typename T, size_t n>
+	[[nodiscard]] AEON_API inline Vector<T, n> lerp(const Vector<T, n>& A, const Vector<T, n>& B, T t) noexcept
 	{
+		static_assert(std::is_floating_point_v<T>, "'lerp' only accepts floating point types");
+		assert(t >= static_cast<T>(0));
+		assert(t <= static_cast<T>(1));
+
 		return (A + t * (B - A));
+	}
+
+	/*!
+	 \relates Vector
+	 \brief Smoothstep is a technique that will interpolate between two edges based on the \a vec provided.
+	 \details This technique will apply a curve function so the movement starts out slow, speeds up in the middle, then slows down again.\n
+	 The ae::Vector retrieved will contain the interpolation factors in the range [0;1].
+	 \note Only floating point types are allowed: float, double, long double.
+
+	 \param[in] edge1 The ae::Vector that will be used as the first edge (the minimum point of interpolation)
+	 \param[in] edge2 The ae::Vector that will be used as the second edge (the maximum point of interpolation)
+	 \param[in] vec The ae::Vector that will be used as the target of interpolation
+
+	 \return An ae::Vector containing the factors of interpolation of the \a vec according to the edges provided
+
+	 \par Example:
+	 \code
+	 ae::Vector2f edge1(0.5f, 0.3f);
+	 ae::Vector2f edge2(0.65f, 0.7f);
+	 ae::Vector2f vec(0.5f, 0.5f);
+	 ae::Vector2f interpolationFactors = ae::smoothstep(edge1, edge2, vec); // ([0.f;1.f], [0.f;1.f])
+
+	 // In order to retrieve the interpolated vector between the two edges:
+	 ae::Vector2f interpolatedVec = edge1 + interpolationFactors * (edge2 - edge1); // ([0.5f;0.65f], [0.3f;0.7f])
+	 // or
+	 ae::Vector2f interpolatedVec = ae::lerp(edge1, edge2, interpolationFactors); // ([0.5f;0.65f], [0.3f;0.7f])
+	 \endcode
+
+	 \since v0.7.0
+	*/
+	template <typename T, size_t n>
+	[[nodiscard]] AEON_API inline Vector<T, n> smoothstep(const Vector<T, n>& edge1, const Vector<T, n>& edge2, const Vector<T, n>& vec)
+	{
+		static_assert(std::is_floating_point_v<T>, "'smoothstep' only accepts floating point types");
+		assert(edge1 <= edge2);
+
+		const Vector<T, n> ERP = clamp((vec - edge1) / (edge2 - edge1), Vector<T, n>(static_cast<T>(0)), Vector<T, n>(static_cast<T>(1)));
+		return ERP * ERP * (Vector<T, n>(static_cast<T>(3)) - Vector<T, n>(static_cast<T>(2)) * ERP);
 	}
 
 	// Vector<T, 2> function(s)
@@ -2984,7 +2446,7 @@ namespace ae
 	 \relates Vector
 	 \brief Calculates and retrieves the normal of the segment formed by \a v1 and \a v2.
 	 \details The normal of a segment is the perpendicular vector of said segment.
-	 \note Only floating point types are allowed (float, double, long double).
+	 \note Only floating point types are allowed: float, double, long double.
 
 	 \param[in] v1 The ae::Vector that will serve as the first point of the segment
 	 \param[in] v2 The ae::Vector that will serve as the second point of the segment
@@ -2999,11 +2461,13 @@ namespace ae
 	 ae::Vector2f normal = ae::normal(vec2f_1, vec2f_2);
 	 \endcode
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
-	template <typename T, typename = Math::FLOATING_POINT_POLICY<T>>
-	_NODISCARD inline Vector<T, 2> normal(const Vector<T, 2>& v1, const Vector<T, 2>& v2)
+	template <typename T>
+	[[nodiscard]] AEON_API inline Vector<T, 2> normal(const Vector<T, 2>& v1, const Vector<T, 2>& v2)
 	{
+		static_assert(std::is_floating_point_v<T>, "'normal' only accepts floating point types");
+
 		const Vector<T, 2> NORMAL(v1.y - v2.y, v2.x - v1.x);
 		const T MAGNITUDE = NORMAL.magnitude();
 
@@ -3030,10 +2494,10 @@ namespace ae
 	 ae::Vector3f crossProduct = ae::cross(vec3f_1.normalize(), vec3f_2.normalize());
 	 \endcode
 
-	 \since v0.6.0
+	 \since v0.7.0
 	*/
 	template <typename T>
-	_NODISCARD inline _CONSTEXPR17 Vector<T, 3> cross(const Vector<T, 3>& v1, const Vector<T, 3>& v2) noexcept
+	[[nodiscard]] AEON_API constexpr Vector<T, 3> cross(const Vector<T, 3>& v1, const Vector<T, 3>& v2) noexcept
 	{
 		return Vector<T, 3>(v1.y * v2.z - v1.z * v2.y,
 		                    v1.z * v2.x - v1.x * v2.z,
@@ -3042,51 +2506,64 @@ namespace ae
 
 	// Typedef(s)
 	template <typename T>
-	using Vector2 = Vector<T, 2>;           //!< A 2-dimensional vector of type T
+	using Vector2 = Vector<T, 2>;       //!< A 2-dimensional vector of type T
 
-	using Vector2f = Vector2<float>;        //!< A 2-dimensional vector of floats
-	using Vector2d = Vector2<double>;       //!< A 2-dimensional vector of doubles
-	using Vector2i = Vector2<int>;          //!< A 2-dimensional vector of ints
-	using Vector2u = Vector2<unsigned int>; //!< A 2-dimensional vector of unsigned ints
-
-	template <typename T>
-	using Vector3 = Vector<T, 3>;           //!< A 3-dimensional vector of type T
-
-	using Vector3f = Vector3<float>;        //!< A 3-dimensional vector of floats
-	using Vector3d = Vector3<double>;       //!< A 3-dimensional vector of doubles
-	using Vector3i = Vector3<int>;          //!< A 3-dimensional vector of ints
-	using Vector3u = Vector3<unsigned int>; //!< A 3-dimensional vector of unsigned ints
+	using Vector2f = Vector2<float>;    //!< A 2-dimensional vector of floats
+	using Vector2d = Vector2<double>;   //!< A 2-dimensional vector of doubles
+	using Vector2i = Vector2<int32_t>;  //!< A 2-dimensional vector of ints
+	using Vector2u = Vector2<uint32_t>; //!< A 2-dimensional vector of unsigned ints
 
 	template <typename T>
-	using Vector4 = Vector<T, 4>;           //!< A 3-dimensional vector with a homogeneous component of type T
+	using Vector3 = Vector<T, 3>;       //!< A 3-dimensional vector of type T
 
-	using Vector4f = Vector4<float>;        //!< A 3-dimensional vector with a homogeneous component of floats
-	using Vector4d = Vector4<double>;       //!< A 3-dimensional vector with a homogeneous component of doubles
-	using Vector4i = Vector4<int>;          //!< A 3-dimensional vector with a homogeneous component of ints
-	using Vector4u = Vector4<unsigned int>; //!< A 3-dimensional vector with a homogeneous component of unsigned ints 
-
-	// Static member data
-	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::Up(0.f, 1.f, 0.f);       //!< The global upward vector
-	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::Down(0.f, -1.f, 0.f);    //!< The global downward vector
-	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::Left(-1.f, 0.f, 0.f);    //!< The global leftward vector
-	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::Right(1.f, 0.f, 0.f);    //!< The global rightward vector
-	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::Forward(0.f, 0.f, -1.f); //!< The global forward vector
-	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::Backward(0.f, 0.f, 1.f); //!< The global backward vector
+	using Vector3f = Vector3<float>;    //!< A 3-dimensional vector of floats
+	using Vector3d = Vector3<double>;   //!< A 3-dimensional vector of doubles
+	using Vector3i = Vector3<int32_t>;  //!< A 3-dimensional vector of ints
+	using Vector3u = Vector3<uint32_t>; //!< A 3-dimensional vector of unsigned ints
 
 	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::XAxis(1.f, 0.f, 0.f); //!< The global X axis vector
+	using Vector4 = Vector<T, 4>;       //!< A 3-dimensional vector with a homogeneous component of type T
+
+	using Vector4f = Vector4<float>;    //!< A 3-dimensional vector with a homogeneous component of floats
+	using Vector4d = Vector4<double>;   //!< A 3-dimensional vector with a homogeneous component of doubles
+	using Vector4i = Vector4<int32_t>;  //!< A 3-dimensional vector with a homogeneous component of ints
+	using Vector4u = Vector4<uint32_t>; //!< A 3-dimensional vector with a homogeneous component of unsigned ints
+
+	// Static member(s)
 	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::YAxis(0.f, 1.f, 0.f); //!< The global Y axis vector
+	const Vector<float, 2> Vector<T, 2>::Up(0.f, -1.f);   //!< The global upward 2D vector
 	template <typename T>
-	const Vector<float, 3> Vector<T, 3>::ZAxis(0.f, 0.f, 1.f); //!< The global Z axis vector
+	const Vector<float, 2> Vector<T, 2>::Down(0.f, 1.f);  //!< The global downward 2D vector
+	template <typename T>
+	const Vector<float, 2> Vector<T, 2>::Left(-1.f, 0.f); //!< The global leftward 2D vector
+	template <typename T>
+	const Vector<float, 2> Vector<T, 2>::Right(1.f, 0.f); //!< The global rightward 2D vector
+
+	template <typename T>
+	const Vector<float, 2> Vector<T, 2>::XAxis(1.f, 0.f); //!< The global X axis 2D vector
+	template <typename T>
+	const Vector<float, 2> Vector<T, 2>::YAxis(0.f, 1.f); //!< The global Y axis 2D vector
+
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::Up(0.f, 1.f, 0.f);       //!< The global upward 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::Down(0.f, -1.f, 0.f);    //!< The global downward 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::Left(-1.f, 0.f, 0.f);    //!< The global leftward 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::Right(1.f, 0.f, 0.f);    //!< The global rightward 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::Forward(0.f, 0.f, -1.f); //!< The global forward 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::Backward(0.f, 0.f, 1.f); //!< The global backward 3D vector
+
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::XAxis(1.f, 0.f, 0.f); //!< The global X axis 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::YAxis(0.f, 1.f, 0.f); //!< The global Y axis 3D vector
+	template <typename T>
+	const Vector<float, 3> Vector<T, 3>::ZAxis(0.f, 0.f, 1.f); //!< The global Z axis 3D vector
 }
-#endif // Aeon_Math_Vector_H_
 
 /*!
  \struct ae::Vector
@@ -3095,7 +2572,7 @@ namespace ae
  The ae::Vector struct defines a mathematical vector n dimensions
  (x, y, z, w, ..., n). In order to instantiate a ae::Vector object, 5 or more
  dimensions need to be provided, the specialized ae::Vector2, ae::Vector3 or
- ae::Vector4 should be used for 2 to 4 dimensions.
+ ae::Vector4 are used for 2 to 4 dimensions.
 
  The coordinates of the primary template can only be accessed through the
  'elements' member whereas the specialized vectors offer more intuitive means.
@@ -3104,8 +2581,8 @@ namespace ae
  simply a n-dimensional entity, for example: a size, a velocity, etc.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.04.07
+ \version v0.7.0
+ \date 2021.12.17
  \copyright MIT License
 */
 
@@ -3118,7 +2595,7 @@ namespace ae
 
  The coordinates of the partially specialized template can be accessed through
  the 'elements' member or through the 'x' and 'y' members. These members occupy
- the same block of memory, they simple offer a more intuitive way of accessing
+ the same block of memory, they simply offer a more intuitive way of accessing
  said elements.
 
  Usage example:
@@ -3135,8 +2612,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.04.07
+ \version v0.7.0
+ \date 2021.12.17
  \copyright MIT License
 */
 
@@ -3150,7 +2627,7 @@ namespace ae
  The coordinates of the partially specialized template can be accessed through
  the 'elements' member or through the 'x', 'y' and 'z' members or through the
  'xy' member that is a 2-dimensional vector. These members occupy the same
- block of memory, they simple offer a more intuitive way of accessing said
+ block of memory, they simply offer a more intuitive way of accessing said
  elements.
 
  Usage example:
@@ -3167,8 +2644,8 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.04.07
+ \version v0.7.0
+ \date 2021.12.17
  \copyright MIT License
 */
 
@@ -3181,7 +2658,7 @@ namespace ae
 
  The coordinates of the partially specialized template can be accessed through
  the 'elements' member or through the 'x', 'y', 'z' and 'w' members or through
- the 'xy' and the 'xzy' members that are a 2-dimensional vector and a
+ the 'xy' and the 'xyz' members that are a 2-dimensional vector and a
  3-dimensional vector respectively. These members occupy the same block of
  memory, they simply offer a more intuitive way of accessing said elements.
 
@@ -3197,7 +2674,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.05.01
+ \version v0.7.0
+ \date 2021.12.17
  \copyright MIT License
 */

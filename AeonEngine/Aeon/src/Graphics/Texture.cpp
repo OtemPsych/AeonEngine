@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -77,26 +77,6 @@ namespace ae
 		}
 	}
 
-	Texture::Filter Texture::getFilter() const noexcept
-	{
-		return mFilter;
-	}
-
-	Texture::Wrap Texture::getWrap() const noexcept
-	{
-		return mWrap;
-	}
-
-	Texture::InternalFormat Texture::getInternalFormat() const noexcept
-	{
-		return mFormat.internal;
-	}
-
-	bool Texture::hasMipmap() const noexcept
-	{
-		return mHasMipmap;
-	}
-
 	// Public virtual method(s)
 	void Texture::setWrap(Wrap wrap)
 	{
@@ -146,36 +126,8 @@ namespace ae
 		GLCall(glCreateTextures(mBindingTarget, 1, &mHandle));
 
 		// Set the filter type and the wrapping mode
-		if (filter != Filter::None) {
-			setFilter(filter);
-		}
-		if (wrap != Wrap::None) {
-			setWrap(wrap);
-		}
-	}
-
-	Texture::Texture(Texture&& rvalue) noexcept
-		: GLResource(std::move(rvalue))
-		, mFormat(std::move(rvalue.mFormat))
-		, mWrap(rvalue.mWrap)
-		, mBindingTarget(rvalue.mBindingTarget)
-		, mHasMipmap(rvalue.mHasMipmap)
-		, mFilter(rvalue.mFilter)
-	{
-	}
-
-	// Protected operator(s)
-	Texture& Texture::operator=(Texture&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		GLResource::operator=(std::move(rvalue));
-		mFormat = std::move(rvalue.mFormat);
-		mWrap = rvalue.mWrap;
-		mBindingTarget = rvalue.mBindingTarget;
-		mHasMipmap = rvalue.mHasMipmap;
-		mFilter = rvalue.mFilter;
-
-		return *this;
+		setFilter(filter);
+		setWrap(wrap);
 	}
 
 	// Texture::Format
@@ -188,54 +140,34 @@ namespace ae
 	{
 		switch (internal)
 		{
+		case InternalFormat::RGBA8:
+			imposedChannels = 4;
+			break;
 		case InternalFormat::R8:
 			base = GL_RED;
 			imposedChannels = 1;
+			break;
+		case InternalFormat::RGB8:
+			base = GL_RGB;
+			imposedChannels = 3;
+			break;
+		case InternalFormat::RG8:
+			base = GL_RG;
+			imposedChannels = 2;
 			break;
 		case InternalFormat::R16:
 			base = GL_RED;
 			imposedChannels = 1;
 			bitCount = 16;
 			break;
-		case InternalFormat::RG8:
-			base = GL_RG;
-			imposedChannels = 2;
-			break;
 		case InternalFormat::RG16:
 			base = GL_RG;
 			imposedChannels = 2;
 			bitCount = 16;
 			break;
-		case InternalFormat::RGB8:
-			base = GL_RGB;
-			imposedChannels = 3;
-			break;
-		case InternalFormat::RGBA8:
-			imposedChannels = 4;
-			break;
 		case InternalFormat::RGBA16:
 			imposedChannels = 4;
 			bitCount = 16;
 		}
-	}
-
-	Texture::Format::Format(Format&& rvalue) noexcept
-		: internal(rvalue.internal)
-		, base(rvalue.base)
-		, imposedChannels(rvalue.imposedChannels)
-		, bitCount(rvalue.bitCount)
-	{
-	}
-
-		// Public operator(s)
-	Texture::Format& Texture::Format::operator=(Format&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data
-		internal = rvalue.internal;
-		base = rvalue.base;
-		imposedChannels = rvalue.imposedChannels;
-		bitCount = rvalue.bitCount;
-
-		return *this;
 	}
 }

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -99,7 +99,7 @@ namespace ae
 	const Matrix4f& Camera2D::getProjectionMatrix()
 	{
 		// Update the orthographic projection matrix is necessary
-		if (mUpdateProjectionMatrix) {
+		//if (mUpdateProjectionMatrix) {
 			// Retrieve the render target's size and the near and far plane distances
 			const Vector2f FRAME_SIZE = static_cast<Vector2f>(mTarget->getFramebufferSize()) * mZoomFactor;
 			float nearPlane, farPlane;
@@ -109,8 +109,8 @@ namespace ae
 			Vector2f viewCoordsY = (mFlippedY) ? Vector2f(0.f, FRAME_SIZE.y) : Vector2f(FRAME_SIZE.y, 0.f);
 			mProjectionMatrix = Matrix4f::orthographic(0.f, FRAME_SIZE.x, viewCoordsY[0], viewCoordsY[1], nearPlane, farPlane);
 			mUpdateInvProjectionMatrix = std::exchange(mUpdateProjectionMatrix, false);
-		}
-
+		//}
+	
 		return mProjectionMatrix;
 	}
 }

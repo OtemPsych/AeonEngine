@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -58,7 +58,7 @@ namespace ae
 		void handleResizing();
 		void handleImposedReturns();
 
-		virtual void enableState(State state) override final;
+		virtual void enableState(uint32_t state) override final;
 
 	private:
 		RenderTexture      mContent;

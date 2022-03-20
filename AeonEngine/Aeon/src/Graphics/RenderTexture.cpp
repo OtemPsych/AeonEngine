@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -22,79 +22,68 @@
 
 #include <AEON/Graphics/RenderTexture.h>
 
+#include <AEON/Window/internal/EventQueue.h>
 #include <AEON/Window/ContextSettings.h>
-#include <AEON/Graphics/GLResourceFactory.h>
 #include <AEON/Graphics/Camera2D.h>
 
 namespace ae
 {
 	// Public constructor(s)
-	RenderTexture::RenderTexture(Texture2D::InternalFormat colorFormat, Texture2D::InternalFormat depthFormat, Texture2D::InternalFormat stencilFormat)
+	RenderTexture::RenderTexture()
 		: RenderTarget()
 		, mFramebuffer(nullptr)
 		, mTexture(nullptr)
 		, mDepthTexture(nullptr)
 		, mStencilTexture(nullptr)
-		, mColorFormat((colorFormat == Texture2D::InternalFormat::Native) ? Texture2D::InternalFormat::RGBA8 : colorFormat)
-		, mDepthFormat(depthFormat)
-		, mStencilFormat(stencilFormat)
+		, mColorProperties({ Texture2D::Filter::Nearest, Texture2D::Wrap::None, Texture2D::InternalFormat::RGBA8 })
+		, mDepthProperties({ Texture2D::Filter::Nearest, Texture2D::Wrap::None, Texture2D::InternalFormat::Native })
+		, mStencilProperties({ Texture2D::Filter::Nearest, Texture2D::Wrap::None, Texture2D::InternalFormat::Native })
 	{
 		// Assign a 2D camera to the render target
 		setCamera(Camera2D(true));
 	}
 
-	RenderTexture::RenderTexture(RenderTexture&& rvalue) noexcept
-		: RenderTarget(std::move(rvalue))
-		, mFramebuffer(std::move(rvalue.mFramebuffer))
-		, mTexture(std::move(rvalue.mTexture))
-		, mDepthTexture(std::move(rvalue.mDepthTexture))
-		, mStencilTexture(std::move(rvalue.mStencilTexture))
-		, mColorFormat(rvalue.mColorFormat)
-		, mDepthFormat(rvalue.mDepthFormat)
-		, mStencilFormat(rvalue.mStencilFormat)
-	{
-	}
-
-	// Public operator(s)
-	RenderTexture& RenderTexture::operator=(RenderTexture&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		RenderTarget::operator=(std::move(rvalue));
-		mFramebuffer = std::move(rvalue.mFramebuffer);
-		mTexture = std::move(rvalue.mTexture);
-		mDepthTexture = std::move(rvalue.mDepthTexture);
-		mStencilTexture = std::move(rvalue.mStencilTexture);
-		mColorFormat = rvalue.mColorFormat;
-		mDepthFormat = rvalue.mDepthFormat;
-		mStencilFormat = rvalue.mStencilFormat;
-
-		return *this;
-	}
-
 	// Public method(s)
 	void RenderTexture::create(unsigned int width, unsigned int height)
 	{
+		// Delete previous framebuffer and textures
+		if (mFramebuffer) {
+			mFramebuffer->destroy();
+			mFramebuffer.reset();
+		}
+		if (mTexture) {
+			mTexture->destroy();
+			mTexture.reset();
+		}
+		if (mDepthTexture) {
+			mDepthTexture->destroy();
+			mDepthTexture.reset();
+		}
+		if (mStencilTexture) {
+			mStencilTexture->destroy();
+			mStencilTexture.reset();
+		}
+
 		// Create the framebuffer object
-		GLResourceFactory& factory = GLResourceFactory::getInstance();
-		mFramebuffer = factory.create<Framebuffer>("");
+		mFramebuffer = std::make_unique<Framebuffer>();
 		
 		// Create the color buffer texture
-		mTexture = factory.create<Texture2D>("", Texture2D::Filter::Nearest, Texture2D::Wrap::None, mColorFormat);
+		mTexture = std::make_unique<Texture2D>(mColorProperties.filter, mColorProperties.wrap, mColorProperties.format);
 		if (!mTexture->create(width, height)) {
 			AEON_LOG_ERROR("Invalid dimensions", "The dimensions " + std::to_string(width) + "x" + std::to_string(height) + " provided for the color buffer are invalid.");
 			return;
 		}
 
 		// Create the depth buffer and stencil buffer texture (if requested)
-		if (mDepthFormat != Texture2D::InternalFormat::Native) {
-			mDepthTexture = factory.create<Texture2D>("", Texture2D::Filter::Nearest, Texture2D::Wrap::None, mDepthFormat);
+		if (mDepthProperties.format != Texture2D::InternalFormat::Native) {
+			mDepthTexture = std::make_unique<Texture2D>(mDepthProperties.filter, mDepthProperties.wrap, mDepthProperties.format);
 			if (!mDepthTexture->create(width, height)) {
 				AEON_LOG_ERROR("Invalid dimensions", "The dimensions " + std::to_string(width) + "x" + std::to_string(height) + " provided for the depth buffer are invalid.");
 				return;
 			}
 		}
-		if (mStencilFormat != Texture2D::InternalFormat::Native) {
-			mStencilTexture = factory.create<Texture2D>("", Texture2D::Filter::Nearest, Texture2D::Wrap::None, mStencilFormat);
+		if (mStencilProperties.format != Texture2D::InternalFormat::Native) {
+			mStencilTexture = std::make_unique<Texture2D>(mStencilProperties.filter, mStencilProperties.wrap, mStencilProperties.format);
 			if (!mStencilTexture->create(width, height)) {
 				AEON_LOG_ERROR("Invalid dimensions", "The dimensions " + std::to_string(width) + "x" + std::to_string(height) + " provided for the stencil buffer are invalid.");
 				return;
@@ -109,6 +98,70 @@ namespace ae
 		// Set the framebuffer size
 		mFramebufferSize.x = width;
 		mFramebufferSize.y = height;
+
+		// Enqueue framebuffer resize event
+		auto event = std::make_unique<FramebufferResizeEvent>(mFramebufferSize.x, mFramebufferSize.y, getFramebufferHandle());
+		EventQueue::getInstance().enqueueEvent(std::move(event));
+	}
+
+	void RenderTexture::setColorProperties(Texture2D::Filter filter, Texture2D::Wrap wrap, Texture2D::InternalFormat format) noexcept
+	{
+		if (filter != Texture2D::Filter::None && filter != Texture2D::Filter::Nearest && filter != Texture2D::Filter::Linear) {
+			AEON_LOG_WARNING("Invalid filter", "The filter provided to the color buffer is invalid.\nNo effect.");
+		}
+		else {
+			mColorProperties.filter = filter;
+		}
+
+		mColorProperties.wrap = wrap;
+
+		if (format != Texture2D::InternalFormat::R8 && format != Texture2D::InternalFormat::R16 && format != Texture2D::InternalFormat::RG8
+			&& format != Texture2D::InternalFormat::RG16 && format != Texture2D::InternalFormat::RGB8 && format != Texture2D::InternalFormat::RGBA8
+			&& format != Texture2D::InternalFormat::RGBA16) {
+			AEON_LOG_WARNING("Invalid internal format", "The internal format provided to the color buffer is invalid.\nNo effect.");
+		}
+		else {
+			mColorProperties.format = format;
+		}
+	}
+
+	void RenderTexture::setDepthProperties(Texture2D::Filter filter, Texture2D::Wrap wrap, Texture2D::InternalFormat format) noexcept
+	{
+		if (filter == Texture2D::Filter::None || filter == Texture2D::Filter::Nearest || filter == Texture2D::Filter::Linear) {
+			mDepthProperties.filter = filter;
+		}
+		else {
+			AEON_LOG_WARNING("Invalid filter", "The filter provided to the depth buffer is invalid.\nNo effect.");
+		}
+
+		mDepthProperties.wrap = wrap;
+
+		if (format == Texture2D::InternalFormat::Native || format == Texture2D::InternalFormat::DEPTH32 || format == Texture2D::InternalFormat::DEPTH24
+			|| format == Texture2D::InternalFormat::DEPTH16 || format == Texture2D::InternalFormat::DEPTH32STENCIL || format == Texture2D::InternalFormat::DEPTH24STENCIL) {
+			mDepthProperties.format = format;
+		}
+		else {
+			AEON_LOG_WARNING("Invalid internal format", "The internal format provided to the depth buffer is invalid.\nNo effect.");
+		}
+	}
+
+	void RenderTexture::setStencilProperties(Texture2D::Filter filter, Texture2D::Wrap wrap, Texture2D::InternalFormat format) noexcept
+	{
+		if (filter == Texture2D::Filter::None || filter == Texture2D::Filter::Nearest || filter == Texture2D::Filter::Linear) {
+			mStencilProperties.filter = filter;
+		}
+		else {
+			AEON_LOG_WARNING("Invalid filter", "The filter provided to the stencil buffer is invalid.\nNo effect.");
+		}
+
+		mStencilProperties.wrap = wrap;
+
+		if (format == Texture2D::InternalFormat::Native || format == Texture2D::InternalFormat::STENCIL) {
+			mStencilProperties.format = format;
+		}
+		else {
+			AEON_LOG_WARNING("Invalid internal format", "The internal format provided to the stencil buffer is invalid.\nNo effect.");
+		}
 	}
 
 	const Texture2D* const RenderTexture::getTexture() const noexcept

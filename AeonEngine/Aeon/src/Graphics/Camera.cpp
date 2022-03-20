@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -21,6 +21,8 @@
 // SOFTWARE.
 
 #include <AEON/Graphics/Camera.h>
+
+#include <AEON/Graphics/internal/RenderTarget.h>
 
 namespace ae
 {
@@ -116,6 +118,7 @@ namespace ae
 	void Camera::setTarget(const RenderTarget* const target) noexcept
 	{
 		mTarget = target;
+		mUpdateProjectionMatrix = true;
 	}
 
 	Vector3f Camera::getLocalRight()
@@ -135,21 +138,11 @@ namespace ae
 		// The 'getRotation()' method is used as derived classes calculate it differently
 		return getRotation().rotate(Vector3f::Forward);
 	}
-	
-	const Vector3f& Camera::getPosition() const noexcept
-	{
-		return mPosition;
-	}
 
 	void Camera::getFrustum(float& nearPlane, float& farPlane) const noexcept
 	{
 		nearPlane = mNearPlane;
 		farPlane = mFarPlane;
-	}
-
-	const Box2f& Camera::getViewport() const noexcept
-	{
-		return mViewport;
 	}
 
 	const Matrix4f& Camera::getInverseViewMatrix()
@@ -166,10 +159,10 @@ namespace ae
 	const Matrix4f& Camera::getInverseProjectionMatrix()
 	{
 		// Update the stored inverse projection matrix if necessary
-		if (mUpdateProjectionMatrix || mUpdateInvProjectionMatrix) {
+		//if (mUpdateProjectionMatrix || mUpdateInvProjectionMatrix) {
 			mInvProjectionMatrix = getProjectionMatrix().invert();
 			mUpdateInvProjectionMatrix = false;
-		}
+		//}
 
 		return mInvProjectionMatrix;
 	}
@@ -182,9 +175,8 @@ namespace ae
 
 	const Matrix4f& Camera::getViewMatrix()
 	{
-		// Update the stored view matrix if necessary
 		if (mUpdateViewMatrix) {
-			// Recalculate the local vectors pointing forwards, rightwards and upwards
+			// Recalculate the local vectors
 			const Vector3f FORWARD = getLocalForward().normalize();
 			const Vector3f RIGHT = cross(FORWARD, getLocalUp().normalize());
 			const Vector3f UP = cross(RIGHT, FORWARD);
@@ -197,18 +189,23 @@ namespace ae
 		return mViewMatrix;
 	}
 
+	Matrix4f Camera::getTransform()
+	{
+		return getViewMatrix();
+	}
+
 	// Protected constructor(s)
 	Camera::Camera(float nearPlane, float farPlane)
-		: mViewMatrix()
-		, mProjectionMatrix()
+		: mViewMatrix(Matrix4f::identity())
+		, mProjectionMatrix(Matrix4f::identity())
 		, mRotation()
 		, mUpdateViewMatrix(true)
 		, mUpdateInvViewMatrix(true)
 		, mUpdateProjectionMatrix(true)
 		, mUpdateInvProjectionMatrix(true)
 		, mTarget(nullptr)
-		, mInvViewMatrix()
-		, mInvProjectionMatrix()
+		, mInvViewMatrix(Matrix4f::identity())
+		, mInvProjectionMatrix(Matrix4f::identity())
 		, mViewport(0.f, 0.f, 1.f, 1.f)
 		, mPosition()
 		, mNearPlane(nearPlane)
@@ -216,43 +213,17 @@ namespace ae
 	{
 	}
 
-	Camera::Camera(Camera&& rvalue) noexcept
-		: mViewMatrix(std::move(rvalue.mViewMatrix))
-		, mProjectionMatrix(std::move(rvalue.mProjectionMatrix))
-		, mRotation(std::move(rvalue.mRotation))
-		, mUpdateViewMatrix(rvalue.mUpdateViewMatrix)
-		, mUpdateInvViewMatrix(rvalue.mUpdateInvViewMatrix)
-		, mUpdateProjectionMatrix(rvalue.mUpdateProjectionMatrix)
-		, mUpdateInvProjectionMatrix(rvalue.mUpdateInvProjectionMatrix)
-		, mTarget(rvalue.mTarget)
-		, mInvViewMatrix(std::move(rvalue.mInvViewMatrix))
-		, mInvProjectionMatrix(std::move(rvalue.mInvProjectionMatrix))
-		, mViewport(std::move(rvalue.mViewport))
-		, mPosition(std::move(rvalue.mPosition))
-		, mNearPlane(rvalue.mNearPlane)
-		, mFarPlane(rvalue.mFarPlane)
+	// Protected virtual method(s)
+	void Camera::handleEventSelf(Event* const event)
 	{
-	}
-
-	// Protected operator(s)
-	Camera& Camera::operator=(Camera&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data and move the rest
-		mViewMatrix = std::move(rvalue.mViewMatrix);
-		mProjectionMatrix = std::move(rvalue.mProjectionMatrix);
-		mRotation = std::move(rvalue.mRotation);
-		mUpdateViewMatrix = rvalue.mUpdateViewMatrix;
-		mUpdateInvViewMatrix = rvalue.mUpdateInvViewMatrix;
-		mUpdateProjectionMatrix = rvalue.mUpdateProjectionMatrix;
-		mUpdateInvProjectionMatrix = rvalue.mUpdateInvProjectionMatrix;
-		mTarget = rvalue.mTarget;
-		mInvViewMatrix = std::move(rvalue.mInvViewMatrix);
-		mInvProjectionMatrix = std::move(rvalue.mInvProjectionMatrix);
-		mViewport = std::move(rvalue.mViewport);
-		mPosition = std::move(rvalue.mPosition);
-		mNearPlane = rvalue.mNearPlane;
-		mFarPlane = rvalue.mFarPlane;
-
-		return *this;
+		if (event->type == Event::Type::WindowResized) {
+			mUpdateProjectionMatrix = true;
+		}
+		else if (event->type == Event::Type::FramebufferResized) {
+			FramebufferResizeEvent* const framebufferResizeEvent = event->as<FramebufferResizeEvent>();
+			if (framebufferResizeEvent->handle == 0 || (mTarget && framebufferResizeEvent->handle == mTarget->getFramebufferHandle())) {
+				mUpdateProjectionMatrix = true;
+			}
+		}
 	}
 }

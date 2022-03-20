@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,8 +23,7 @@
 #include <AEON/System/Time.h>
 
 #include <ctime>
-
-#include <AEON/System/DebugLogger.h>
+#include <cassert>
 
 namespace ae
 {
@@ -37,19 +36,7 @@ namespace ae
 	{
 	}
 
-	Time::Time(Time&& rvalue) noexcept
-		: mSeconds(rvalue.mSeconds)
-	{
-	}
-
 	// Public operator(s)
-	Time& Time::operator=(Time&& rvalue) noexcept
-	{
-		// Copy the rvalue's trivial data
-		mSeconds = rvalue.mSeconds;
-		return *this;
-	}
-
 	Time Time::operator+(const Time& other) const noexcept
 	{
 		return Time(mSeconds + other.mSeconds);
@@ -62,14 +49,6 @@ namespace ae
 
 	Time Time::operator/(const Time& other) const noexcept
 	{
-		// Check that the other's time value isn't equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (other.mSeconds == 0.0) {
-				AEON_LOG_ERROR("Attempt to divide by 0", "The time value provided is equal to 0.0.\nRetrieving erroneous data.");
-				return Time(mSeconds);
-			}
-		}
-
 		return Time(mSeconds / other.mSeconds);
 	}
 
@@ -80,14 +59,7 @@ namespace ae
 
 	Time Time::operator/(double scale) const
 	{
-		// Check that the scale provided isn't equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (scale == 0.0) {
-				AEON_LOG_ERROR("Attempt to divide by 0", "The scale value provided is equal to 0.0.\nRetrieving erroneous data.");
-				return Time(mSeconds);
-			}
-		}
-
+		assert(scale != 0.0);
 		return Time(mSeconds / scale);
 	}
 
@@ -111,13 +83,7 @@ namespace ae
 
 	Time& Time::operator/=(double scale)
 	{
-		// Check that the scale provided isn't equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (scale == 0.0) {
-				AEON_LOG_ERROR("Attempt to divide by 0", "The scale value provided is equal to 0.0.\nRetrieving erroneous data.");
-				return *this;
-			}
-		}
+		assert(scale != 0.0);
 
 		mSeconds /= scale;
 		return *this;
@@ -125,32 +91,32 @@ namespace ae
 
 	bool Time::operator==(const Time& other) const noexcept
 	{
-		return (mSeconds == other.mSeconds);
+		return mSeconds == other.mSeconds;
 	}
 
 	bool Time::operator!=(const Time& other) const noexcept
 	{
-		return (mSeconds != other.mSeconds);
+		return mSeconds != other.mSeconds;
 	}
 
 	bool Time::operator<(const Time& other) const noexcept
 	{
-		return (mSeconds < other.mSeconds);
+		return mSeconds < other.mSeconds;
 	}
 
 	bool Time::operator<=(const Time& other) const noexcept
 	{
-		return (mSeconds <= other.mSeconds);
+		return mSeconds <= other.mSeconds;
 	}
 
 	bool Time::operator>(const Time& other) const noexcept
 	{
-		return (mSeconds > other.mSeconds);
+		return mSeconds > other.mSeconds;
 	}
 
 	bool Time::operator>=(const Time& other) const noexcept
 	{
-		return (mSeconds >= other.mSeconds);
+		return mSeconds >= other.mSeconds;
 	}
 
 	// Friend operator(s)
@@ -165,19 +131,14 @@ namespace ae
 	}
 
 	// Public method(s)
-	int_fast32_t Time::asMilliseconds() const noexcept
+	int32_t Time::asMilliseconds() const noexcept
 	{
-		return static_cast<int_fast32_t>(mSeconds * 1000.0);
+		return static_cast<int32_t>(mSeconds * 1000.0);
 	}
 
-	int_fast64_t Time::asMicroseconds() const noexcept
+	int64_t Time::asMicroseconds() const noexcept
 	{
-		return static_cast<int_fast64_t>(mSeconds * 1'000'000.0);
-	}
-
-	double Time::asSeconds() const noexcept
-	{
-		return mSeconds;
+		return static_cast<int64_t>(mSeconds * 1'000'000.0);
 	}
 
 	// Public static method(s)
@@ -186,12 +147,12 @@ namespace ae
 		return Time(seconds);
 	}
 
-	Time Time::milliseconds(int_fast32_t milliseconds) noexcept
+	Time Time::milliseconds(int32_t milliseconds) noexcept
 	{
 		return Time(static_cast<double>(milliseconds) / 1000.0);
 	}
 
-	Time Time::microseconds(int_fast64_t microseconds) noexcept
+	Time Time::microseconds(int64_t microseconds) noexcept
 	{
 		return Time(static_cast<double>(microseconds) / 1'000'000.0);
 	}
@@ -212,7 +173,7 @@ namespace ae
 		char dateStr[11];
 		snprintf(dateStr, sizeof(dateStr), "%s.%s.%s", year, month, day);
 
-		return dateStr;
+		return std::string(dateStr);
 	}
 
 	std::string Time::getSystemTime()
@@ -231,7 +192,7 @@ namespace ae
 		char timeStr[9];
 		snprintf(timeStr, sizeof(timeStr), "%s:%s:%s", hours, minutes, seconds);
 
-		return timeStr;
+		return std::string(timeStr);
 	}
 
 	// Private constructor(s)

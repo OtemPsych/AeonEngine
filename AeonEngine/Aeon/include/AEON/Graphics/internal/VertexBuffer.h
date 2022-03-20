@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_VertexBuffer_H_
-#define Aeon_Graphics_VertexBuffer_H_
+#pragma once
 
 #include <vector>
 
@@ -33,7 +32,7 @@ namespace ae
 	 \brief The class representing an OpenGL buffer used to supply vertex data to a vertex shader.
 	 \note This class is considered to be internal but may still be used by the API user.
 	*/
-	class _NODISCARD AEON_API VertexBuffer : public Buffer
+	class AEON_API VertexBuffer : public Buffer
 	{
 	public:
 		// Public nested class(es)
@@ -41,7 +40,7 @@ namespace ae
 		 \brief The class representing the data layout of an ae::VertexBuffer.
 		 \note This class is considered to be internal but may still be used by the API user.
 		*/
-		class _NODISCARD AEON_API Layout
+		class AEON_API Layout
 		{
 		public:
 			// Public struct(s)
@@ -50,59 +49,51 @@ namespace ae
 			*/
 			struct Element
 			{
-				uint32_t     type;       //!< The OpenGL data type
-				int          count;      //!< The number of components per element
-				unsigned int offset;     //!< The offset in bytes at which the component's data begins
-				bool         normalized; //!< Whether the data should be normalized or not (value between 0 and 1)
+				uint32_t type;       //!< The OpenGL data type
+				int32_t  count;      //!< The number of components per element
+				uint32_t offset;     //!< The offset in bytes at which the component's data begins
+				bool     normalized; //!< Whether the data should be normalized or not (value between 0 and 1)
 			};
 
 		public:
 			// Public constructor(s)
 			/*!
 			 \brief Default constructor.
-			 \details Set the stride between vertices to 0.
+			 \details Sets the stride between vertices to 0.
 
-			 \since v0.4.0
+			 \since v0.7.0
 			*/
 			Layout() noexcept;
 			/*!
 			 \brief Copy constructor.
 
-			 \param[in] copy The ae::VertexBuffer::Layout that will be copied
-
-			 \since v0.6.0
+			 \since v0.7.0
 			*/
-			Layout(const Layout& copy);
+			Layout(const Layout&) = default;
 			/*!
 			 \brief Move constructor.
 
-			 \param[in] rvalue The ae::VertexBuffer::Layout that will be moved
-
-			 \since v0.6.0
+			 \since v0.7.0
 			*/
-			Layout(Layout&& rvalue) noexcept;
+			Layout(Layout&&) noexcept = default;
 		public:
 			// Public operator(s)
 			/*!
 			 \brief Assignment operator.
 
-			 \param[in] other The ae::VertexBuffer::Layout that will be copied
-
 			 \return The caller ae::VertexBuffer::Layout
 
-			 \since v0.6.0
+			 \since v0.7.0
 			*/
-			Layout& operator=(const Layout& other);
+			Layout& operator=(const Layout&) = default;
 			/*!
 			 \brief Move assignment operator.
 
-			 \param[in] rvalue The ae::VertexBuffer::Layout that will be moved
-
 			 \return The caller ae::VertexBuffer::Layout
 
-			 \since v0.6.0
+			 \since v0.7.0
 			*/
-			Layout& operator=(Layout&& rvalue) noexcept;
+			Layout& operator=(Layout&&) noexcept = default;
 		public:
 			// Public method(s)
 			/*!
@@ -114,15 +105,15 @@ namespace ae
 
 			 \par Example:
 			 \code
-			 // Add 3 integers that must be normalized (un ae::Vector3i, for example)
+			 // Add 3 integers that must be normalized (a ae::Vector3i, for example)
 			 vbo->getLayout().addElement(GL_INT, 3, GL_TRUE);
 			 \endcode
 
 			 \sa getElements()
 
-			 \since v0.4.0
+			 \since v0.7.0
 			*/
-			void addElement(uint32_t type, int count, bool normalized);
+			void addElement(uint32_t type, int32_t count, bool normalized);
 			/*!
 			 \brief Retrieves the list of format elements.
 
@@ -137,9 +128,9 @@ namespace ae
 
 			 \sa addElement()
 
-			 \since v0.4.0
+			 \since v0.7.0
 			*/
-			_NODISCARD const std::vector<Element>& getElements() const noexcept;
+			[[nodiscard]] inline const std::vector<Element>& getElements() const noexcept { return mElements; }
 			/*!
 			 \brief Retrieves the stride in bytes between each vertex attribut's data.
 
@@ -152,17 +143,16 @@ namespace ae
 			 GLsizei layoutStride = vbo->getLayout().getStride();
 			 \endcode
 
-			 \since v0.4.0
+			 \since v0.7.0
 			*/
-			_NODISCARD int getStride() const noexcept;
+			[[nodiscard]] inline int32_t getStride() const noexcept { return mStride; }
 
 		private:
 			// Private member(s)
 			std::vector<Element> mElements; //!< The format elements of the buffer's data store
-			int                  mStride;   //!< The amount of bytes between the beginning of a vertex's data and the beginning of the next vertex's data
+			int32_t              mStride;   //!< The amount of bytes between the beginning of a vertex's data and the beginning of the next vertex's data
 		};
 
-	public:
 		// Public constructor(s)
 		/*!
 		 \brief Constructs the ae::VertexBuffer by providing the intended \a usage pattern.
@@ -197,12 +187,10 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::VertexBuffer that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		VertexBuffer(VertexBuffer&& rvalue) noexcept;
-	public:
+		VertexBuffer(VertexBuffer&&) noexcept = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -213,19 +201,17 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::VertexBuffer that will be moved
-
 		 \return The caller ae::VertexBuffer
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		VertexBuffer& operator=(VertexBuffer&& rvalue) noexcept;
-	public:
+		VertexBuffer& operator=(VertexBuffer&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief (Re)Creates a new data store for the ae::VertexBuffer with the \a size in bytes specified and the \a data itself.
 		 \details This method is best suited for creating the data store and resizing it if all the data is available at the call of this method.\n
-		 Consider the 'setSubData()' method if the data store's content need only be modified.
+		 Consider the 'setSubData()' method if the data store's content only need to be modified.
 
 		 \param[in] size The size of the data store, measured in bytes
 		 \param[in] data A pointer to the data that will be placed in the data store
@@ -246,9 +232,9 @@ namespace ae
 
 		 \sa setSubData()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		void setData(int size, const void* data) const;
+		void setData(int64_t size, const void* data) const;
 		/*!
 		 \brief Modifies the entire or part of the ae::VertexBuffer's data store.
 		 \details The data to be modified start at the \a offset provided in bytes, up to the \a size in bytes; the specified memory range will be replaced by the \a data.
@@ -279,9 +265,9 @@ namespace ae
 
 		 \sa setData()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		void setSubData(int offset, int size, const void* data) const;
+		void setSubData(int64_t offset, int64_t size, const void* data) const;
 		/*!
 		 \brief Retrieves the ae::VertexBuffer::Layout that describes the data format of the ae::VertexBuffer.
 
@@ -302,9 +288,9 @@ namespace ae
 		 vbo->getLayout().addElement(GL_FLOAT, 4, GL_FALSE); // each vertex contains 4 floats
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD Layout& getLayout() noexcept;
+		[[nodiscard]] inline Layout& getLayout() noexcept { return mLayout; }
 		/*!
 		 \brief Retrieves the ae::VertexBuffer::Layout that describes the data format of the ae::VertexBuffer.
 
@@ -327,9 +313,9 @@ namespace ae
 		 const ae::VertexBuffer::Layout& layout = vbo->getLayout();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Layout& getLayout() const noexcept;
+		[[nodiscard]] inline const Layout& getLayout() const noexcept { return mLayout; }
 
 	private:
 		// Private member(s)
@@ -337,7 +323,6 @@ namespace ae
 		uint32_t mUsage;  //!< The intended data store usage pattern
 	};
 }
-#endif // Aeon_Graphics_VertexBuffer_H_
 
 /*!
  \class ae::VertexBuffer::Layout
@@ -396,7 +381,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

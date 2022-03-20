@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_EllipseShape_H_
-#define Aeon_Graphics_EllipseShape_H_
+#pragma once
 
 #include <AEON/Graphics/internal/Shape.h>
 
@@ -30,13 +29,12 @@ namespace ae
 	/*!
 	 \brief Class representing a 2D ellipse or circle.
 	*/
-	class _NODISCARD AEON_API EllipseShape : public Shape
+	class AEON_API EllipseShape : public Shape
 	{
 	public:
 		// Public constructor(s)
 		/*!
-		 \brief Constructs the ae::EllipseShape by providing an optional radius along
-		 the X and Y axes, and an optional point count.
+		 \brief Constructs the ae::EllipseShape by providing an optional radius along the X and Y axes, and an optional point count.
 		 \details Creates an ellipse with no texture and a white fill color.
 
 		 \param[in] radius The horizontal and vertical radii of the ellipse, (0, 0) by default
@@ -51,42 +49,45 @@ namespace ae
 		 auto ellipse = std::make_unique<ae::EllipseShape>(ae::Vector2f(10.f, 5.f));
 		 \endcode
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		explicit EllipseShape(const Vector2f& radius = Vector2f(), size_t pointCount = 30);
 		/*!
-		 \brief Deleted copy constructor.
+		 \brief Copy constructor.
 
 		 \since v0.5.0
 		*/
-		EllipseShape(const EllipseShape&) = delete;
+		EllipseShape(const EllipseShape&) = default;
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::EllipseShape that will be moved
-
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		EllipseShape(EllipseShape&& rvalue) noexcept;
-	public:
+		EllipseShape(EllipseShape&&) noexcept = default;
+		/*!
+		 \brief Virtual destructor.
+		 \details This is needed as the API user may derive from this class.
+
+		 \since v0.7.0
+		*/
+		virtual ~EllipseShape() = default;
+
 		// Public operator(s)
 		/*!
-		 \brief Deleted assignment operator.
+		 \brief Assignment operator.
 
 		 \since v0.5.0
 		*/
-		EllipseShape& operator=(const EllipseShape&) = delete;
+		EllipseShape& operator=(const EllipseShape&) = default;
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::EllipseShape that will be moved
-
 		 \return The caller ae::EllipseShape
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		EllipseShape& operator=(EllipseShape&& rvalue) noexcept;
-	public:
+		EllipseShape& operator=(EllipseShape&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Sets the radii of the ae::EllipseShape.
@@ -101,7 +102,7 @@ namespace ae
 
 		 \sa getRadius()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setRadius(const Vector2f& radius) noexcept;
 		/*!
@@ -118,7 +119,7 @@ namespace ae
 
 		 \sa getRadius()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setRadius(float radiusX, float radiusY) noexcept;
 		/*!
@@ -137,7 +138,7 @@ namespace ae
 
 		 \sa getPointCount()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
 		void setPointCount(size_t count) noexcept;
 		/*!
@@ -154,9 +155,9 @@ namespace ae
 
 		 \sa setRadius()
 
-		 \since v0.5.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Vector2f& getRadius() const noexcept;
+		[[nodiscard]] const Vector2f& getRadius() const noexcept { return mRadius; }
 
 		// Public virtual method(s)
 		/*!
@@ -188,7 +189,6 @@ namespace ae
 		size_t   mPointCount; //!< The number of points used to form the ellipse
 	};
 }
-#endif // Aeon_Graphics_EllipseShape_H_
 
 /*!
  \class ae::EllipseShape
@@ -199,7 +199,7 @@ namespace ae
  color and can hold an optional texture.
 
  \author Filippos Gleglakos
- \version v0.5.0
- \date 2020.08.03
+ \version v0.7.0
+ \date 2022.01.02
  \copyright MIT License
 */

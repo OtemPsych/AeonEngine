@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -31,24 +31,6 @@ namespace ae
 	{
 	}
 
-	Quaternion::Quaternion(float w, float x, float y, float z) noexcept
-		: w(w)
-		, v(x, y, z)
-	{
-	}
-
-	Quaternion::Quaternion(float w, const Vector3f& axes) noexcept
-		: w(w)
-		, v(axes)
-	{
-	}
-
-	Quaternion::Quaternion(const Vector4f& rotation) noexcept
-		: w(rotation.w)
-		, v(rotation)
-	{
-	}
-
 	Quaternion::Quaternion(const Quaternion& copy) noexcept
 		: w(copy.w)
 		, v(copy.v)
@@ -56,7 +38,7 @@ namespace ae
 	}
 
 	Quaternion::Quaternion(Quaternion&& rvalue) noexcept
-		: w(std::move(rvalue.w))
+		: w(rvalue.w)
 		, v(std::move(rvalue.v))
 	{
 	}
@@ -64,13 +46,7 @@ namespace ae
 	// Public operator(s)
 	Quaternion& Quaternion::operator=(const Quaternion& other) noexcept
 	{
-		// Check that the caller object won't be assigned to itself (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (this == &other) {
-				AEON_LOG_ERROR("Invalid assignment", "Attempt to assign an object to itself.\nAborting operation.");
-				return *this;
-			}
-		}
+		assert(this != &other);
 
 		w = other.w;
 		v = other.v;
@@ -80,7 +56,7 @@ namespace ae
 
 	Quaternion& Quaternion::operator=(Quaternion&& rvalue) noexcept
 	{
-		w = std::move(rvalue.w);
+		w = rvalue.w;
 		v = std::move(rvalue.v);
 
 		return *this;
@@ -112,14 +88,7 @@ namespace ae
 
 	Quaternion Quaternion::operator/(float scalar) const
 	{
-		// Check if scalar is equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (scalar == 0.f) {
-				AEON_LOG_ERROR("Division by zero", "The scalar value provided is equal to 0.\nReturning caller quaternion.");
-				return *this;
-			}
-		}
-
+		assert(scalar != 0.f);
 		return Quaternion(w / scalar, v / scalar);
 	}
 
@@ -159,13 +128,7 @@ namespace ae
 
 	Quaternion& Quaternion::operator/=(float scalar)
 	{
-		// Check if scalar is equal to 0 (ignored in Release mode)
-		if _CONSTEXPR_IF (AEON_DEBUG) {
-			if (scalar == 0.f) {
-				AEON_LOG_ERROR("Division by zero", "The scalar value provided is equal to 0.\nReturning caller quaternion.");
-				return *this;
-			}
-		}
+		assert(scalar != 0.f);
 
 		w /= scalar;
 		v /= scalar;
@@ -196,7 +159,7 @@ namespace ae
 		const Vector2f PITCH(2.f * (w * x + y * z), 1.f - 2.f * (x * x + YY));
 
 		return Vector3f(
-			((PITCH == Vector2f(0.f)) ? 2.f * Math::atan2(x, w) : Math::atan2(PITCH.x, PITCH.y)),
+			((PITCH.x == 0.f && PITCH.y == 0.f) ? 2.f * Math::atan2(x, w) : Math::atan2(PITCH.x, PITCH.y)),
 			Math::asin(Math::clamp(2.f * (w * y - z * x), -1.f, 1.f)),
 			Math::atan2(2.f * (w * z + x * y), 1.f - 2.f * (YY + z * z))
 		);
@@ -221,17 +184,9 @@ namespace ae
 	Quaternion Quaternion::normalize() const
 	{
 		const float MAGNITUDE = magnitude();
-		return (MAGNITUDE <= 0.f) ? Quaternion() : (*this / MAGNITUDE);
-	}
+		assert(MAGNITUDE != 0.f);
 
-	float Quaternion::getAngle() const noexcept
-	{
-		return w;
-	}
-
-	const Vector3f& Quaternion::getAxes() const noexcept
-	{
-		return v;
+		return *this / MAGNITUDE;
 	}
 
 	// Public static method(s)
@@ -276,5 +231,18 @@ namespace ae
 	float Quaternion::dot(const Quaternion& q0, const Quaternion& q1) noexcept
 	{
 		return (q0.w * q1.w + q0.x * q1.x + q0.y * q1.y + q0.z * q1.z);
+	}
+
+	// Private constructor(s)
+	Quaternion::Quaternion(float w, float x, float y, float z) noexcept
+		: w(w)
+		, v(x, y, z)
+	{
+	}
+
+	Quaternion::Quaternion(float w, const Vector3f& axes) noexcept
+		: w(w)
+		, v(axes)
+	{
 	}
 }

@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_BlendMode_H_
-#define Aeon_Graphics_BlendMode_H_
-
-#include <yvals_core.h>
+#pragma once
 
 #include <AEON/Config.h>
 
@@ -32,7 +29,7 @@ namespace ae
 	/*!
 	 \brief Structure describing the blending mode to use during OpenGL rendering.
 	*/
-	struct _NODISCARD AEON_API BlendMode
+	struct AEON_API BlendMode
 	{
 		// Public enum(s)
 		/*!
@@ -164,9 +161,9 @@ namespace ae
 
 		 \sa operator!=()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator==(const BlendMode& other) const noexcept;
+		[[nodiscard]] bool operator==(const BlendMode& other) const noexcept;
 		/*!
 		 \brief Inequality operator.
 		 \details Checks if the caller's and the \a other's members are respectively inequal.
@@ -186,21 +183,20 @@ namespace ae
 
 		 \sa operator==()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator!=(const BlendMode& other) const noexcept;
+		[[nodiscard]] bool operator!=(const BlendMode& other) const noexcept;
 		/*!
 		 \brief Less than operator.
 		 \details This method is simply used so that ae::BlendMode can be used as a key in a hashtable.
 
 		 \param[in] other The ae::BlendMode that will be compared with the caller
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD bool operator<(const BlendMode& other) const noexcept;
+		[[nodiscard]] bool operator<(const BlendMode& other) const noexcept;
 	};
 }
-#endif // Aeon_Graphics_BlendMode_H_
 
 /*!
  \struct ae::BlendMode
@@ -250,7 +246,7 @@ namespace ae
  \endcode
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2021.01.30
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */

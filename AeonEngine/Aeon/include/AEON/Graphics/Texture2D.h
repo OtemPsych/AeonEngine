@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -23,6 +23,8 @@
 #ifndef Aeon_Graphics_Texture2D_H_
 #define Aeon_Graphics_Texture2D_H_
 
+#include <string>
+
 #include <AEON/Math/Vector.h>
 #include <AEON/Graphics/Texture.h>
 
@@ -31,12 +33,12 @@ namespace ae
 	/*!
 	 \brief The class that represents a 2-dimensional texture used for 2D images.
 	*/
-	class _NODISCARD AEON_API Texture2D : public Texture
+	class AEON_API Texture2D : public Texture
 	{
 	public:
 		// Public constructor(s)
 		/*!
-		 \brief Constructs the ae::Texture2D by providing the optional filter type, the wrapping mode and internal format of the data.
+		 \brief Constructs the ae::Texture2D by providing the optional filter type, wrapping mode and internal format of the data.
 		 \details The filter type and the wrapping mode can be set later, but the internal format can only be set during construction.
 
 		 \param[in] filter The ae::Texture::Filter that'll be applied to the texture, ae::Texture2D::Filter::Linear by default
@@ -48,7 +50,7 @@ namespace ae
 		 ae::Texture2D texture(ae::Texture2D::Filter::Nearest);
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		explicit Texture2D(Filter filter = Filter::Linear, Wrap wrap = Wrap::ClampToEdge, InternalFormat internalFormat = InternalFormat::Native);
 		/*!
@@ -62,9 +64,9 @@ namespace ae
 
 		 \param[in] rvalue The ae::Texture2D that will be moved
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Texture2D(Texture2D&& rvalue) noexcept;
+		Texture2D(Texture2D&& rvalue) noexcept = default;
 	public:
 		// Public operator(s)
 		/*!
@@ -80,9 +82,9 @@ namespace ae
 
 		 \return The caller ae::Texture2D
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Texture2D& operator=(Texture2D&& rvalue) noexcept;
+		Texture2D& operator=(Texture2D&& rvalue) noexcept = default;
 	public:
 		// Public method(s)
 		/*!
@@ -105,7 +107,7 @@ namespace ae
 
 		 \sa loadFromFile(), update()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		bool create(unsigned int width, unsigned int height, const void* data = nullptr);
 		/*!
@@ -132,7 +134,7 @@ namespace ae
 		 
 		 \sa create()
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
 		bool update(unsigned int offsetX, unsigned int offsetY, unsigned int width, unsigned int height, const void* data);
 		/*!
@@ -165,8 +167,9 @@ namespace ae
 		 \since v0.4.0
 		*/
 		bool loadFromFile(const std::string& filename);
+		void getPixels(std::vector<uint8_t>& pixels) const;
 		/*!
-		 \brief Retrieves the ae::Texture2D's loaded image's filepath.
+		 \brief Retrieves the loaded image's filepath.
 
 		 \return A std::string containing the texture's filepath
 
@@ -178,11 +181,11 @@ namespace ae
 		 const std::string& filepath = texture.getFilepath();
 		 \endcode
 
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const std::string& getFilepath() const noexcept;
+		_NODISCARD inline const std::string& getFilepath() const noexcept { return mFilepath; }
 		/*!
-		 \brief Retrieves the ae::Texture2D's loaded image's size.
+		 \brief Retrieves the loaded image's size.
 		 
 		 \return An ae::Vector2u containing the texture's dimensions
 		 
@@ -194,9 +197,9 @@ namespace ae
 		 const ae::Vector2u& textureSize = texture.getSize();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		_NODISCARD const Vector2u& getSize() const noexcept;
+		_NODISCARD inline const Vector2u& getSize() const noexcept { return mSize; }
 
 		// Public virtual method(s)
 		/*!
@@ -235,7 +238,7 @@ namespace ae
  located in the VRAM so this class is simply an intermediary to that data.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.09.05
+ \version v0.7.0
+ \date 2021.07.26
  \copyright MIT License
 */

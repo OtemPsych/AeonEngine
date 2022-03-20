@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright(c) 2019-2021 Filippos Gleglakos
+// Copyright(c) 2019-2022 Filippos Gleglakos
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -20,10 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef Aeon_Graphics_Buffer_H_
-#define Aeon_Graphics_Buffer_H_
-
-#include <cstdint>
+#pragma once
 
 #include <AEON/Graphics/internal/GLResource.h>
 
@@ -33,7 +30,7 @@ namespace ae
 	 \brief The base class representing a generalized OpenGL buffer used to supply data to OpenGL.
 	 \note This class is considered to be internal but may still be used by the API user.
 	*/
-	class _NODISCARD AEON_API Buffer : public GLResource
+	class AEON_API Buffer : public GLResource
 	{
 	public:
 		// Public constructor(s)
@@ -74,19 +71,17 @@ namespace ae
 		/*!
 		 \brief Move constructor.
 
-		 \param[in] rvalue The ae::Buffer that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Buffer(Buffer&& rvalue) noexcept;
+		Buffer(Buffer&&) noexcept = default;
 		/*!
 		 \brief Virtual destructor.
 		 \details It's needed as this class will be inherited by others.
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		virtual ~Buffer();
-	public:
+		virtual ~Buffer() = default;
+
 		// Public operator(s)
 		/*!
 		 \brief Deleted assignment operator.
@@ -97,12 +92,10 @@ namespace ae
 		/*!
 		 \brief Move assignment operator.
 
-		 \param[in] rvalue The ae::Buffer that will be moved
-
-		 \since v0.6.0
+		 \since v0.7.0
 		*/
-		Buffer& operator=(Buffer&& rvalue) noexcept;
-	public:
+		Buffer& operator=(Buffer&&) noexcept = default;
+
 		// Public method(s)
 		/*!
 		 \brief Retrieves the internal OpenGL pointer to the ae::Buffer's data store by mapping it.
@@ -163,9 +156,9 @@ namespace ae
 
 		 \sa map(), unmap()
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
-		void* mapRange(int offset, int length, uint32_t access) const;
+		void* mapRange(int64_t offset, int64_t length, uint32_t access) const;
 		/*!
 		 \brief Releases the internal OpenGL pointer to the ae::Buffer's data store that was previously mapped.
 		 \note Make sure that the ae::Buffer's data store was indeed mapped before calling this method.
@@ -187,6 +180,7 @@ namespace ae
 		 \since v0.4.0
 		*/
 		void unmap() const;
+
 		// Public virtual method(s)
 		/*!
 		 \brief Deletes the OpenGL handle to the ae::Buffer that was created.
@@ -199,7 +193,7 @@ namespace ae
 		 buffer.destroy();
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		virtual void destroy() const override final;
 		/*!
@@ -216,7 +210,7 @@ namespace ae
 		 buffer.unbind(); // Unbind it once we're done with it for this frame
 		 \endcode
 
-		 \since v0.4.0
+		 \since v0.7.0
 		*/
 		virtual void bind() const override final;
 		/*!
@@ -241,7 +235,6 @@ namespace ae
 		uint32_t mBindingTarget; //!< The binding target of the OpenGL buffer
 	};
 }
-#endif // Aeon_Graphics_Buffer_H_
 
 /*!
  \class ae::Buffer
@@ -255,7 +248,7 @@ namespace ae
  use and should be used instead of the ae::Buffer base class.
 
  \author Filippos Gleglakos
- \version v0.6.0
- \date 2020.08.27
+ \version v0.7.0
+ \date 2021.12.27
  \copyright MIT License
 */
